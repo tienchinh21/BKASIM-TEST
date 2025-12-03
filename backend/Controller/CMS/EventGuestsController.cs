@@ -48,12 +48,12 @@ namespace MiniAppGIBA.Controller.CMS
 
                 if (!string.IsNullOrEmpty(targetEventId) && targetEventId != "all")
                 {
-                    result = await _eventGuestService.GetEventGuestListsWithRegistrationsAsync(targetEventId, null, null);
+                    result = await _eventGuestService.GetEventGuestListsWithRegistrationsAsync(targetEventId);
                 }
                 else
                 {
                     // Get all event guests across all events
-                    result = await _eventGuestService.GetAllEventGuestsWithRegistrationsAsync(null, null);
+                    result = await _eventGuestService.GetAllEventGuestsWithRegistrationsAsync();
                 }
 
                 // Filter by status if provided

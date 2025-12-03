@@ -154,29 +154,12 @@
             </li>
             @if (isGiba)
             {       
-                @* Thành Viên *@
-                <li class="@(new string[] { "Membership", "MembershipApproval" }.Contains(controller) ? "active" : "")">
-                    <a href="#membership" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                @* Thành Viên - Không còn chức năng phê duyệt tài khoản *@
+                <li class="@(controller == "Membership" ? "active" : "")">
+                    <a href="/Membership" class="svg-icon">
                         <i class="ri-user-settings-line" style="font-size: 20px;"></i>
                         <span class="ml-4">Quản Lý Thành Viên</span>
-                        <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
                     </a>
-                    <ul id="membership"
-                    class="iq-submenu collapse @(new string[] { "Membership", "MembershipApproval" }.Contains(controller) ? "show" : "")"
-                    data-parent="#iq-sidebar-toggle">
-                        <li class="@(new string[] { "Membership" }.Contains(controller) ? "active" : "")">
-                            <a href="/Membership">
-                                <i class="ri-subtract-line"></i><span>Danh Sách Thành Viên</span>
-                            </a>
-                        </li>
-
-                            <li class="@(new string[] { "MembershipApproval" }.Contains(controller) ? "active" : "")">
-                                <a href="/MembershipApproval">
-                                    <i class="ri-subtract-line"></i><span>Phê Duyệt Thành Viên</span>
-                                </a>
-                            </li>
-
-                    </ul>
                 </li>
 
             }

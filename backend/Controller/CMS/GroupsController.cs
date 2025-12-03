@@ -73,7 +73,7 @@ namespace MiniAppGIBA.Controller.CMS
             try
             {
                 // GIBA has full access to all groups - no filtering needed
-                var groups = await _groupService.GetGroupsAsync(query, null, null, query.GroupType);
+                var groups = await _groupService.GetGroupsAsync(query);
 
                 var result = new
                 {
@@ -119,7 +119,7 @@ namespace MiniAppGIBA.Controller.CMS
                 };
 
                 // GIBA has full access - get all groups without filtering
-                var result = await _groupService.GetGroupsAsync(query, null, null, null);
+                var result = await _groupService.GetGroupsAsync(query);
 
                 return Json(new
                 {

@@ -223,7 +223,6 @@ namespace MiniAppGIBA.Controller.API
                 if (role == CTRole.GIBA)
                 {
                     query.UserGroupIds = null;
-                    query.GroupTypeFilter = null;
                 }
 
                 var result = await articleService.GetPage(query);
