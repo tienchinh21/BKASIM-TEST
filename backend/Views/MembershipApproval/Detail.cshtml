@@ -1,0 +1,172 @@
+@using MiniAppGIBA.Entities.Memberships
+@model Membership
+
+@{
+    ViewData["Title"] = "Chi tiết thành viên";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    // Helper function to get initials
+    string GetInitials(string fullName)
+    {
+        if (string.IsNullOrEmpty(fullName)) return "?";
+        
+        var words = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length >= 2)
+        {
+            return words[0].Substring(0, 1).ToUpper() + words[words.Length - 1].Substring(0, 1).ToUpper();
+        }
+        else if (words.Length == 1)
+        {
+            return words[0].Substring(0, Math.Min(2, words[0].Length)).ToUpper();
+        }
+        return "?";
+    }
+}
+
+<style>
+    .member-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #0d6efd;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 600;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+
+    .info-row label {
+        color: #666;
+        font-weight: 600;
+    }
+
+    .info-row span {
+        color: #333;
+    }
+
+    .info-row .text-muted {
+        color: #999 !important;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <div class="d-flex align-items-center mb-3">
+                    <button class="btn btn-light border me-3" onclick="history.back()">
+                        <i class="ri-arrow-left-line me-1"></i>Quay lại
+                    </button>
+                    <h4 class="mb-0">Chi tiết thành viên</h4>
+                </div>
+                <p class="mb-0 text-muted">Xem thông tin chi tiết thành viên</p>
+            </div>
+            <div>
+                <span class="badge bg-success">
+                    <i class="ri-check-line me-1"></i>Thành viên
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông tin cá nhân -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-user-line me-2"></i>
+                    Thông tin cá nhân
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-4">
+                        <div class="member-avatar mx-auto">
+                            @if (!string.IsNullOrEmpty(Model.ZaloAvatar) && (Model.ZaloAvatar.StartsWith("http") || Model.ZaloAvatar.StartsWith("/")))
+                            {
+                                <img src="@Model.ZaloAvatar" alt="@Model.Fullname" 
+                                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-weight: 600; font-size: 32px;">
+                                    @GetInitials(Model.Fullname)
+                                </div>
+                            }
+                            else
+                            {
+                                @GetInitials(Model.Fullname)
+                            }
+                        </div>
+                        <h5 class="mt-3 mb-1">@Model.Fullname</h5>
+                        <small class="text-muted">@Model.UserZaloName</small>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <label>Số điện thoại:</label>
+                                    <span>@Model.PhoneNumber</span>
+                                </div>
+                                <div class="info-row">
+                                    <label>Tên đăng nhập:</label>
+                                    <span class="@(string.IsNullOrWhiteSpace(Model.Username) ? "text-muted" : null)">@(string.IsNullOrWhiteSpace(Model.Username) ? "Chưa cập nhật" : Model.Username)</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-row">
+                                    <label>Slug:</label>
+                                    <span class="@(string.IsNullOrWhiteSpace(Model.Slug) ? "text-muted" : null)">@(string.IsNullOrWhiteSpace(Model.Slug) ? "Chưa cập nhật" : Model.Slug)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thông tin đăng ký -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-calendar-line me-2"></i>
+                    Thông tin đăng ký
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-row">
+                            <label>Ngày đăng ký:</label>
+                            <span>@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-row">
+                            <label>Cập nhật:</label>
+                            <span>@Model.UpdatedDate.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hành động -->
+    <div class="col-lg-12">
+        <div class="d-flex gap-2">
+            <a href="/MembershipApproval" class="btn btn-secondary">
+                <i class="ri-arrow-left-line me-1"></i>Quay lại danh sách
+            </a>
+        </div>
+    </div>
+</div>

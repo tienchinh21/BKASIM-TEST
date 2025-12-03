@@ -1,0 +1,632 @@
+@{
+    ViewData["Title"] = "Chờ Phê Duyệt";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        padding-right: 2.5rem;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .status-warning {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-success {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+</style>
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var canEdit = User?.IsInRole("SUPER_ADMIN") == true;
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Chờ Phê Duyệt</h4>
+                <p class="mb-0 text-muted">Quản lý các đơn xin tham gia hội nhóm</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Thanh tìm kiếm -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input id="search" type="text" class="form-control"
+                                    placeholder="Tìm theo tên, công ty..." />
+                                <button class="btn btn-primary" onclick="pendingTable.ajax.reload()">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bộ lọc hội nhóm -->
+                    <div class="col-md-3">
+                        <label class="form-label">Hội nhóm</label>
+                        <select id="filter-group" class="form-select" onchange="pendingTable.ajax.reload()">
+                            <option value="">Tất cả hội nhóm</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Bộ lọc trạng thái -->
+                    <div class="col-md-3">
+                        <label class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-select" onchange="handleStatusChange()">
+                            <option value="pending">Chờ xét duyệt</option>
+                            <option value="true">Đã phê duyệt</option>
+                            <option value="false">Đã từ chối</option>
+                            <option value="all" selected>Tất cả trạng thái</option>
+                        </select>
+                    </div>
+
+                    <!-- Nút lọc -->
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light border flex-fill" onclick="resetFilters()">
+                                <i class="ri-refresh-line me-1"></i>
+                                Đặt lại
+                            </button>
+                            <button class="btn btn-primary flex-fill" onclick="pendingTable.ajax.reload()">
+                                <i class="ri-filter-line me-1"></i>
+                                Lọc
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="table-responsive rounded mb-3">
+            <table id="list-pending" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div id="detailModalContent">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Approval Options Modal (Chọn gói cước khi duyệt) -->
+<div class="modal fade" id="approvalOptionsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="ri-check-circle-line me-2"></i>
+                    Phê duyệt thành viên
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="ri-information-line me-2"></i>
+                    Bạn đang phê duyệt đơn của: <strong id="approveMemberName"></strong>
+                </div>
+
+                <!-- Chọn gói cước -->
+                <div class="mb-3">
+                    <label for="subscriptionPlanSelect" class="form-label">
+                        <i class="ri-vip-crown-line me-1"></i>
+                        Chọn gói cước (không bắt buộc)
+                    </label>
+                    <select id="subscriptionPlanSelect" class="form-select">
+                        <option value="">-- Không chọn gói cước --</option>
+                    </select>
+                    <div class="form-text">Chọn gói cước để tự động tạo subscription cho thành viên</div>
+                </div>
+
+                <!-- Thông tin gói được chọn -->
+                <div id="planInfo" class="card bg-light mb-3" style="display: none;">
+                    <div class="card-body">
+                        <h6 class="text-primary mb-2">Thông tin gói:</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted">Thời hạn:</small>
+                                <p class="mb-0 fw-semibold" id="planDuration"></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Giá:</small>
+                                <p class="mb-0 fw-semibold" id="planPrice"></p>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted">Mô tả:</small>
+                                <p class="mb-0" id="planDescription"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tùy chỉnh ngày bắt đầu -->
+                <div class="mb-3">
+                    <label for="customStartDate" class="form-label">
+                        <i class="ri-calendar-line me-1"></i>
+                        Ngày bắt đầu (không bắt buộc)
+                    </label>
+                    <input type="date" id="customStartDate" class="form-control">
+                    <div class="form-text">Để trống sẽ bắt đầu từ hôm nay</div>
+                </div>
+
+                <!-- Số ngày thêm -->
+                <div class="mb-3">
+                    <label for="additionalDays" class="form-label">
+                        <i class="ri-time-line me-1"></i>
+                        Số ngày thêm (không bắt buộc)
+                    </label>
+                    <input type="number" id="additionalDays" class="form-control" min="0" placeholder="0">
+                    <div class="form-text">Thêm số ngày vào thời hạn gói (VD: gói 30 ngày + 5 ngày = 35 ngày)</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ri-arrow-left-line me-1"></i>
+                    Hủy
+                </button>
+                <button type="button" class="btn btn-success" id="confirmApprove">
+                    <i class="ri-check-line me-1"></i>
+                    Xác nhận phê duyệt
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ri-close-circle-line text-danger me-2"></i>
+                    Từ chối đơn xin tham gia
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="ri-alert-line me-2"></i>
+                    Bạn đang từ chối đơn xin tham gia của: <strong id="rejectMemberName"></strong>
+                </div>
+
+                <div class="mb-3">
+                    <label for="rejectReason" class="form-label">
+                        Lý do từ chối <span class="text-danger">*</span>
+                    </label>
+                    <textarea id="rejectReason" class="form-control" rows="4"
+                        placeholder="Nhập lý do từ chối đơn xin tham gia..." maxlength="500"></textarea>
+                    <div class="form-text">Tối đa 500 ký tự</div>
+                    <div id="rejectReasonError" class="text-danger small" style="display: none;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ri-arrow-left-line me-1"></i>
+                    Hủy
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmReject">
+                    <i class="ri-close-line me-1"></i>
+                    Từ chối đơn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        let pendingTable;
+
+        let availablePlans = []; // Store subscription plans
+
+        let searchTimeout; // Declare timeout variable outside function
+
+        $(document).ready(function () {
+            GetListPendingApprovals();
+            $('#search').on('input', handleSearchInput);
+            loadGroupsForFilter();
+            loadAvailableSubscriptionPlans();
+
+            // Handle subscription plan selection
+            $('#subscriptionPlanSelect').change(function () {
+                const planId = $(this).val();
+                if (planId) {
+                    const plan = availablePlans.find(p => p.id === planId);
+                    if (plan) {
+                        showPlanInfo(plan);
+                    }
+                } else {
+                    $('#planInfo').hide();
+                }
+            });
+        });
+
+        function GetListPendingApprovals() {
+            pendingTable = new DataTable("#list-pending", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const groupId = $("#filter-group").val();
+                    const status = $("#filter-status").val();
+                    let keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '/Membership/GetPendingPage',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pageSize: data.length,
+                            keyword: keyword,
+                            groupId: groupId,
+                            status: status
+                        },
+                        success: function (response) {
+                            console.log('API Response:', response);
+                            const formattedData = response.data.map((item, index) => ({
+                                index: data.start + index + 1,
+                                memberName: `<div class="d-flex flex-column">
+                                                            <h6 class="mb-1">${item.memberName}</h6>
+                                                            <small class="text-muted">${item.company || 'Chưa có công ty'}</small>
+                                                        </div>`,
+                                groupName: `<div class="d-flex flex-column align-items-center">
+                                                            <span class="fw-semibold text-primary">${item.groupName}</span>
+                                                            <small class="text-muted">Xin vào nhóm</small>
+                                                        </div>`,
+                                position: item.position || '<span class="text-muted">Chưa có</span>',
+                                reason: item.reason
+                                    ? `<div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.reason}">${item.reason}</div>`
+                                    : '<span class="text-muted">Chưa có</span>',
+                                status: `<span class="status-badge status-${item.statusClass}">
+                                                            ${item.statusText}
+                                                        </span>`,
+                                createdDate: item.createdDate,
+                                actions: item.isApproved === null
+                                    ? `<div class="d-flex align-items-center justify-content-center gap-1">
+                                                                <button onclick="openDetailModal('${item.id}')"
+                                                                        class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                                                                    <i class="ri-eye-line"></i>
+                                                                </button>
+                                                                <button onclick="approveRequest('${item.id}', '${item.memberName}')"
+                                                                        class="btn btn-sm btn-outline-success" title="Phê duyệt">
+                                                                    <i class="ri-check-line"></i>
+                                                                </button>
+                                                                <button onclick="openRejectModal('${item.id}', '${item.memberName}')"
+                                                                        class="btn btn-sm btn-outline-danger" title="Từ chối">
+                                                                    <i class="ri-close-line"></i>
+                                                                </button>
+                                                            </div>`
+                                    : `<div class="d-flex align-items-center justify-content-center gap-1">
+                                                                <button onclick="openDetailModal('${item.id}')"
+                                                                        class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                                                                    <i class="ri-eye-line"></i>
+                                                                </button>
+                                                            </div>`,
+                                // Store raw data
+                                rawData: item.rawData
+                            }));
+
+                            console.log('Formatted Data:', formattedData);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: response.totalItems,
+                                recordsFiltered: response.totalItems,
+                                data: formattedData
+                            });
+
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error loading data:', error);
+                            console.error('Response:', xhr.responseText);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: 0,
+                                recordsFiltered: 0,
+                                data: []
+                            });
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: "index", className: 'text-center', width: "60px" },
+                    { title: "Thành viên", data: "memberName", className: 'col-3' },
+                    { title: "Hội nhóm", data: "groupName", className: 'text-center', width: "150px" },
+                    { title: "Chức vụ", data: "position", className: 'text-center', width: "120px" },
+                    { title: "Lý do tham gia", data: "reason", className: 'col-3' },
+                    { title: "Trạng thái", data: "status", className: 'text-center', width: "130px" },
+                    { title: "Ngày tạo", data: "createdDate", className: 'text-center', width: "120px" },
+                    { title: "Thao tác", data: "actions", className: 'text-center', width: "150px" }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Hiển thị từ 0 đến 0 trong tổng số 0 mục (lọc từ NaN mục)",
+                    "infoFiltered": "(lọc từ _MAX_ mục)",
+                    "oPaginate": {
+                        "sFirst": "Đầu",
+                        "sPrevious": "Trước",
+                        "sNext": "Tiếp",
+                        "sLast": "Cuối"
+                    }
+                },
+                pagingType: "full_numbers"
+            });
+
+            $(pendingTable.table().header()).addClass('ligth ligth-data');
+        }
+
+        function handleSearchInput() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                pendingTable.ajax.reload();
+            }, 500);
+        }
+
+        function resetFilters() {
+            $('#search').val('');
+            $('#filter-group').val('');
+            $('#filter-status').val('all');
+            pendingTable.ajax.reload();
+        }
+
+        function openDetailModal(id) {
+            try {
+                // Load partial view vào modal
+                $.get(`/Membership/ViewDetail/${id}`, function (data) {
+                    $('#detailModalContent').html(data);
+                    $('#detailModal').modal('show');
+            }).fail(function (xhr, status, error) {
+                console.error('Error loading detail:', error);
+                showError('Lỗi', 'Không thể tải thông tin chi tiết');
+            });
+        } catch (e) {
+            console.error('Error in openDetailModal:', e);
+            showError('Lỗi', 'Có lỗi xảy ra');
+        }
+        }
+
+        // Show approval options modal instead of direct approval
+        function approveRequest(id, memberName) {
+            showApprovalOptions(id, memberName);
+        }
+
+        function showApprovalOptions(id, memberName) {
+            $('#approveMemberName').text(memberName);
+            $('#approvalOptionsModal').data('requestId', id);
+
+            // Reset form
+            $('#subscriptionPlanSelect').val('');
+            $('#customStartDate').val('');
+            $('#additionalDays').val('');
+            $('#planInfo').hide();
+
+            $('#approvalOptionsModal').modal('show');
+        }
+
+        function loadAvailableSubscriptionPlans() {
+            $.get('/Membership/GetActivePlans', function (response) {
+                if (response.success && response.data) {
+                    availablePlans = response.data;
+                    const select = $('#subscriptionPlanSelect');
+                    select.find('option:not(:first)').remove(); // Clear existing options except first
+
+                    response.data.forEach(plan => {
+                        select.append(`<option value="${plan.id}">${plan.planName} - ${plan.durationDays} ngày - ${plan.price ? formatCurrency(plan.price) : 'Miễn phí'}</option>`);
+                    });
+                }
+            }).fail(function () {
+                console.error('Failed to load subscription plans');
+            });
+        }
+
+        function showPlanInfo(plan) {
+            $('#planDuration').text(`${plan.durationDays} ngày`);
+            $('#planPrice').text(plan.price ? formatCurrency(plan.price) : 'Miễn phí');
+            $('#planDescription').text(plan.description || 'Không có mô tả');
+            $('#planInfo').show();
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        function openRejectModal(id, memberName) {
+            // Set member name and store ID for later use
+            $('#rejectMemberName').text(memberName);
+            $('#rejectModal').data('requestId', id);
+
+            // Clear previous data
+            $('#rejectReason').val('');
+            $('#rejectReasonError').hide();
+
+            // Show modal
+            $('#rejectModal').modal('show');
+        }
+
+        function loadGroupsForFilter() {
+            // Load active groups for filter dropdown
+            $.get('/api/groups/active', function (response) {
+                if (response.code === 0 && response.data) {
+                    const select = $('#filter-group');
+                    response.data.forEach(group => {
+                        select.append(`<option value="${group.id}">${group.groupName}</option>`);
+                    });
+                }
+            }).fail(function () {
+                console.error('Failed to load groups for filter');
+            });
+        }
+
+
+        // Handle approval confirmation with subscription plan
+        $('#confirmApprove').click(function () {
+            const requestId = $('#approvalOptionsModal').data('requestId');
+            const subscriptionPlanId = $('#subscriptionPlanSelect').val();
+            const customStartDate = $('#customStartDate').val();
+            const additionalDays = $('#additionalDays').val();
+
+            // Disable button
+            $('#confirmApprove').prop('disabled', true).html('<i class="ri-loader-4-line ri-spin me-1"></i>Đang xử lý...');
+
+            const requestData = {
+                id: requestId,
+                subscriptionPlanId: subscriptionPlanId || null,
+                customStartDate: customStartDate || null,
+                additionalDays: additionalDays ? parseInt(additionalDays) : null,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            };
+
+            $.ajax({
+                url: '/Membership/Approve',
+                type: 'POST',
+                data: requestData,
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', response.message || 'Phê duyệt thành công');
+                        $('#approvalOptionsModal').modal('hide');
+                        $('#detailModal').modal('hide'); // Close detail modal if open
+                        pendingTable.ajax.reload(null, false);
+                    } else {
+                        showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi phê duyệt');
+                },
+                complete: function () {
+                    $('#confirmApprove').prop('disabled', false).html('<i class="ri-check-line me-1"></i>Xác nhận phê duyệt');
+                }
+            });
+        });
+
+        // Handle reject confirmation
+        $('#confirmReject').click(function () {
+            const requestId = $('#rejectModal').data('requestId');
+            const reason = $('#rejectReason').val().trim();
+
+            // Validate reason
+            if (!reason) {
+                $('#rejectReasonError').text('Vui lòng nhập lý do từ chối!').show();
+                $('#rejectReason').focus();
+                return;
+            }
+
+            if (reason.length < 10) {
+                $('#rejectReasonError').text('Lý do từ chối phải có ít nhất 10 ký tự!').show();
+                $('#rejectReason').focus();
+                return;
+            }
+
+            // Hide error and disable button
+            $('#rejectReasonError').hide();
+            $('#confirmReject').prop('disabled', true).html('<i class="ri-loader-4-line ri-spin me-1"></i>Đang xử lý...');
+
+            // Send reject request
+            $.ajax({
+                url: '/Membership/Reject',
+                type: 'POST',
+                data: {
+                    id: requestId,
+                    rejectReason: reason,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', response.message || 'Từ chối thành công');
+                        $('#rejectModal').modal('hide');
+                        pendingTable.ajax.reload(null, false);
+                    } else {
+                        showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi từ chối');
+                },
+                complete: function () {
+                    // Re-enable button
+                    $('#confirmReject').prop('disabled', false).html('<i class="ri-close-line me-1"></i>Từ chối đơn');
+                }
+            });
+        });
+
+        // Handle modal events
+        $(document).on('hidden.bs.modal', '#detailModal', function () {
+            $('#detailModalContent').empty();
+        });
+
+        $(document).on('hidden.bs.modal', '#rejectModal', function () {
+            $('#rejectReason').val('');
+            $('#rejectReasonError').hide();
+            $('#rejectModal').removeData('requestId');
+        });
+
+        // Handle status change with loading indicator
+        function handleStatusChange() {
+            // Show loading indicator
+            const loadingHtml = '<tr><td colspan="8" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Đang tải...</span></div><p class="mt-2 text-muted">Đang lọc dữ liệu...</p></td></tr>';
+            
+            // Replace table content with loading
+            const tableBody = document.querySelector('#list-pending tbody');
+            if (tableBody) {
+                tableBody.innerHTML = loadingHtml;
+            }
+            
+            // Reload data
+            pendingTable.ajax.reload();
+        }
+    </script>
+}

@@ -1,0 +1,22 @@
+{
+  "app": {
+    "title": "Incom Booking",
+    "headerTitle": "Incom Booking",
+    "headerColor": "#000000",
+    "textColor": "white",
+    "textAlign": "center",
+    "statusBarColor": "linear-gradient(to bottom, #1a1a1a, #000000)",
+    "leftButton": "back",
+    "statusBar": "normal",
+    "actionBarHidden": true,
+    "hideAndroidBottomNavigationBar": true,
+    "hideIOSSafeAreaBottom": true,
+    "selfControlLoading": false
+  },
+  "debug": false,
+  "pages": [],
+  "listCSS": [],
+  "listSyncJS": [],
+  "listAsyncJS": [],
+  "template": {}
+}

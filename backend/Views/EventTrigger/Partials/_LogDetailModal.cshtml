@@ -1,0 +1,130 @@
+﻿@model MiniAppGIBA.Entities.Notifications.EventTriggerLog
+
+<div class="modal-header">
+    <h4 class="modal-title">Chi tiết Log #@Model.Id</h4>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Loại tin:</label>
+                <div>
+                    @switch (Model.Type)
+                    {
+                        case "1":
+                            <span class="badge bg-primary">Zalo UID</span>
+                            break;
+                        case "2":
+                            <span class="badge bg-info">Omni ZNS</span>
+                            break;
+                        case "3":
+                            <span class="badge bg-warning">Http Request</span>
+                            break;
+                        default:
+                            <span class="badge bg-secondary">N/A</span>
+                            break;
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Trạng thái:</label>
+                <div>
+                    @if (Model.ResultCode == "200" || Model.ResultCode == "0" || Model.ResultCode == "1")
+                    {
+                        <span class="badge bg-success">Thành công</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">Lỗi (@Model.ResultCode)</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Người nhận:</label>
+                <div class="form-control-plaintext">@Model.Recipient</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label fw-bold">Thời gian:</label>
+                <div class="form-control-plaintext">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3 d-none">
+        <label class="form-label fw-bold">Tin nhắn:</label>
+        <textarea class="form-control" rows="3" readonly>@Model.Message</textarea>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.RequestBody))
+    {
+        <div class="mb-3">
+            <label class="form-label fw-bold">Request Body:</label>
+            <textarea class="form-control" rows="4" readonly>@Model.RequestBody</textarea>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ResponseBody))
+    {
+        <div class="mb-3">
+            <label class="form-label fw-bold">Response Body:</label>
+            <textarea class="form-control" rows="4" readonly>@Model.ResponseBody</textarea>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Metadata))
+    {
+        <div class="mb-3">
+            <label class="form-label fw-bold">Metadata:</label>
+            <div class="card">
+                <div class="card-body">
+                    <pre class="mb-0"><code>@Model.Metadata</code></pre>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+    @if (!string.IsNullOrEmpty(Model.RequestBody) || !string.IsNullOrEmpty(Model.ResponseBody))
+    {
+        <button type="button" class="btn btn-primary" onclick="copyLogData('@Model.Id')">Copy dữ liệu</button>
+    }
+</div>
+
+<script>
+    function copyLogData(logId) {
+        let textToCopy = '';
+        textToCopy += 'Log ID: ' + logId + '\n';
+        textToCopy += 'Loại: @Model.Type\n';
+        textToCopy += 'Người nhận: @Model.Recipient\n';
+        textToCopy += 'Trạng thái: @Model.ResultCode\n';
+        textToCopy += 'Thời gian: @Model.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss")\n';
+        textToCopy += 'Tin nhắn: @Model.Message\n';
+
+        @if (!string.IsNullOrEmpty(Model.RequestBody))
+            {
+                <text>textToCopy += '\nRequest:\n@Html.Raw(Model.RequestBody?.Replace("\n", "\\n").Replace("\r", ""))\n';</text>
+        }
+
+            @if (!string.IsNullOrEmpty(Model.ResponseBody))
+            {
+                <text>textToCopy += '\nResponse:\n@Html.Raw(Model.ResponseBody?.Replace("\n", "\\n").Replace("\r", ""))\n';</text>
+        }
+
+            navigator.clipboard.writeText(textToCopy).then(function () {
+                toastr.success('Đã copy dữ liệu log!');
+            }).catch(function () {
+                toastr.error('Không thể copy dữ liệu!');
+            });
+    }
+</script>

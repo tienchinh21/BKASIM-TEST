@@ -1,0 +1,602 @@
+@using MiniAppGIBA.Constants;
+@{
+
+
+
+    ViewData["Title"] = "Quản lý Thành viên";
+
+
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        padding-right: 2.5rem;
+    }
+
+    /* Style cho dropdown filter - giới hạn chiều cao và cho phép scroll */
+    .form-select[size],
+    .form-control[size] {
+        position: absolute;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        max-height: calc(1.5rem * 5 + 0.75rem * 2);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .form-select::-webkit-scrollbar,
+    .form-control::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .form-select::-webkit-scrollbar-track,
+    .form-control::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .form-select::-webkit-scrollbar-thumb,
+    .form-control::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    .form-select::-webkit-scrollbar-thumb:hover,
+    .form-control::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background-color: #d1edff;
+        color: #0c63e4;
+    }
+
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+</style>
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+
+
+
+    var canEdit = User?.IsInRole(CTRole.GIBA) == true;
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản Lý Thành Viên</h4>
+                <p class="mb-0 text-muted">Quản lý danh sách thành viên trong hệ thống</p>
+            </div>
+            @if (canEdit)
+            {
+                <div>
+                    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+                        <i class="ri-add-line me-1"></i>
+                        Tạo tài khoản
+                    </button>
+                </div>
+
+
+
+            }
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Thanh tìm kiếm -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input id="search" type="text" class="form-control"
+                                    placeholder="Tìm theo tên, SĐT, email..." />
+                                <button class="btn btn-primary" onclick="membershipsTable.ajax.reload()">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+                    <!-- Nút lọc và xuất excel -->
+                    <div class="col-md-8">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light border flex-fill" onclick="resetFilters()">
+                                <i class="ri-refresh-line me-1"></i>
+                                Đặt lại
+                            </button>
+                            <button class="btn btn-primary flex-fill" onclick="membershipsTable.ajax.reload()">
+                                <i class="ri-filter-line me-1"></i>
+                                Lọc dữ liệu
+                            </button>
+                            @if (canEdit)
+
+
+
+                            {
+                                <button type="button" class="btn btn-success flex-fill" onclick="HandleExportData()">
+                                    <i class="ri-file-excel-line me-1"></i>
+                                    Xuất Excel
+                                </button>
+
+
+
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="table-responsive rounded mb-3">
+            <table id="list-memberships" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<!-- Membership Modal -->
+<div class="modal fade" id="membershipModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div id="membershipModalContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    // Override showError and showSuccess to use SweetAlert 2.x (Swal.fire) instead of SweetAlert 1.x (swal)
+    // This prevents the "Class constructor Un cannot be invoked without 'new'" error
+    window.showError = function (title, message) {
+        if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+            Swal.fire({
+                title: title || 'Lỗi',
+                text: message || '',
+                icon: 'error',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#d33'
+            });
+        } else {
+            alert((title || 'Lỗi') + ': ' + (message || ''));
+        }
+    };
+
+    window.showSuccess = function (title, message) {
+        if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+            Swal.fire({
+                title: title || 'Thành công',
+                text: message || '',
+                icon: 'success',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#3085d6',
+                timer: 2000,
+                timerProgressBar: true
+            });
+        } else {
+            alert((title || 'Thành công') + ': ' + (message || ''));
+        }
+    };
+
+    window.showWarning = function (title, message) {
+        if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+            Swal.fire({
+                title: title || 'Cảnh báo',
+                text: message || '',
+                icon: 'warning',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#f0ad4e'
+            });
+        } else {
+            alert((title || 'Cảnh báo') + ': ' + (message || ''));
+        }
+    };
+    let membershipsTable;
+    let searchTimeout;
+
+    $(document).ready(function () {
+        GetListMemberships();
+        $('#search').on('input', function () {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                membershipsTable.ajax.reload();
+            }, 500);
+        });
+    });
+
+
+
+    function GetListMemberships() {
+        membershipsTable = new DataTable("#list-memberships", {
+            searching: false,
+            sort: false,
+            responsive: true,
+            pageLength: 10,
+            serverSide: true,
+            ajax: function (data, callback, settings) {
+                const page = (data.start / data.length) + 1;
+                let keyword = $("#search").val();
+
+                $.ajax({
+                    url: '/Membership/GetPage',
+                    type: 'GET',
+                    data: {
+                        page: page,
+                        pageSize: data.length,
+                        keyword: keyword
+                    },
+                    success: function (response) {
+                        console.log('API Response:', response);
+
+                        // Helper function to truncate text
+                        function truncateText(text, maxLength) {
+                            if (!text) return '';
+                            if (text.length <= maxLength) return text;
+                            return text.substring(0, maxLength) + '...';
+                        }
+
+                        // Check if response is successful and has data
+                        if (!response || !response.success || !response.data || !Array.isArray(response.data)) {
+                            console.error('Invalid response:', response);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: 0,
+                                recordsFiltered: 0,
+                                data: []
+                            });
+                            return;
+                        }
+
+                        const formattedData = response.data.map((item, index) => ({
+                            index: data.start + index + 1,
+                            avatar: item.zaloAvatar
+                                ? `<div class="text-center">
+                                                                                                    <img src="${item.zaloAvatar}" alt="Avatar" class="rounded-circle"
+                                                                                                         style="width: 40px; height: 40px; object-fit: cover;"
+                                                                                                         onerror="this.src='/images/default-avatar.png'">
+                                                                                                   </div>`
+                                : `<div class="text-center">
+                                                                                                    <div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center"
+                                                                                                         style="width: 40px; height: 40px; color: white; font-weight: bold;">
+                                                                                                        ${item.fullname ? item.fullname.charAt(0).toUpperCase() : 'U'}
+                                                                                                    </div>
+                                                                                                   </div>`,
+                            fullname: `<div class="d-flex flex-column">
+                                                                                                <h6 class="mb-1" title="${item.fullname || ''}">${truncateText(item.fullname || '', 20)}</h6>
+                                                                                                <small class="text-muted">${item.phoneNumber || ''}</small>
+                                                                                            </div>`,
+                            createdDate: item.createdDate,
+                            actions: `<div class="d-flex align-items-center justify-content-center gap-1">
+                                                                                                <button onclick="openEditModal('${item.id}')"
+                                                                                                        class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                                                                                    <i class="ri-edit-line"></i>
+                                                                                                </button>
+                                                                                                <button onclick="confirmDelete('${item.id}', '${item.fullname}')"
+                                                                                                        class="btn btn-sm btn-outline-danger" title="Xóa">
+                                                                                                    <i class="ri-delete-bin-line"></i>
+                                                                                                </button>
+                                                                                            </div>`,
+                            // Store raw data for edit form
+                            formattedData: item.formattedData
+                        }));
+
+                        console.log('Formatted Data:', formattedData);
+                        callback({
+                            draw: data.draw,
+                            recordsTotal: response.totalItems,
+                            recordsFiltered: response.totalItems,
+                            data: formattedData
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading data:', error);
+                        console.error('Response:', xhr.responseText);
+                        callback({
+                            draw: data.draw,
+                            recordsTotal: 0,
+                            recordsFiltered: 0,
+                            data: []
+                        });
+                    }
+                });
+            },
+            columns: [
+                { title: "STT", data: "index", className: 'text-center', width: "60px" },
+                { title: "Avatar", data: "avatar", className: 'text-center', width: "80px" },
+                { title: "Thành viên", data: "fullname", className: 'col-3' },
+                { title: "Ngày tạo", data: "createdDate", className: 'text-center', width: "120px" },
+                { title: "Thao tác", data: "actions", className: 'text-center', width: "120px" }
+            ],
+            language: {
+                "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                "zeroRecords": "Không tìm thấy kết quả",
+                "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                "infoEmpty": "Không có dữ liệu",
+                "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+            }
+        });
+
+        $(membershipsTable.table().header()).addClass('ligth ligth-data');
+    }
+
+
+    function resetFilters() {
+        $('#search').val('');
+        membershipsTable.ajax.reload();
+    }
+
+    function HandleExportData() {
+        const keyword = $("#search").val() || "";
+
+        const queryParams = new URLSearchParams({
+            keyword: keyword
+        }).toString();
+
+        const apiUrl = `/api/Memberships/Export?${queryParams}`;
+
+        // Tạo form ẩn để submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = apiUrl;
+        form.target = '_blank';
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+
+    function openEditModal(membershipId) {
+        try {
+            console.log('openEditModal called with membershipId:', membershipId);
+
+            // Load partial view edit vào modal
+            $.get(`/Membership/Edit/${membershipId}`, function (data) {
+                console.log('Edit form loaded successfully');
+                console.log('Response data length:', data.length);
+
+                $('#membershipModalContent').html(data);
+
+                // Initialize field selection after modal content is loaded
+                if (typeof initializeFieldSelection === 'function') {
+                    initializeFieldSelection();
+                }
+
+                // Show modal trước, sau đó mới fill data (để đảm bảo form đã render xong từ server)
+                $('#membershipModal').modal('show');
+
+                // Delay fill data để form từ server render xong trước
+                setTimeout(() => {
+                    loadMembershipDataAndFillForm(membershipId);
+                }, 300);
+
+                console.log('Modal shown with edit form');
+            }).fail(function (xhr, status, error) {
+                console.error('Error loading edit form:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                showError('Lỗi', 'Không thể tải form chỉnh sửa thành viên');
+            });
+        } catch (e) {
+            console.error('Error in openEditModal:', e);
+            showError('Lỗi', 'Có lỗi xảy ra');
+        }
+    }
+
+    function loadMembershipDataAndFillForm(membershipId) {
+        // Get data from DataTable's stored formattedData
+        const tableData = membershipsTable.rows().data().toArray();
+        const membershipData = tableData.find(row => row.actions.includes(membershipId));
+
+        if (membershipData && membershipData.formattedData) {
+            const data = membershipData.formattedData;
+
+            // Fill data vào form - chỉ fill các trường có thể chỉnh sửa
+            // Các trường readonly đã được fill từ server trong partial view, không cần fill lại
+            $('input[name="Fullname"]').val(data.fullname || '');
+            $('input[name="PhoneNumber"]').val(data.phoneNumber || '');
+            $('input[name="ZaloAvatar"]').val(data.zaloAvatar || '');
+            $('input[name="RoleId"]').val(data.roleId || '');
+
+            console.log('Form filled with data:', data);
+        } else {
+            console.error('No data found for membership:', membershipId);
+        }
+    }
+
+    function confirmDelete(id, name) {
+        if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                text: `Bạn có chắc chắn muốn xóa thành viên "${name}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Membership/Delete',
+                        type: 'POST',
+                        data: {
+                            id: id,
+                            __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (response) {
+                            if (response.success) {
+                                showSuccess('Thành công', response.message || 'Xóa thành công');
+                                membershipsTable.ajax.reload(null, false);
+                            } else {
+                                showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                            }
+                        },
+                        error: function () {
+                            showError('Lỗi', 'Có lỗi xảy ra khi xóa thành viên');
+                        }
+                    });
+                }
+            });
+        } else {
+            // Fallback to browser confirm if SweetAlert2 is not available
+            if (confirm(`Bạn có chắc chắn muốn xóa thành viên "${name}"?`)) {
+                $.ajax({
+                    url: '/Membership/Delete',
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            showSuccess('Thành công', response.message || 'Xóa thành công');
+                            membershipsTable.ajax.reload(null, false);
+                        } else {
+                            showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                        }
+                    },
+                    error: function () {
+                        showError('Lỗi', 'Có lỗi xảy ra khi xóa thành viên');
+                    }
+                });
+            }
+        }
+    }
+
+
+
+
+
+            const price = sub.price ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(sub.price) : 'Miễn phí';
+
+            tbody.append(`
+                    <tr>
+                        <td class="text-center">${index + 1}</td>
+                        <td>${sub.planName}</td>
+                        <td class="text-center">${sub.durationDays} ngày</td>
+                        <td class="text-center">${new Date(sub.startDate).toLocaleDateString('vi-VN')}</td>
+                        <td class="text-center">${new Date(sub.endDate).toLocaleDateString('vi-VN')}</td>
+                        <td class="text-center">${statusBadge}</td>
+                    </tr>
+                `);
+        });
+    }
+
+    // Handle modal events
+    $(document).on('hidden.bs.modal', '#membershipModal', function () {
+        $('#membershipModalContent').empty();
+    });
+
+    // Open create membership modal
+    function openCreateModal() {
+        $.get('/Membership/Create', function (viewHtml) {
+            $('#membershipModalContent').html(viewHtml);
+            $('#membershipModal').modal('show');
+        }).fail(function (xhr, status, error) {
+            console.error('Error loading create form:', error);
+            showError('Lỗi', 'Không thể tải form tạo tài khoản');
+        });
+    }
+
+    // Submit create membership form
+    function submitCreateMembershipForm(event) {
+        event.preventDefault();
+
+        // Check if phone warning is visible - prevent submission
+        if ($('#phoneWarningMessage').is(':visible')) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: 'Cảnh báo',
+                    text: 'Số điện thoại này đã có tài khoản trong hệ thống. Vui lòng kiểm tra lại!',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#f0ad4e'
+                });
+            } else {
+                alert('Số điện thoại này đã có tài khoản trong hệ thống. Vui lòng kiểm tra lại!');
+            }
+            return false;
+        }
+
+        var form = $('#membershipCreateForm');
+        var formData = new FormData(form[0]);
+
+        // Show loading
+        Swal.fire({
+            title: 'Đang xử lý...',
+            text: 'Vui lòng đợi',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            url: 'api/memberships/register-by-admin',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                Swal.close();
+                if (response.success) {
+                    $('#membershipModal').modal('hide');
+                    showSuccess('Thành công', response.message || 'Tạo tài khoản thành công!');
+                    onClickReloadTable();
+                } else {
+                    showError('Lỗi', response.message || 'Có lỗi xảy ra khi tạo tài khoản');
+                }
+            },
+            error: function (xhr, status, error) {
+                Swal.close();
+                console.error('Error creating membership:', error);
+                var errorMessage = 'Có lỗi xảy ra khi tạo tài khoản';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                showError('Lỗi', errorMessage);
+            }
+        });
+    }
+</script>
+}

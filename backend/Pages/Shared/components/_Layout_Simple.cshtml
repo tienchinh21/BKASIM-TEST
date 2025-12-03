@@ -1,0 +1,24 @@
+﻿﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <link rel="favicon icon" href="/images/logo.png" />
+    <link rel="stylesheet" href="~/css/backend-plugin.min.css" />
+    <link rel="stylesheet" href="~/css/backend.css?v=1.0.0" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/line-awesome/1.3.0/line-awesome/css/line-awesome.min.css" />
+    <link rel="stylesheet" href="~/vendor/remixicon/fonts/remixicon.css" />
+</head>
+
+<body>
+    <div class="wrapper">
+        @RenderBody()
+    </div>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

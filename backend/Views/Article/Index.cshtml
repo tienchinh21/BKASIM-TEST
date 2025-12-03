@@ -1,0 +1,492 @@
+@using MiniAppGIBA.Base.Dependencies.Extensions
+@using MiniAppGIBA.Entities.Articles
+@{
+    var canEdit = User.IsEditable();
+    ViewData["Title"] = "Danh sách tin tức";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Danh sách tin tức</h4>
+                @* <p class="mb-0"> *@
+                @*     Danh sách tin tức quyết định cách trình bày tin tức một cách hiệu quả và cung cấp không gian<br /> *@
+                @*     để liệt kê các sản phẩm và ưu đãi của bạn theo cách hấp dẫn nhất. *@
+                @* </p> *@
+            </div>
+            @if (canEdit)
+            {
+                <button type="button" class="btn btn-primary mt-2" onclick="GetFormArticle()">
+                    <i class="ri-add-line mr-3"></i>Thêm mới
+                </button>
+            }
+        </div>
+    </div>
+
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo tên">
+                            <span class="search-icon position-absolute user-select-auto"
+                                style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer"
+                                onclick="onClickReloadTable()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="filter-status" class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-select select2" onchange="onClickReloadTable()">
+                            <option value="">Tất cả</option>
+                            <option value="0">Riêng tư</option>
+                            <option value="1">Công khai</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filter-category" class="form-label">Danh mục</label>
+                        <select id="filter-category" class="form-control" onchange="onClickReloadTable()">
+                            @if (ViewBag.ArticleCategories != null)
+                            {
+                                <option value="" selected>Tất cả danh mục</option>
+                                foreach (ArticleCategory item in ViewBag.ArticleCategories)
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+
+                    <div class="col-md-6">
+                        <label class="form-label">Thời gian</label>
+                        <div class="d-flex align-items-center">
+                            <div class="input-group">
+                                <input id="filterStart" type="date" class="form-control">
+                                <span class="input-group-text bg-light border-0">đến</span>
+                                <input id="filterEnd" type="date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 d-flex justify-content-end mt-3">
+                        <button class="btn btn-primary" onclick="onClickReloadTable()">
+                            <i class="ri-filter-line me-1"></i> Lọc
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div id="article-table" class="table-responsive rounded mb-3">
+            <table id="list-article" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-article" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade">
+    <div id="modal-content" class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 90vw;"></div>
+</div>
+
+@section Scripts {
+    <script>
+
+
+    function onClickReloadTable() {
+					startDate = $('#filterStart').val();
+					endDate = $('#filterEnd').val();
+
+					if (!startDate || !endDate) {
+						alert("Vui lòng chọn khoảng thời gian");
+						return;
+					}
+
+					if (moment(endDate).isBefore(startDate)) {
+						alert("Ngày kết thúc phải sau ngày bắt đầu");
+						return;
+					}
+
+					table.ajax.reload()
+			}
+        // ================= Gom JS từ _Article.cshtml về Index =================
+        var ArticleModal = (function () {
+            function init() {
+                $('.carousel').carousel({ interval: 2000 });
+
+                $("#categoryId").select2({ dropdownParent: $("#modal-article") });
+                $("#status").select2({ dropdownParent: $("#modal-article") });
+
+                InitialEditor();
+
+                const titleInput = $('#title');
+                const authorInput = $('#author');
+                const titleCounter = $('#title-counter');
+                const authorCounter = $('#author-counter');
+
+                updateInputCounter(titleInput, titleCounter);
+                updateInputCounter(authorInput, authorCounter);
+
+                titleInput.off('input.article').on('input.article', (e) => {
+                    ChangeInput(e.target, '#preview-title > h4');
+                    updateInputCounter(titleInput, titleCounter);
+                });
+                authorInput.off('input.article').on('input.article', (e) => {
+                    ChangeInput(e.target, '#preview-author');
+                    updateInputCounter(authorInput, authorCounter);
+                });
+            }
+            return { init: init };
+        })();
+
+        let removedOldImages = [];
+        let removedOldBanner = "";
+
+        let searchTimeout;
+        
+        $(document).ready(function () {
+
+            $("#filterStart").val(moment().startOf('month').format('YYYY-MM-DD'));
+            $("#filterEnd").val(moment().endOf('month').format('YYYY-MM-DD'));
+
+            // Initialize search with debounce
+            $('#search').on('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (table) {
+                        table.ajax.reload();
+                    }
+                }, 500);
+            });
+            
+            $('#filter-category').select2();
+            $('#filter-status').select2();
+
+            // Thêm kiểm tra ngày bắt đầu và ngày kết thúc
+            $('#filterStart, #filterEnd').on('change', function () {
+                const startDate = $('#filterStart').val();
+                const endDate = $('#filterEnd').val();
+                if (startDate && endDate && startDate > endDate) {
+                    AlertResponse("Ngày bắt đầu không thể lớn hơn ngày kết thúc. Vui lòng chọn lại.", 'warning');
+                }
+            });
+
+            GetListArticle();
+        });
+
+        function GetFormArticle(id) {
+            const url = id ? `@Url.Action("Detail", "Article")/${id}` : "@Url.Action("Create", "Article")"
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (data) {
+                    $("#modal-content").html(data);
+                    $("#modal-article").modal("toggle");
+                    ArticleModal.init();
+                }
+            })
+
+        }
+
+        // Hàm hiển thị lại 3 ảnh mặc định
+        function showDefaultImages() {
+            const defaultImages = [
+                "/images/no-image-2.jpg",
+                "/images/no-image-2.jpg",
+                "/images/no-image-2.jpg"
+            ];
+
+            defaultImages.forEach((src, index) => {
+                const defaultItem = $(`
+                                                                            <div class="carousel-item ${index === 0 ? 'active' : ''}">
+                                                                                <img class="d-block w-100" src="${src}" alt="Default image">
+                                                                            </div>
+                                                                        `);
+                $("#carosuel-preview").append(defaultItem);
+            });
+        }
+
+        $(document).on("click", ".btn-preview-remove", function () {
+            const fullImageUrl = $(this).data("url");
+            const imageUrl = fullImageUrl.split("/").pop();
+            $(this).parent().remove();
+            removedOldImages.push(imageUrl);
+        });
+
+        $(document).on("click", ".btn-banner-remove", function () {
+            const fullImageUrl = $("#banner-preview-img").attr("src");
+            const imageUrl = fullImageUrl.split("/").pop();
+            removedOldBanner = imageUrl;
+            $("#preview-banner").html(`<img style="object-fit:contain; height:150px;" src="/images/no-image-2.jpg" />`);
+        });
+
+        function removeFileFromInput(inputElement, indexToRemove) {
+            const dataTransfer = new DataTransfer();
+            const currentFiles = Array.from(inputElement.files);
+
+            currentFiles.forEach((file, index) => {
+                if (index !== indexToRemove) {
+                    dataTransfer.items.add(file);
+                }
+            });
+
+            inputElement.files = dataTransfer.files;
+        }
+
+        function InitialEditor() {
+            window.editor = createQuillEditor("#editor", "#preview-content", 5000, "#editor-counter");
+        }
+
+        function GetListArticle() {
+            table = new DataTable("#list-article", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const pageSize = data.length;
+                    const keyword = $("#search").val();
+                    const status = $("#filter-status").val()
+                    const categoryId = $("#filter-category").val();
+
+                    const startDate = moment($("#filterStart").val()).format('YYYY-MM-DDT00:00');
+                    const endDate = moment($("#filterEnd").val()).format('YYYY-MM-DDT23:59');
+
+                    $.ajax({
+                        url: '@Url.Action("GetPage", "Articles")',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pagesize: data.length,
+                            keyword: keyword,
+                            status: status,
+                            startDate: startDate,
+                            endDate: endDate,
+                            categoryId: categoryId
+                        },
+                        success: function (response) {
+                            const formattedData = response.data.map((item, index) => ({
+                                0: data.start + index + 1,
+                                1: `<div style="width: 300px" title="${item.title}">
+                                                                            ${item.title}
+                                                                        </div>`,
+                                2: item.status == 0 ? "Riêng tư" : "Công khai",
+
+                                5: FormatDate(item.createdDate),
+                                6: `<div class="d-flex align-items-center justify-content-evenly list-action">
+                                                                                                <a onclick="GetFormArticle('${item.id}')" class="badge badge-info" data-toggle="tooltip" data-placement="top" title="Xem chi tiết">
+                                                                                                    <i class="ri-edit-line fs-6"></i>
+                                                                                                </a>
+
+                                                                                                <a onclick="DeleteArticle('${item.id}')" class="badge bg-warning @(canEdit ? "" : "d-none")" data-toggle="tooltip" data-placement="top" title="Xóa">
+                                                                                                    <i class="ri-delete-bin-line fs-6"></i>
+                                                                                                </a>
+                                                                                            </div>`,
+                                8: `<img style="width: 120px;height: 55px; object-fit: cover;" src="${item.bannerImage ?? item.images[0]}" alt="Ảnh tin tức" >`,
+                                9: item.orderPriority
+                            }));
+
+                            setTimeout(() => {
+                                    var totalCount = response.totalCount || 0;
+                                    callback({
+                                        draw: data.draw,
+                                        recordsTotal: totalCount,
+                                        recordsFiltered: totalCount,
+                                        data: formattedData
+                                    });
+                            }, 400);
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: 0, className: 'text-center' },
+                    { title: "Tiêu đề", data: 1, width: "250px" },
+                    { title: "Trạng thái", data: 2 },
+                    { title: "Hình ảnh", data: 8, className: 'text-center' },
+                    { title: "Thứ tự hiển thị(mini app)", data: 9, className: 'text-center', width: "120px" },
+                    { title: "Ngày đăng", data: 5, className: 'text-center' },
+                    { title: "Thao tác", data: 6, className: 'text-center' }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                     "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng dữ liệu",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": ""
+                }
+            });
+
+            $(table.table().header()).addClass('ligth ligth-data');
+        }
+
+        function ApproveArticle(id) {
+            $.ajax({
+                url: `/api/Articles/${id}/Status?status=1`,
+                type: 'PATCH',
+                success: function (res) {
+                    const { code, message } = res;
+                    if (code === 0) {
+                        AlertResponse(message, "success");
+                        table.ajax.reload();
+                    } else {
+                        AlertResponse(message, "error");
+                    }
+                },
+                error: function (error) {
+                    AlertResponse(error.message, "error");
+                }
+            });
+        }
+
+        function DeleteArticle(id) {
+            if (id === '') return;
+            const url = `/api/Articles/${id}`
+            $("#modal-article").modal("hide");
+            DeleteItem(url);
+        }
+
+        function ChangeInput(ele, previewElement) {
+            const elementValue = $(ele).val();
+            const data = $(ele).data('type')
+
+            let innerContent = "";
+            let subContent = "";
+
+            switch (data) {
+                case "title":
+                    innerContent = elementValue;
+                    break;
+                case "status":
+                    switch (elementValue) {
+                        case "0":
+                            subContent = "Riêng tư";
+                            break;
+                        case "1":
+                            subContent = "Công khai";
+                            break;
+                        default:
+                            break;
+                    }
+                    innerContent = "Trạng thái: " + subContent;
+                    break;
+                default:
+                    break;
+            }
+
+            $(previewElement).html(innerContent);
+        }
+
+        function validateEmail(email) {
+            const regex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            return regex.test(email);
+        }
+
+        async function HandleSaveOrUpdate(id) {
+            const formData = new FormData();
+            const content = window.editor.root.innerHTML;
+            const title = $('#title').val()?.trim();
+            const author = $('#author').val()?.trim();
+            const bannerImageFile = $('#bannerImage')[0].files[0];
+            const images = $('#images')[0].files;
+            const status = $("#status").val();
+            const categoryId = $("#categoryId").val();
+            const orderPriority = $('#orderPriority').val();
+
+            // Validate required fields
+            const requiredFields = [];
+            const missingImageFields = [];
+
+            if (!title) requiredFields.push("tiêu đề");
+            if (!content || content === "<p><br></p>") requiredFields.push("nội dung");
+            if (images.length === 0 && !id) missingImageFields.push("ảnh tin tức");
+
+            // Handle validation messages
+            if (requiredFields.length > 0 || missingImageFields.length > 0) {
+                let message = "";
+
+                // Nếu tất cả các trường đều trống
+                if (requiredFields.length + missingImageFields.length >= 2) {
+                    message = "Bạn chưa nhập các trường thông tin bắt buộc. Vui lòng nhập các trường thông tin bắt buộc";
+                } else {
+                    // Handle text fields
+                    if (requiredFields.length > 0) {
+                        if (requiredFields.length === 1) {
+                            message = `Bạn chưa nhập trường thông tin ${requiredFields[0]}. Vui lòng nhập ${requiredFields[0]}`;
+                        } else {
+                            message = `Bạn chưa nhập các trường thông tin bắt buộc ${requiredFields.join(', ')}. Vui lòng nhập các trường thông tin bắt buộc`;
+                        }
+                    }
+
+                    // Handle image fields
+                    if (missingImageFields.length > 0) {
+                        if (message) message += "\n";
+                        missingImageFields.forEach(field => {
+                            message += `Bạn chưa tải lên ${field}. Vui lòng tải lên ${field}\n`;
+                        });
+                    }
+                }
+
+                AlertResponse(message.trim(), 'warning');
+                return;
+            }
+
+            formData.append('title', title);
+            formData.append('author', author);
+            formData.append('status', status);
+            formData.append('content', content);
+            formData.append('categoryId', categoryId);
+            formData.append('orderPriority', orderPriority);
+
+            if (bannerImageFile) {
+                formData.append('bannerImage', bannerImageFile);
+            } else if (id === "" && images.length > 0) {
+                formData.append('bannerImage', images[0]);
+            } else if (id !== "" && removedOldBanner !== "") {
+                formData.append('removedOldBanner', removedOldBanner);
+            }
+
+            for (let i = 0; i < images.length; i++) {
+                formData.append('images', images[i]);
+            }
+
+            removedOldImages.forEach((url) => formData.append('removedOldImages', url));
+
+            const url = id === "" ? "/api/Articles" : "/api/Articles/" + id;
+            const method = id === "" ? "POST" : "PUT";
+
+            $.ajax({
+                url: url,
+                type: method,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.code === 0) {
+                        AlertResponse(response.message, 'success')
+                        removedOldImages = [];
+                        removedOldBanner = "";
+                        table.ajax.reload();
+                        $("#modal-article").modal("toggle");
+                    } else {
+                        AlertResponse(response.message, 'warning')
+                    }
+                },
+                error: function (err) {
+                    AlertResponse("Đã xảy ra lỗi, vui lòng thử lại sau!", 'error')
+                }
+            });
+        }
+    </script>
+}

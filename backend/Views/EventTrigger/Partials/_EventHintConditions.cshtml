@@ -1,0 +1,98 @@
+﻿<div class="mt-3">
+    <h6 class="fw-semibold text-primary mb-3">Gợi ý trường dữ liệu cho sự kiện</h6>
+    <p class="text-muted small">
+        Chọn sự kiện để xem các trường có sẵn từ payload. Bạn có thể sử dụng các trường này trong điều kiện (ví dụ: <code>OrderStatus = 1</code> hoặc
+        <code>Total > 100000</code>).
+    </p>
+
+    <!-- Accordion để hiển thị gợi ý cho từng sự kiện -->
+    <div class="accordion" id="eventHintsAccordion">
+
+        <!-- Sự kiện Order.Create / Order.Update -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOrder">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOrder" aria-expanded="false" aria-controls="collapseOrder">
+                    <i class="ri-shopping-cart-line me-2"></i> Order.Create / Order.Update
+                </button>
+            </h2>
+            <div id="collapseOrder" class="accordion-collapse collapse" aria-labelledby="headingOrder" data-bs-parent="#eventHintsAccordion">
+                <div class="accordion-body">
+                    <p class="text-muted">
+                        Ví dụ điều kiện:<br>
+                        - <code>OrderStatus = 2</code> (Đơn hàng đã hoàn thành)<br>
+                        - <code>Total > 500000</code> (Tổng tiền lớn hơn 500k)<br>
+                        - <code>PaymentStatus = 1 and BranchName = 'HCM'</code> (Đã thanh toán và chi nhánh HCM)<br>
+                        - <code>DiscountAmount > 0 and UserZaloId != ''</code> (Có giảm giá và có ID Zalo)<br>
+                        - <code>ShippingFee < 30000 or OrderStatus = 3</code> (Phí ship dưới 30k hoặc đơn hủy)
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sự kiện Membership.Register / Membership.UpdateRank -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingMembership">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMembership" aria-expanded="false" aria-controls="collapseMembership">
+                    <i class="ri-user-line me-2"></i> Membership.Register / Membership.UpdateRank
+                </button>
+            </h2>
+            <div id="collapseMembership" class="accordion-collapse collapse" aria-labelledby="headingMembership" data-bs-parent="#eventHintsAccordion">
+                <div class="accordion-body">
+                    <p class="text-muted">
+                        Ví dụ điều kiện:<br>
+                        - <code>NewRank = 'VIP'</code> (Hạng mới là VIP)<br>
+                        - <code>OldRank = 'Silver' and NewRank = 'Gold'</code> (Nâng từ Silver lên Gold)<br>
+                        - <code>UserZaloId != '' and PhoneNumber != ''</code> (Có ID Zalo và số điện thoại)<br>
+                        - <code>RankId = '123' or ExtendInformation.Contains('promo')</code> (ID hạng cụ thể hoặc có promo trong thông tin mở rộng)
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sự kiện Booking.Create / Booking.Update -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingBooking">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBooking" aria-expanded="false" aria-controls="collapseBooking">
+                    <i class="ri-calendar-line me-2"></i> Booking.Create / Booking.Update
+                </button>
+            </h2>
+            <div id="collapseBooking" class="accordion-collapse collapse" aria-labelledby="headingBooking" data-bs-parent="#eventHintsAccordion">
+                <div class="accordion-body">
+                    <p class="text-muted">
+                        Ví dụ điều kiện:<br>
+                        - <code>BookingStatusId = 1</code> (Đặt lịch đã xác nhận)<br>
+                        - <code>BranchName = 'HN' and BookingDate > '2025-01-01'</code> (Chi nhánh HN và ngày đặt sau 1/1/2025)<br>
+                        - <code>UserZaloId != '' or PhoneNumber != ''</code> (Có ID Zalo hoặc số điện thoại)<br>
+                        - <code>BookingStatus = 'Confirmed' and Note.Contains('urgent')</code> (Đã xác nhận và ghi chú có 'urgent')
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // (Tùy chọn) JavaScript để tự động mở accordion dựa trên sự kiện được chọn trong dropdown
+    document.getElementById('eventName').addEventListener('change', function () {
+        const selectedEvent = this.value;
+        const accordionItems = document.querySelectorAll('.accordion-item');
+
+        // Đóng tất cả accordion
+        accordionItems.forEach(item => {
+            const collapse = item.querySelector('.accordion-collapse');
+            if (collapse.classList.contains('show')) {
+                collapse.classList.remove('show');
+            }
+        });
+
+        // Mở accordion tương ứng
+        if (selectedEvent.includes('Order')) {
+            document.getElementById('collapseOrder').classList.add('show');
+        } else if (selectedEvent.includes('Membership')) {
+            document.getElementById('collapseMembership').classList.add('show');
+        } else if (selectedEvent.includes('Booking')) {
+            document.getElementById('collapseBooking').classList.add('show');
+        }
+    });
+</script>

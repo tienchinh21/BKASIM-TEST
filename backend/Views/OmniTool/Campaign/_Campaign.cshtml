@@ -1,0 +1,126 @@
+﻿@using MiniAppGIBA.Entities.Commons
+@using MiniAppGIBA.Entities.OmniTool
+@model (CampaignCSKH campaign, CampaignConfig config, List<string> selectedTags)
+@{
+    var routeRule = new Dictionary<int, string>(){
+        {1, "ZNS"},
+        {2, "Auto Call"},
+        {3, "SMS"}
+    };
+
+	// var tags = (List<Tag>)ViewBag.Tags;
+}
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bs-dismiss="modal">
+            <span aria-hidden="true">×</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <form>
+            <div class="row">
+                <div class="col-4">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Tên campaign</label>
+                            <input class="form-control" value="@Model.campaign.CampaignName" id="campaignName" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Thời gian chạy</label>
+                            <input id="scheduleTime" type="datetime-local" class="form-control" value="@Model.campaign.ScheduleTime.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+
+                        <div class="form-group">
+                            <label>Template Code</label>
+                            <select id="campaginCode" class="form-control" onchange="HandleTemplateTable()">
+                                @if (ViewBag.Templates != null)
+                                {
+                                    foreach (var template in ViewBag.Templates)
+                                    {
+                                        <option value="@template.TemplateCode" selected="@(template.TemplateCode == Model.campaign.TemplateCode)">@template.TemplateCode</option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option>Không có dữ liệu</option>
+                                }
+                            </select>
+                        </div>
+                    </div> 
+
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Router rule</label>
+                            <select id="routeRule" class="form-control" multiple>
+                                @foreach (var key in routeRule.Keys)
+                                {
+                                    <option selected="@Model.campaign.RoutingRule.Contains(key.ToString())" value="@key">@routeRule[key]</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Tags </label>
+                            <select id="tags" class="form-control" multiple>
+                                @* @foreach (var item in tags)
+                                {
+                                    <option value="@item.Id" selected="@(Model.selectedTags.Contains(item.Id))">@item.Name</option>
+                                } *@
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Trạng thái hoạt động</label>
+                            <select id="status" class="form-control">
+                                <option value="1" selected="@(Model.campaign.Status == 1)">Đang chờ</option>
+                                <option value="2" selected="@(Model.campaign.Status == 2)" disabled>Đang chạy</option>
+                                <option value="3" selected="@(Model.campaign.Status == 3)" disabled>Hoàn thành</option>
+                                @if(!string.IsNullOrEmpty(Model.campaign.Id)){
+                                    <option value="4" selected="@(Model.campaign.Status == 4)">Hủy</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-8">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Danh sách tham số</label>
+                            <div class="help-block with-errors">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <table id="table-params" class="data-table table mb-0 tbl-server-info text-center"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        @if (string.IsNullOrEmpty(Model.campaign.Id))
+        {
+            <button type="button" class="btn btn-secondary" onclick="ClearForm()">Làm mới</button>
+        }
+        <button type="submit" class="btn btn-primary" onclick="HandleSaveOrUpdate('@Model.campaign.Id')">@ViewBag.Button</button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $("#tags").select2();
+        $("#routeRule").select2();
+        $("#templateCode").select2({ dropdownParent: $("#modal-campagin") });
+        $('#campaginCode').select2();
+        $('#status').select2();
+    })
+</script>

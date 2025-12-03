@@ -1,0 +1,188 @@
+@model MiniAppGIBA.Models.Request.Sponsors.CreateSponsorshipTierRequest
+
+<style>
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .image-preview {
+        position: relative;
+        display: inline-block;
+        margin: 5px;
+    }
+
+    .btn-preview-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .preview-container img {
+        max-width: 200px;
+        max-height: 150px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+</style>
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+    </div>
+    <div class="modal-body">
+        <form id="sponsorshipTierForm" onsubmit="handleSponsorshipTierSubmit(event)">
+            @if (ViewBag.IsEdit)
+            {
+                <input type="hidden" id="sponsorshipTierId" value="@ViewBag.SponsorshipTierId" />
+            }
+            <!-- Flag to track image removal -->
+            <input type="hidden" id="shouldRemoveImage" value="false" />
+
+            <div class="row">
+                <!-- Tên hạng tài trợ -->
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Tên hạng tài trợ <span class="text-danger">*</span></label>
+                        <input id="tierName" type="text" class="form-control" value="@Model?.TierName"
+                            placeholder="Nhập tên hạng tài trợ..." required>
+                        <span class="error-message" id="error-tierName"></span>
+                    </div>
+                </div>
+
+                <!-- Trạng thái hoạt động -->
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Trạng thái hoạt động</label>
+                        <select id="isActive" class="form-select">
+                            <option value="true" @(Model?.IsActive != false ? "selected" : "")>Hoạt động</option>
+                            <option value="false" @(Model?.IsActive == false ? "selected" : "")>Không hoạt động</option>
+                        </select>
+                        <small class="text-muted">Chọn trạng thái hoạt động của hạng tài trợ</small>
+                    </div>
+                </div>
+
+                <!-- Mô tả -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="description" class="form-control" rows="5"
+                            placeholder="Nhập mô tả hạng tài trợ...">@Model?.Description</textarea>
+                        <span class="error-message" id="error-description"></span>
+                    </div>
+                </div>
+
+                <!-- Hình ảnh -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Hình ảnh</label>
+                        <input id="image" type="file" accept="image/*" class="form-control"
+                            onchange="previewImage(this)" />
+                        <div id="image-preview" class="mt-2 preview-container">
+                            @if (!string.IsNullOrEmpty(ViewBag.Image))
+                            {
+                                <div class="image-preview">
+                                    <img src="@ViewBag.Image" alt="SponsorshipTier Image" />
+                                    <button type="button" class="btn-preview-remove"
+                                        onclick="removeImagePreview()">×</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-arrow-left-line me-1"></i>
+            Đóng
+        </button>
+        <button type="submit" form="sponsorshipTierForm" class="btn btn-primary">
+            <i class="ri-save-line me-1"></i>
+            @ViewBag.Button
+        </button>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    $(document).ready(function () {
+        // No need for Quill editor initialization
+    });
+
+    function handleSponsorshipTierSubmit(event) {
+        event.preventDefault();
+
+        const isEdit = @(ViewBag.IsEdit ? "true" : "false");
+        const sponsorshipTierId = isEdit ? $('#sponsorshipTierId').val() : null;
+
+        // Validate form
+        if (!validateSponsorshipTierForm()) {
+            return;
+        }
+
+        // Call global function from Index.cshtml
+        submitSponsorshipTierForm(isEdit, sponsorshipTierId);
+    }
+
+    // Image preview functions
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            const previewContainer = $('#image-preview');
+
+            reader.onload = function (e) {
+                previewContainer.html(`
+                    <div class="image-preview">
+                        <img src="${e.target.result}" alt="SponsorshipTier Image" />
+                        <button type="button" class="btn-preview-remove" onclick="removeImagePreview()">×</button>
+                    </div>
+                `);
+                
+                // Reset remove flag when new image is selected
+                $('#shouldRemoveImage').val('false');
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImagePreview() {
+        $('#image').val('');
+        $('#image-preview').empty();
+        
+        // CRITICAL FIX: Set flag to remove existing image from database
+        $('#shouldRemoveImage').val('true');
+        console.log('Image removal flag set to true');
+    }
+
+    function validateSponsorshipTierForm() {
+        let isValid = true;
+
+        // Clear previous errors
+        $('.error-message').text('').hide();
+
+        // Validate required fields
+        const tierName = $('#tierName').val();
+        if (!tierName || tierName.trim() === '') {
+            $('#error-tierName').text('Tên hạng tài trợ là bắt buộc').show();
+            isValid = false;
+        }
+
+        return isValid;
+    }
+</script>

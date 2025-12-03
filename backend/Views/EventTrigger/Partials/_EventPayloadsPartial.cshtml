@@ -1,0 +1,288 @@
+﻿<!-- Chi tiết dữ liệu có thể sử dụng-->
+<div class="col-12">
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="card-title">Payload của Event Trigger</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary fw-semibold">🛒 Order Events (Order.Create, Order.Update)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Trường</th>
+                                    <th>Kiểu</th>
+                                    <th>Mô tả</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>OrderId</code></td>
+                                    <td>string</td>
+                                    <td>Mã đơn hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>UserZaloIdByOA</code></td>
+                                    <td>string</td>
+                                    <td>ID Zalo OA</td>
+                                </tr>
+                                <tr>
+                                    <td><code>UserZaloId</code></td>
+                                    <td>string</td>
+                                    <td>ID Zalo người đặt</td>
+                                </tr>
+                                <tr>
+                                    <td><code>UserZaloName</code></td>
+                                    <td>string</td>
+                                    <td>Người đặt hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>PhoneNumber</code></td>
+                                    <td>string</td>
+                                    <td>Số điện thoại người đặt hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>NameReceiver</code></td>
+                                    <td>string</td>
+                                    <td>Người nhận hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>PhoneReceiver</code></td>
+                                    <td>string</td>
+                                    <td>Số điện thoại người nhận hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ShippingFee</code></td>
+                                    <td>string</td>
+                                    <td>Phí vận chuyển</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Note</code></td>
+                                    <td>string</td>
+                                    <td>Ghi chú đơn hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>DeliveryAddress</code></td>
+                                    <td>string</td>
+                                    <td>Địa chỉ giao hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>BranchName</code></td>
+                                    <td>string</td>
+                                    <td>Tên chi nhánh đặt hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Total</code></td>
+                                    <td>decimal</td>
+                                    <td>Tổng tiền đơn hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CreatedDate</code></td>
+                                    <td>string</td>
+                                    <td>Ngày đặt hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>DiscountAmount</code></td>
+                                    <td>decimal</td>
+                                    <td>Số tiền được giảm</td>
+                                </tr>
+                                <tr>
+                                    <td><code>OrderStatus</code></td>
+                                    <td>int</td>
+                                    <td>Trạng thái đơn hàng (số)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>PaymentStatus</code></td>
+                                    <td>int</td>
+                                    <td>Trạng thái thanh toán (số)</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><code>OrderStatusLabel</code></td>
+                                    <td>string</td>
+                                    <td>Nhãn trạng thái đơn hàng</td>
+                                </tr>
+                                <tr class="table-success">
+                                    <td><code>PaymentStatusLabel</code></td>
+                                    <td>string</td>
+                                    <td>Nhãn trạng thái thanh toán</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Membership</code></td>
+                                    <td>object</td>
+                                    <td>Thông tin thành viên(Để lấy dữ liệu trong thành viên vui lòng sử dụng Membership.&lt;Tên trường&gt;</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ExtendInformation</code></td>
+                                    <td>object</td>
+                                    <td>Thông tin thêm của đơn hàng</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-success fw-semibold">👥 Membership Events</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Trường</th>
+                                    <th>Kiểu</th>
+                                    <th>Mô tả</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>UserZaloId</code></td>
+                                    <td>string</td>
+                                    <td>ID người dùng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>UserZaloName</code></td>
+                                    <td>string</td>
+                                    <td>Tên thành viên</td>
+                                </tr>
+                                <tr>
+                                    <td><code>PhoneNumber</code></td>
+                                    <td>string</td>
+                                    <td>Số điện thoại</td>
+                                </tr>
+                                <tr>
+                                    <td><code>OldRank</code></td>
+                                    <td>string</td>
+                                    <td>Hạng cũ (chỉ UpdateRank)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>NewRank</code></td>
+                                    <td>string</td>
+                                    <td>Hạng mới (chỉ UpdateRank)</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ExtendInfomation</code></td>
+                                    <td>object</td>
+                                    <td>Thông tin mở rộng trong cấu hình custom entity (ExtendInformation.&lt;FieldName cần lấy dữ liệu &gt;)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h6 class="text-info fw-semibold mt-3">💡 Ghi chú về Status Labels</h6>
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>OrderStatusLabel:</strong><br>
+                            - "Chờ xác nhận" (Pending)<br>
+                            - "Đã xác nhận" (Confirmed)<br>
+                            - "Đã hoàn thành" (Completed)<br>
+                            - "Đã hủy" (Cancelled)<br><br>
+
+                            <strong>PaymentStatusLabel:</strong><br>
+                            - "Chưa thanh toán" (Unpaid)<br>
+                            - "Đã thanh toán" (Paid)<br>
+                            - "Thanh toán thất bại" (Failed)<br>
+                            - "Đã hoàn tiền" (Refunded)<br><br>
+
+                            <strong>BookingStatus:</strong><br>
+                            - "Chờ xác nhận" (Pending)<br>
+                            - "Đã xác nhận" (Confirmed)<br>
+                            - "Đã Check-in" (Check-in)<br>
+                            - "Đã hoàn thành" (Completed)<br>
+                            - "Đã hủy" (Cancelled)<br><br>
+
+                            <strong>Tự động gán dữ liệu datasource</strong><br>
+                            - Dữ liệu theo cấu trúc "Tên chiến dịch"."Tên biến chiến dịch" (Dữ liệu lấy trong menu <b>Dữ liệu ETM</b>) <br />
+                            Ví dụ: Sự kiện thăng hạng thành viên có tên chiến dịch là <b>DKTVM</b> và tên biến chiến dịch là <b>voucher</b> <br />
+                            Giá trị nhập vào biến: <b>DKTVM.voucher</b>
+                        </small>
+                    </div>
+
+                    <h6 class="text-warning fw-semibold">⚠️ Lưu ý Template</h6>
+                    <div class="alert alert-warning">
+                        <small>
+                            Sử dụng <strong>OrderStatusLabel</strong> và <strong>PaymentStatusLabel</strong>
+                            thay vì số để hiển thị trạng thái cho người dùng cuối.
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary fw-semibold">🛒 Booking Events (Booking.Create, Booking.Update)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Trường</th>
+                                    <th>Kiểu</th>
+                                    <th>Mô tả</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>BookingId</code></td>
+                                    <td>string</td>
+                                    <td>Mã đặt lịch</td>
+                                </tr>
+                                <tr>
+                                    <td><code>UserZaloIdByOA</code></td>
+                                    <td>string</td>
+                                    <td>ID Zalo OA khách hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>UserZaloId</code></td>
+                                    <td>string</td>
+                                    <td>ID người dùng Zalo</td>
+                                </tr>
+                                <tr>
+                                    <td><code>UserZaloName</code></td>
+                                    <td>string</td>
+                                    <td>Tên khách hàng</td>
+                                </tr>
+                                <tr>
+                                    <td><code>PhoneNumber</code></td>
+                                    <td>string</td>
+                                    <td>Số điện thoại</td>
+                                </tr>
+
+                                <tr>
+                                    <td><code>Note</code></td>
+                                    <td>string</td>
+                                    <td>Ghi chú đặt lịch</td>
+                                </tr>
+                                <tr>
+                                    <td><code>BranchName</code></td>
+                                    <td>string</td>
+                                    <td>Tên chi nhánh đặt lịch</td>
+                                </tr>
+
+                                <tr>
+                                    <td><code>BookingDate</code></td>
+                                    <td>string</td>
+                                    <td>Ngày đặt lịch</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CreatedDate</code></td>
+                                    <td>string</td>
+                                    <td>Ngày tạo đặt lịch</td>
+                                </tr>
+
+                                <tr>
+                                    <td><code>BookingStatus</code></td>
+                                    <td>string</td>
+                                    <td>Trạng thái đặt lịch</td>
+                                </tr>
+                                <tr>
+                                    <td><code>Membership</code></td>
+                                    <td>object</td>
+                                    <td>Thông tin thành viên(Để lấy dữ liệu trong thành viên vui lòng sử dụng Membership.&lt;Tên trường&gt;</td>
+                                </tr>
+                                <tr>
+                                    <td><code>ExtendInformation</code></td>
+                                    <td>object</td>
+                                    <td>Thông tin thêm của đặt lịch</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

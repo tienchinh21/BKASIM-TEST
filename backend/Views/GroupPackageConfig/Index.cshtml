@@ -1,0 +1,821 @@
+@{
+    ViewData["Title"] = "Gán Gói Cước Cho Hội Nhóm";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+
+    /* Custom dropdown styling */
+    .custom-dropdown {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .custom-dropdown-toggle {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+
+    .custom-dropdown-toggle:hover {
+        border-color: #86b7fe;
+    }
+
+    .custom-dropdown-toggle:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .custom-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        display: none;
+        max-height: 200px;
+        overflow-y: auto;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        margin-top: 2px;
+    }
+
+    .custom-dropdown-menu.show {
+        display: block;
+    }
+
+    .custom-dropdown-item {
+        display: block;
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        clear: both;
+        font-weight: 400;
+        color: #212529;
+        text-align: inherit;
+        text-decoration: none;
+        white-space: nowrap;
+        background-color: transparent;
+        border: 0;
+        cursor: pointer;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .custom-dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .custom-dropdown-item:hover {
+        color: #1e2125;
+        background-color: #e9ecef;
+    }
+
+    .custom-dropdown-item.selected {
+        background-color: #0d6efd;
+        color: #fff;
+    }
+
+    .custom-dropdown-item input[type="checkbox"] {
+        margin-right: 0.5rem;
+    }
+
+    .selected-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        margin-top: 0.25rem;
+    }
+
+    .selected-item {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        background-color: #e7f1ff;
+        border: 1px solid #b3d7ff;
+        border-radius: 0.25rem;
+        color: #0c63e4;
+    }
+
+    .selected-item .remove {
+        margin-left: 0.25rem;
+        cursor: pointer;
+        color: #6c757d;
+    }
+
+    .selected-item .remove:hover {
+        color: #dc3545;
+    }
+</style>
+
+@Html.AntiForgeryToken()
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                <div>
+                    <h4 class="mb-3">
+                        <i class="ri-links-line me-2 text-primary"></i>
+                        Gán Gói Cước Cho Hội Nhóm
+                    </h4>
+                    <p class="mb-0 text-muted">Quản lý gán các gói cước vào hội nhóm</p>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between">
+                    <button type="button" class="btn btn-primary shadow-sm" onclick="openCreateModal()">
+                        <i class="ri-add-line me-2"></i>
+                        Gán Gói Mới
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bộ lọc -->
+        <div class="col-lg-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 d-flex align-items-center">
+                        <i class="ri-filter-3-line me-2"></i>
+                        Bộ lọc tìm kiếm
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Thanh tìm kiếm -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Tìm kiếm</label>
+                                <div class="input-group">
+                                    <input id="searchInput" type="text" class="form-control"
+                                        placeholder="Tìm theo tên nhóm, tên gói..." />
+                                    <button class="btn btn-primary" onclick="loadData()">
+                                        <i class="ri-search-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nút lọc -->
+                        <div class="col-md-6">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-light border flex-fill" onclick="resetFilters()">
+                                    <i class="ri-refresh-line me-1"></i>
+                                    Đặt lại
+                                </button>
+                                <button class="btn btn-primary flex-fill" onclick="loadData()">
+                                    <i class="ri-filter-line me-1"></i>
+                                    Lọc dữ liệu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="row mt-2 justify-content-between dt-layout-table">
+            <div class="d-md-flex justify-content-between align-items-center col-12 dt-layout-full col-md">
+                <table class="data-table table mb-0 tbl-server-info dataTable" id="configsTable">
+                    <thead class="ligth ligth-data">
+                        <tr>
+                            <th width="5%" class="text-center">#</th>
+                            <th width="25%">Hội Nhóm</th>
+                            <th width="25%">Gói Cước</th>
+                            <th width="15%" class="text-center">Trạng Thái</th>
+                            <th width="15%" class="text-center">Ngày Tạo</th>
+                            <th width="15%" class="text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="configsTableBody">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <div class="dataTables_info" id="tableInfo">Hiển thị 0 đến 0 của 0 dòng</div>
+            </div>
+            <div class="col-md-6">
+                <div class="dataTables_paginate paging_simple_numbers" id="pagination">
+                    <!-- Pagination will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="ri-add-line me-2"></i>
+                    Gán Gói Cước Cho Hội Nhóm
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createForm">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Hội Nhóm <span class="text-danger">*</span></label>
+                            <select class="form-select" id="groupId" required>
+                                <option value="">-- Chọn hội nhóm --</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Gói Cước <span class="text-danger">*</span></label>
+                            <div class="custom-dropdown">
+                                <div class="form-select custom-dropdown-toggle" id="subscriptionPlanToggle">
+                                    <span id="subscriptionPlanText">-- Chọn gói cước --</span>
+                                </div>
+                                <div class="custom-dropdown-menu" id="subscriptionPlanMenu">
+                                    <!-- Options will be loaded here -->
+                                </div>
+                                <div class="selected-items" id="selectedPlans">
+                                    <!-- Selected items will be displayed here -->
+                                </div>
+                            </div>
+                            <input type="hidden" id="subscriptionPlanId" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Trạng thái</label>
+                            <select class="form-select" id="isActive">
+                                <option value="true" selected>Hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ri-close-line me-1"></i>
+                    Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitCreate()">
+                    <i class="ri-save-line me-1"></i>
+                    Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="ri-edit-line me-2"></i>
+                    Chỉnh Sửa Gán Gói Cước
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editConfigId" />
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Hội Nhóm <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editGroupId" required>
+                                <option value="">-- Chọn hội nhóm --</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Gói Cước <span class="text-danger">*</span></label>
+                            <div class="custom-dropdown">
+                                <div class="form-select custom-dropdown-toggle" id="editSubscriptionPlanToggle">
+                                    <span id="editSubscriptionPlanText">-- Chọn gói cước --</span>
+                                </div>
+                                <div class="custom-dropdown-menu" id="editSubscriptionPlanMenu">
+                                    <!-- Options will be loaded here -->
+                                </div>
+                                <div class="selected-items" id="editSelectedPlans">
+                                    <!-- Selected items will be displayed here -->
+                                </div>
+                            </div>
+                            <input type="hidden" id="editSubscriptionPlanId" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Trạng thái</label>
+                            <select class="form-select" id="editIsActive">
+                                <option value="true" selected>Hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ri-close-line me-1"></i>
+                    Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitEdit()">
+                    <i class="ri-save-line me-1"></i>
+                    Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPage = 1;
+        let pageSize = 10;
+
+        let selectedPlans = [];
+        let editSelectedPlans = [];
+
+        $(document).ready(function () {
+            loadData();
+            loadGroups();
+            loadSubscriptionPlans();
+            initializeCustomDropdowns();
+        });
+
+        function loadData() {
+            const keyword = $('#searchInput').val();
+
+            $.ajax({
+                url: '/GroupPackageConfig/GetPaged',
+                type: 'GET',
+                data: {
+                    page: currentPage,
+                    pageSize: pageSize,
+                    keyword: keyword
+                },
+                success: function (response) {
+                    if (response.success) {
+                        renderTable(response.data);
+                    } else {
+                        showError('Lỗi', response.message);
+                    }
+                },
+                error: function (xhr) {
+                    showError('Lỗi', 'Có lỗi xảy ra khi tải dữ liệu');
+                }
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = $('#configsTableBody');
+            tbody.empty();
+
+            if (!data.items || data.items.length === 0) {
+                tbody.append('<tr><td colspan="6" class="text-center">Không có dữ liệu</td></tr>');
+                $('#tableInfo').text('Hiển thị 0 đến 0 của 0 dòng');
+                $('#pagination').empty();
+                return;
+            }
+
+            data.items.forEach((item, index) => {
+                const rowNumber = (currentPage - 1) * pageSize + index + 1;
+                const statusBadge = item.isActive
+                    ? '<span class="badge bg-success">Hoạt động</span>'
+                    : '<span class="badge bg-secondary">Không hoạt động</span>';
+
+                const row = `
+                    <tr>
+                        <td class="text-center">${rowNumber}</td>
+                        <td>${item.groupName || 'N/A'}</td>
+                        <td>${item.planName || 'N/A'}</td>
+                        <td class="text-center">${statusBadge}</td>
+                        <td class="text-center">${new Date(item.createdDate).toLocaleDateString('vi-VN')}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary" onclick="openEditModal('${item.id}')" title="Chỉnh sửa">
+                                <i class="ri-edit-line"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteConfig('${item.id}')" title="Xóa">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+
+            // Update info
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, data.totalItems);
+            $('#tableInfo').text(`Hiển thị ${start} đến ${end} của ${data.totalItems} dòng`);
+
+            // Render pagination
+            renderPagination(data.totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            const pagination = $('#pagination');
+            pagination.empty();
+
+            if (totalPages <= 1) return;
+
+            let html = '<ul class="pagination mb-0">';
+
+            // Previous
+            html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Trước</a>
+                     </li>`;
+
+            // Pages
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                             </li>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
+            }
+
+            // Next
+            html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Sau</a>
+                     </li>`;
+
+            html += '</ul>';
+            pagination.html(html);
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadData();
+        }
+
+        function resetFilters() {
+            $('#searchInput').val('');
+            currentPage = 1;
+            loadData();
+        }
+
+        function openCreateModal() {
+            resetCreateForm();
+            $('#createModal').modal('show');
+        }
+
+        function resetCreateForm() {
+            $('#createForm')[0].reset();
+            selectedPlans = [];
+            updateSelectedPlansDisplay('#selectedPlans', selectedPlans);
+            updateToggleText('#subscriptionPlanText', selectedPlans);
+            $('#subscriptionPlanMenu input[type="checkbox"]').prop('checked', false);
+        }
+
+        function loadGroups() {
+            return $.ajax({
+                url: '/Groups/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        // Load for create modal
+                        const createSelect = $('#groupId');
+                        createSelect.find('option:not(:first)').remove();
+
+                        // Load for edit modal
+                        const editSelect = $('#editGroupId');
+                        editSelect.find('option:not(:first)').remove();
+
+                        response.data.forEach(group => {
+                            createSelect.append(`<option value="${group.id}">${group.name}</option>`);
+                            editSelect.append(`<option value="${group.id}">${group.name}</option>`);
+                        });
+                    }
+                },
+                error: function () {
+                    console.error('Error loading groups');
+                }
+            });
+        }
+
+        function loadSubscriptionPlans() {
+            $.ajax({
+                url: '/SubscriptionPlan/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        populateCustomDropdown('#subscriptionPlanMenu', response.data);
+                        populateCustomDropdown('#editSubscriptionPlanMenu', response.data);
+                    }
+                },
+                error: function () {
+                    console.error('Error loading subscription plans');
+                }
+            });
+        }
+
+        function populateCustomDropdown(menuSelector, plans) {
+            const menu = $(menuSelector);
+            menu.empty();
+
+            plans.forEach(plan => {
+                const item = $(`
+                    <div class="custom-dropdown-item" data-value="${plan.id}">
+                        <input type="checkbox" value="${plan.id}" id="plan_${plan.id}">
+                        <label for="plan_${plan.id}">${plan.planName}</label>
+                    </div>
+                `);
+                menu.append(item);
+            });
+        }
+
+        function initializeCustomDropdowns() {
+            // Create modal dropdown
+            $('#subscriptionPlanToggle').click(function(e) {
+                e.stopPropagation();
+                $('#subscriptionPlanMenu').toggleClass('show');
+            });
+
+            // Edit modal dropdown
+            $('#editSubscriptionPlanToggle').click(function(e) {
+                e.stopPropagation();
+                $('#editSubscriptionPlanMenu').toggleClass('show');
+            });
+
+            // Handle plan selection in create modal
+            $(document).on('change', '#subscriptionPlanMenu input[type="checkbox"]', function() {
+                const planId = $(this).val();
+                const planName = $(this).next('label').text();
+                const isChecked = $(this).is(':checked');
+
+                if (isChecked) {
+                    if (!selectedPlans.find(p => p.id === planId)) {
+                        selectedPlans.push({ id: planId, name: planName });
+                    }
+                } else {
+                    selectedPlans = selectedPlans.filter(p => p.id !== planId);
+                }
+
+                updateSelectedPlansDisplay('#selectedPlans', selectedPlans);
+                updateToggleText('#subscriptionPlanText', selectedPlans);
+            });
+
+            // Handle plan selection in edit modal
+            $(document).on('change', '#editSubscriptionPlanMenu input[type="checkbox"]', function() {
+                const planId = $(this).val();
+                const planName = $(this).next('label').text();
+                const isChecked = $(this).is(':checked');
+
+                if (isChecked) {
+                    if (!editSelectedPlans.find(p => p.id === planId)) {
+                        editSelectedPlans.push({ id: planId, name: planName });
+                    }
+                } else {
+                    editSelectedPlans = editSelectedPlans.filter(p => p.id !== planId);
+                }
+
+                updateSelectedPlansDisplay('#editSelectedPlans', editSelectedPlans);
+                updateToggleText('#editSubscriptionPlanText', editSelectedPlans);
+            });
+
+            // Close dropdown when clicking outside
+            $(document).click(function(e) {
+                if (!$(e.target).closest('.custom-dropdown').length) {
+                    $('.custom-dropdown-menu').removeClass('show');
+                }
+            });
+        }
+
+        function updateSelectedPlansDisplay(containerSelector, plans) {
+            const container = $(containerSelector);
+            container.empty();
+
+            plans.forEach(plan => {
+                const item = $(`
+                    <div class="selected-item">
+                        ${plan.name}
+                        <span class="remove" data-id="${plan.id}">&times;</span>
+                    </div>
+                `);
+                container.append(item);
+            });
+        }
+
+        function updateToggleText(textSelector, plans) {
+            const textElement = $(textSelector);
+            if (plans.length === 0) {
+                textElement.text('-- Chọn gói cước --');
+            } else if (plans.length === 1) {
+                textElement.text(plans[0].name);
+            } else {
+                textElement.text(`${plans.length} gói đã chọn`);
+            }
+        }
+
+        // Handle remove selected plan
+        $(document).on('click', '.selected-item .remove', function() {
+            const planId = $(this).data('id');
+
+            // Remove from create modal
+            if ($(this).closest('#selectedPlans').length) {
+                selectedPlans = selectedPlans.filter(p => p.id !== planId);
+                updateSelectedPlansDisplay('#selectedPlans', selectedPlans);
+                updateToggleText('#subscriptionPlanText', selectedPlans);
+                $(`#subscriptionPlanMenu input[value="${planId}"]`).prop('checked', false);
+            }
+
+            // Remove from edit modal
+            if ($(this).closest('#editSelectedPlans').length) {
+                editSelectedPlans = editSelectedPlans.filter(p => p.id !== planId);
+                updateSelectedPlansDisplay('#editSelectedPlans', editSelectedPlans);
+                updateToggleText('#editSubscriptionPlanText', editSelectedPlans);
+                $(`#editSubscriptionPlanMenu input[value="${planId}"]`).prop('checked', false);
+            }
+        });
+
+        function submitCreate() {
+            const groupId = $('#groupId').val();
+            const isActive = $('#isActive').val() === 'true';
+
+            if (!groupId || selectedPlans.length === 0) {
+                showWarning('Cảnh báo', 'Vui lòng chọn đầy đủ thông tin');
+                return;
+            }
+
+            // Gán từng gói cước cho nhóm
+            let successCount = 0;
+            let errorCount = 0;
+
+            selectedPlans.forEach(plan => {
+                const data = {
+                    groupId: groupId,
+                    subscriptionPlanId: plan.id,
+                    isActive: isActive
+                };
+
+                $.ajax({
+                    url: '/GroupPackageConfig/Create',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (response) {
+                        if (response.success) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+
+                        if (successCount + errorCount === selectedPlans.length) {
+                            if (errorCount === 0) {
+                                showSuccess('Thành công', `Đã gán ${successCount} gói cước cho nhóm`);
+                                $('#createModal').modal('hide');
+                                resetCreateForm();
+                                loadData();
+                            } else {
+                                showWarning('Cảnh báo', `Gán thành công ${successCount} gói, lỗi ${errorCount} gói`);
+                                loadData();
+                            }
+                        }
+                    },
+                    error: function (xhr) {
+                        errorCount++;
+                        if (successCount + errorCount === selectedPlans.length) {
+                            showError('Lỗi', `Gán thành công ${successCount} gói, lỗi ${errorCount} gói`);
+                            loadData();
+                        }
+                    }
+                });
+            });
+        }
+
+        function toggleActive(id) {
+            $.ajax({
+                url: '/GroupPackageConfig/ToggleActive',
+                type: 'PUT',
+                data: { id: id },
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', response.message);
+                        loadData();
+                    } else {
+                        showError('Lỗi', response.message);
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi cập nhật trạng thái');
+                }
+            });
+        }
+
+        function deleteConfig(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa cấu hình này?')) {
+                return;
+            }
+
+            $.ajax({
+                url: '/GroupPackageConfig/Delete',
+                type: 'DELETE',
+                data: { id: id },
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', response.message);
+                        loadData();
+                    } else {
+                        showError('Lỗi', response.message);
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi xóa');
+                }
+            });
+        }
+
+        function openEditModal(id) {
+            $('#editConfigId').val(id);
+            loadConfigById(id);
+            $('#editModal').modal('show');
+        }
+
+        function loadConfigById(id) {
+            $.ajax({
+                url: `/GroupPackageConfig/GetById?id=${id}`,
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        const config = response.data;
+
+                        // Ensure groups are loaded before setting value
+                        if ($('#editGroupId option').length <= 1) {
+                            loadGroups().then(() => {
+                                $('#editGroupId').val(config.groupId);
+                            });
+                        } else {
+                            $('#editGroupId').val(config.groupId);
+                        }
+
+                        $('#editIsActive').val(config.isActive.toString());
+
+                        // Set selected plan for edit modal
+                        editSelectedPlans = [{ id: config.subscriptionPlanId, name: config.planName }];
+                        updateSelectedPlansDisplay('#editSelectedPlans', editSelectedPlans);
+                        updateToggleText('#editSubscriptionPlanText', editSelectedPlans);
+
+                        // Check the corresponding checkbox
+                        $('#editSubscriptionPlanMenu input[type="checkbox"]').prop('checked', false);
+                        $(`#editSubscriptionPlanMenu input[value="${config.subscriptionPlanId}"]`).prop('checked', true);
+                    } else {
+                        showError('Lỗi', response.message);
+                        $('#editModal').modal('hide');
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi tải dữ liệu');
+                    $('#editModal').modal('hide');
+                }
+            });
+        }
+
+        function submitEdit() {
+            const configId = $('#editConfigId').val();
+            const groupId = $('#editGroupId').val();
+            const isActive = $('#editIsActive').val() === 'true';
+
+            if (!groupId || editSelectedPlans.length === 0) {
+                showWarning('Cảnh báo', 'Vui lòng chọn đầy đủ thông tin');
+                return;
+            }
+
+            // For edit, we only allow single plan selection
+            const selectedPlan = editSelectedPlans[0];
+            const data = {
+                groupId: groupId,
+                subscriptionPlanId: selectedPlan.id,
+                isActive: isActive
+            };
+
+            $.ajax({
+                url: `/GroupPackageConfig/Update?id=${configId}`,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', response.message);
+                        $('#editModal').modal('hide');
+                        loadData();
+                    } else {
+                        showError('Lỗi', response.message);
+                    }
+                },
+                error: function (xhr) {
+                    showError('Lỗi', 'Có lỗi xảy ra khi cập nhật');
+                }
+            });
+        }
+    </script>
+}
+

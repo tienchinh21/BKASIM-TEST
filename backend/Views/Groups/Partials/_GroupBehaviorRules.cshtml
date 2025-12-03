@@ -1,0 +1,547 @@
+@* Partial view for GROUP-level behavior rules management *@
+
+<style>
+    .content-display {
+        min-height: 300px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .content-display h3 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .content-display .content-body {
+        background: white;
+        padding: 20px;
+        border-radius: 4px;
+        min-height: 200px;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .pagination-controls button {
+        min-width: 100px;
+    }
+
+    .page-info {
+        font-weight: 500;
+        color: #666;
+    }
+
+    /* PDF Preview Styles */
+    .pdf-preview {
+        margin-top: 20px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .pdf-preview iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    .image-preview {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .image-preview img {
+        max-width: 100%;
+        height: auto;
+        max-height: 600px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="group-behavior-rules-container">
+    <!-- Action Buttons -->
+    <div class="mb-3">
+        <button class="btn btn-primary" onclick="openGroupCreateModal()">
+            <i class="ri-add-line me-1"></i>
+            Tạo mới
+        </button>
+    </div>
+
+    <!-- Content Display -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="content-display">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 id="groupContentTitle">Chưa có dữ liệu</h3>
+                    <div class="btn-group" id="groupActionButtons" style="display: none;">
+                        <button class="btn btn-sm btn-warning" onclick="openGroupEditModal()">
+                            <i class="ri-edit-line me-1"></i>
+                            Chỉnh sửa
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="confirmGroupDelete()">
+                            <i class="ri-delete-bin-line me-1"></i>
+                            Xóa
+                        </button>
+                    </div>
+                </div>
+                <div class="content-body" id="groupContentBody">
+                    <p class="text-muted text-center">Chưa có quy tắc ứng xử nào</p>
+                </div>
+
+                <!-- PDF/File Preview Section (hidden by default) -->
+                <div id="groupFilePreviewSection" class="pdf-preview" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center p-3 bg-light">
+                        <h6 class="mb-0">Xem trước tài liệu</h6>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeGroupFilePreview()">
+                            <i class="ri-close-line me-1"></i>Đóng
+                        </button>
+                    </div>
+                    <div class="position-relative">
+                        <iframe id="groupFileViewer" src=""></iframe>
+                        <div class="loading-overlay" id="groupFileLoadingOverlay" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Preview Section (hidden by default) -->
+                <div id="groupImagePreviewSection" class="image-preview" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Xem trước hình ảnh</h6>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeGroupImagePreview()">
+                            <i class="ri-close-line me-1"></i>Đóng
+                        </button>
+                    </div>
+                    <img id="groupImageViewer" src="" alt="Preview" />
+                </div>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="pagination-controls">
+                <button class="btn btn-outline-primary" id="groupBtnPrev" onclick="groupPreviousPage()" disabled>
+                    <i class="ri-arrow-left-line me-1"></i>
+                    Trang trước
+                </button>
+                <span class="page-info" id="groupPageInfo">Trang 0 / 0</span>
+                <button class="btn btn-outline-primary" id="groupBtnNext" onclick="groupNextPage()" disabled>
+                    Trang sau
+                    <i class="ri-arrow-right-line ms-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nested Modal for Create/Edit Form -->
+<div class="modal fade" id="groupBehaviorRuleFormModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="groupBehaviorRuleFormModalTitle">
+                    <i class="ri-file-list-3-line me-2"></i>
+                    Quy Tắc Ứng Xử
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0" id="groupBehaviorRuleFormModalBody">
+                <!-- Form content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Global variables for GROUP behavior rules - using window scope to avoid redeclaration errors
+    window.groupBehaviorRules = window.groupBehaviorRules || {};
+    window.groupBehaviorRules.currentGroupId = null;
+    window.groupBehaviorRules.currentGroupName = null;
+    window.groupBehaviorRules.currentPage = 1;
+    window.groupBehaviorRules.totalPages = 0;
+    window.groupBehaviorRules.currentRuleId = null;
+
+    function initGroupBehaviorRules(groupId, groupName) {
+        console.log('Initializing GROUP behavior rules for:', groupId, groupName);
+        window.groupBehaviorRules.currentGroupId = groupId;
+        window.groupBehaviorRules.currentGroupName = groupName;
+        window.groupBehaviorRules.currentPage = 1;
+        loadGroupPageInfo();
+    }
+
+    function loadGroupPageInfo() {
+        if (!window.groupBehaviorRules.currentGroupId) {
+            console.error('No group ID set');
+            return;
+        }
+
+        console.log('=== Loading GROUP page info ===');
+        console.log('Request params:', {
+            type: 'GROUP',
+            groupId: window.groupBehaviorRules.currentGroupId,
+            page: window.groupBehaviorRules.currentPage
+        });
+
+        $.ajax({
+            url: '/api/BehaviorRuleV2/pageInfo',
+            type: 'GET',
+            data: {
+                type: 'GROUP',
+                groupId: window.groupBehaviorRules.currentGroupId,
+                page: window.groupBehaviorRules.currentPage
+            },
+            success: function (response) {
+                console.log('API Response:', response);
+                console.log('Response type:', typeof response);
+                console.log('Response keys:', Object.keys(response));
+                console.log('Response.success:', response.success);
+                console.log('Response.code:', response.code);
+                console.log('Response.data:', response.data);
+
+                // Support both response formats: {code: 0, data: ...} and {success: true, data: ...}
+                const isSuccess = (response.code === 0) || (response.success === true);
+                const hasData = response.data && (response.data.id !== null && response.data.id !== undefined);
+
+                console.log('Is success:', isSuccess);
+                console.log('Has data:', hasData);
+                console.log('Data.id:', response.data?.id);
+
+                if (isSuccess && hasData) {
+                    console.log('✓ Data found, displaying content');
+                    displayGroupPageContent(response.data);
+                } else if (isSuccess && response.data) {
+                    console.log('⚠ Success but no data.id (no rules created yet)');
+                    showGroupNoData();
+                } else {
+                    console.log('✗ No data or error code, showing no data message');
+                    console.log('Response message:', response.message);
+                    showGroupNoData();
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('✗ AJAX Error loading page info:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                showGroupNoData();
+            }
+        });
+    }
+
+    function displayGroupPageContent(data) {
+        console.log('=== Displaying GROUP page content ===');
+        console.log('Data received:', data);
+        console.log('Has ID:', !!data.id);
+        console.log('Content Type:', data.contentType);
+        console.log('Title:', data.title);
+
+        window.groupBehaviorRules.totalPages = data.totalPages || 0;
+        window.groupBehaviorRules.currentPage = data.currentPage || 1;
+        window.groupBehaviorRules.currentRuleId = data.id;
+
+        // Update page info
+        $('#groupPageInfo').text(`Trang ${window.groupBehaviorRules.currentPage} / ${window.groupBehaviorRules.totalPages}`);
+
+        // Update navigation buttons
+        $('#groupBtnPrev').prop('disabled', window.groupBehaviorRules.currentPage <= 1);
+        $('#groupBtnNext').prop('disabled', window.groupBehaviorRules.currentPage >= window.groupBehaviorRules.totalPages);
+
+        if (data.id) {
+            console.log('✓ Has data.id, showing content');
+
+            // Check if elements exist
+            console.log('Element check:');
+            console.log('  #groupContentTitle exists:', $('#groupContentTitle').length);
+            console.log('  #groupActionButtons exists:', $('#groupActionButtons').length);
+            console.log('  #groupContentBody exists:', $('#groupContentBody').length);
+
+            // Show content
+            const $title = $('#groupContentTitle');
+            const $actions = $('#groupActionButtons');
+            const $body = $('#groupContentBody');
+
+            $title.text(data.title || 'Quy tắc ứng xử');
+            console.log('Set title to:', $title.text());
+
+            $actions.show();
+            console.log('Showed action buttons');
+
+            // Display content based on type
+            if (data.contentType === 'TEXT') {
+                console.log('Displaying TEXT content');
+                const htmlContent = data.content || '<p class="text-muted">Không có nội dung</p>';
+                $body.html(htmlContent);
+                console.log('Set body HTML, length:', htmlContent.length);
+                $('#groupFilePreviewSection').hide();
+                $('#groupImagePreviewSection').hide();
+            } else if (data.contentType === 'FILE') {
+                console.log('Displaying FILE content:', data.content);
+                const fileName = data.content ? data.content.split('/').pop() : 'file';
+                const fileExt = getGroupFileExtension(data.content);
+                const absoluteUrl = toAbsoluteUrl(data.content);
+
+                $('#groupContentBody').html(`
+                    <div class="text-center">
+                        <i class="ri-file-line" style="font-size: 48px; color: #667eea;"></i>
+                        <p class="mt-3">File đính kèm</p>
+                        <p class="text-muted">${fileName}</p>
+                        <div class="btn-group mt-2">
+                            <button class="btn btn-primary" onclick="viewGroupFile('${data.content}')">
+                                <i class="ri-eye-line me-1"></i>
+                                Xem
+                            </button>
+                            <a href="${absoluteUrl}" download class="btn btn-success">
+                                <i class="ri-download-line me-1"></i>
+                                Tải xuống
+                            </a>
+                        </div>
+                    </div>
+                `);
+
+                // Auto-show preview for supported file types
+                if (fileExt === 'pdf' || ['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                    setTimeout(() => viewGroupFile(data.content), 300);
+                }
+            }
+            console.log('✓ Content displayed successfully');
+        } else {
+            console.log('✗ No data.id, showing no data message');
+            showGroupNoData();
+        }
+        console.log('=== End displaying content ===');
+    }
+
+    function showGroupNoData() {
+        $('#groupContentTitle').text('Chưa có dữ liệu');
+        $('#groupContentBody').html('<p class="text-muted text-center">Chưa có quy tắc ứng xử nào</p>');
+        $('#groupActionButtons').hide();
+        $('#groupFilePreviewSection').hide();
+        $('#groupImagePreviewSection').hide();
+        $('#groupPageInfo').text('Trang 0 / 0');
+        $('#groupBtnPrev').prop('disabled', true);
+        $('#groupBtnNext').prop('disabled', true);
+    }
+
+    function groupPreviousPage() {
+        if (window.groupBehaviorRules.currentPage > 1) {
+            window.groupBehaviorRules.currentPage--;
+            loadGroupPageInfo();
+        }
+    }
+
+    function groupNextPage() {
+        if (window.groupBehaviorRules.currentPage < window.groupBehaviorRules.totalPages) {
+            window.groupBehaviorRules.currentPage++;
+            loadGroupPageInfo();
+        }
+    }
+
+    function openGroupCreateModal() {
+        $.get('/Setting/GetBehaviorRuleForm', function (data) {
+            $('#groupBehaviorRuleFormModalTitle').html('<i class="ri-add-line me-2"></i>Tạo Quy Tắc Ứng Xử Mới');
+            $('#groupBehaviorRuleFormModalBody').html(data);
+
+            // Set hidden fields for GROUP type and groupId BEFORE showing modal
+            // Use setTimeout to ensure DOM is fully rendered
+            setTimeout(function() {
+                console.log('=== Setting GROUP type and groupId ===');
+                console.log('Current GroupId:', window.groupBehaviorRules.currentGroupId);
+
+                // Find the form within the modal body
+                const $modalBody = $('#groupBehaviorRuleFormModalBody');
+                const $ruleTypeField = $modalBody.find('#ruleType');
+                const $behaviorForm = $modalBody.find('#behaviorRuleForm');
+
+                console.log('Found ruleType field:', $ruleTypeField.length);
+                console.log('Found behaviorRuleForm:', $behaviorForm.length);
+
+                // Update the ruleType hidden field to GROUP
+                if ($ruleTypeField.length > 0) {
+                    $ruleTypeField.val('GROUP');
+                    console.log('Updated existing ruleType to:', $ruleTypeField.val());
+                } else {
+                    $behaviorForm.append(`<input type="hidden" id="ruleType" value="GROUP" />`);
+                    console.log('Created new ruleType field');
+                }
+
+                // Add or update the ruleGroupId hidden field
+                const $groupIdField = $modalBody.find('#ruleGroupId');
+                if ($groupIdField.length > 0) {
+                    $groupIdField.val(window.groupBehaviorRules.currentGroupId);
+                    console.log('Updated existing ruleGroupId to:', $groupIdField.val());
+                } else {
+                    $behaviorForm.append(`<input type="hidden" id="ruleGroupId" value="${window.groupBehaviorRules.currentGroupId}" />`);
+                    console.log('Created new ruleGroupId field with value:', window.groupBehaviorRules.currentGroupId);
+                }
+
+                // Verify the values
+                console.log('Final verification:');
+                console.log('  - Type:', $modalBody.find('#ruleType').val());
+                console.log('  - GroupId:', $modalBody.find('#ruleGroupId').val());
+                console.log('=== End GROUP setup ===');
+
+                // Now show the modal
+                $('#groupBehaviorRuleFormModal').modal('show');
+            }, 200); // Increased timeout to ensure DOM is ready
+
+        }).fail(function (xhr, status, error) {
+            console.error('Error loading form:', error);
+            Swal.fire('Lỗi', 'Không thể tải form tạo quy tắc', 'error');
+        });
+    }
+
+    function openGroupEditModal() {
+        if (!window.groupBehaviorRules.currentRuleId) {
+            Swal.fire('Lỗi', 'Không có quy tắc nào để chỉnh sửa', 'error');
+            return;
+        }
+
+        $.get(`/Setting/GetBehaviorRuleForm?id=${window.groupBehaviorRules.currentRuleId}`, function (data) {
+            $('#groupBehaviorRuleFormModalTitle').html('<i class="ri-edit-line me-2"></i>Chỉnh Sửa Quy Tắc Ứng Xử');
+            $('#groupBehaviorRuleFormModalBody').html(data);
+            $('#groupBehaviorRuleFormModal').modal('show');
+        }).fail(function (xhr, status, error) {
+            console.error('Error loading edit form:', error);
+            Swal.fire('Lỗi', 'Không thể tải form chỉnh sửa', 'error');
+        });
+    }
+
+    function confirmGroupDelete() {
+        if (!window.groupBehaviorRules.currentRuleId) {
+            Swal.fire('Lỗi', 'Không có quy tắc nào để xóa', 'error');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Xác nhận xóa',
+            text: 'Bạn có chắc chắn muốn xóa quy tắc này?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Xóa',
+            cancelButtonText: 'Hủy'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                deleteGroupRule();
+            }
+        });
+    }
+
+    function deleteGroupRule() {
+        $.ajax({
+            url: '/api/BehaviorRuleV2/delete',
+            type: 'POST',
+            data: { id: window.groupBehaviorRules.currentRuleId },
+            success: function (response) {
+                if (response.code === 0) {
+                    Swal.fire('Thành công', 'Đã xóa quy tắc', 'success');
+                    loadGroupPageInfo();
+                } else {
+                    Swal.fire('Lỗi', response.message || 'Không thể xóa quy tắc', 'error');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error deleting rule:', error);
+                Swal.fire('Lỗi', 'Có lỗi xảy ra khi xóa quy tắc', 'error');
+            }
+        });
+    }
+
+    // Convert relative URL to absolute URL (like App Brief)
+    function toAbsoluteUrl(url) {
+        if (!url) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        return window.location.origin + (url.startsWith('/') ? url : '/' + url);
+    }
+
+    // File preview functions
+    function viewGroupFile(fileUrl) {
+        const fileExt = getGroupFileExtension(fileUrl);
+        const absoluteUrl = toAbsoluteUrl(fileUrl);
+
+        if (fileExt === 'pdf') {
+            $('#groupFileViewer').attr('src', absoluteUrl);
+            $('#groupFileLoadingOverlay').show();
+            $('#groupFilePreviewSection').show();
+
+            $('#groupFileViewer').off('load').on('load', function() {
+                setTimeout(() => {
+                    $('#groupFileLoadingOverlay').hide();
+                }, 500);
+            });
+
+            // Handle error with fallback
+            $('#groupFileViewer').off('error').on('error', function() {
+                $('#groupFileLoadingOverlay').hide();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Không thể xem trong trình duyệt',
+                    html: `<a href="${absoluteUrl}" target="_blank" class="btn btn-primary">Mở trong tab mới</a>`,
+                    showConfirmButton: true
+                });
+            });
+
+            setTimeout(() => {
+                $('html, body').animate({
+                    scrollTop: $('#groupFilePreviewSection').offset().top - 100
+                }, 500);
+            }, 100);
+        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+            $('#groupImageViewer').attr('src', absoluteUrl);
+            $('#groupImagePreviewSection').show();
+
+            setTimeout(() => {
+                $('html, body').animate({
+                    scrollTop: $('#groupImagePreviewSection').offset().top - 100
+                }, 500);
+            }, 100);
+        } else {
+            window.open(absoluteUrl, '_blank');
+        }
+    }
+
+    function closeGroupFilePreview() {
+        $('#groupFilePreviewSection').hide();
+        $('#groupFileViewer').attr('src', '');
+    }
+
+    function closeGroupImagePreview() {
+        $('#groupImagePreviewSection').hide();
+        $('#groupImageViewer').attr('src', '');
+    }
+
+    function getGroupFileExtension(filename) {
+        if (!filename) return '';
+        return filename.split('.').pop().toLowerCase();
+    }
+
+    // Handle form submission success - reload page info
+    $(document).on('behaviorRuleFormSuccess', function() {
+        $('#groupBehaviorRuleFormModal').modal('hide');
+        loadGroupPageInfo();
+    });
+

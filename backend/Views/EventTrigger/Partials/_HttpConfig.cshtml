@@ -1,0 +1,148 @@
+﻿@using MiniAppGIBA.Entities.ETM
+@using MiniAppGIBA.Entities.Notifications.Templates
+@model HttpConfig;
+@{
+    // Deserialize HeadersJson nếu có
+    var headers = !string.IsNullOrWhiteSpace(Model?.HeadersJson)
+    ? Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, string>>(Model.HeadersJson)
+    : new Dictionary<string, string>();
+}
+
+<div>
+    <div class="">
+        <p class="form-label text-center fs-4 fw-bold">Chi tiết cấu hình</p>
+
+        <div>
+            <!-- Endpoint & Method -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <select class="form-select" id="methodSelect">
+                        <option value="GET" selected="@(Model?.Method == "GET")">GET</option>
+                        <option value="POST" selected="@(Model?.Method == "POST")">POST</option>
+                        <option value="PUT" selected="@(Model?.Method == "PUT")">PUT</option>
+                        <option value="PATCH" selected="@(Model?.Method == "PATCH")">PATCH</option>
+                    </select>
+                </div>
+                <div class="col-12 input-group mt-3">
+                    <input type="text" class="form-control" id="endpointInput" placeholder="Nhập endpoint" value="@Model?.Endpoint">
+                    <button class="btn btn-primary" type="button" id="sendButton">Send Test</button>
+                </div>
+            </div>
+
+            <!-- Headers -->
+            <div class="mb-4">
+                <h5>Headers</h5>
+                <div id="headersContainer">
+                    @if (headers.Any())
+                    {
+                        foreach (var header in headers)
+                        {
+                            <div class="row g-2 mb-2 header-row">
+                                <div class="col">
+                                    <input type="text" class="form-control header-key" placeholder="Key" value="@header.Key">
+                                </div>
+                                <div class="col">
+                                    <input type="text" class="form-control header-value" placeholder="Value" value="@header.Value">
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-danger btn-sm remove-header">X</button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="row g-2 mb-2 header-row">
+                            <div class="col">
+                                <input type="text" class="form-control header-key" placeholder="Key">
+                            </div>
+                            <div class="col">
+                                <input type="text" class="form-control header-value" placeholder="Value">
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-danger btn-sm remove-header">X</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="addHeaderButton">+ Thêm header</button>
+            </div>
+
+            <!-- Body -->
+            <div class="mb-4">
+                <h5>Body</h5>
+                <textarea class="form-control" id="bodyTextarea" rows="6" placeholder='{"key": "value"}'>@Model?.BodyJson</textarea>
+            </div>
+
+            <!-- Response -->
+            <div class="mb-4">
+                <h5>Response</h5>
+                <pre class="bg-dark text-white p-3 rounded" id="responsePre" style="min-height:150px;">Kết quả response sẽ hiển thị ở đây...</pre>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Thêm header mới
+        $('#addHeaderButton').click(function () {
+            var newHeader = `
+                <div class="row g-2 mb-2 header-row">
+                    <div class="col">
+                        <input type="text" class="form-control header-key" placeholder="Key">
+                    </div>
+                    <div class="col">
+                        <input type="text" class="form-control header-value" placeholder="Value">
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-danger btn-sm remove-header">X</button>
+                    </div>
+                </div>`;
+            $('#headersContainer').append(newHeader);
+        });
+
+        // Xóa header
+        $(document).on('click', '.remove-header', function () {
+            $(this).closest('.header-row').remove();
+        });
+
+        // Gửi request test
+        $('#sendButton').click(function () {
+            var method = $('#methodSelect').val();
+            var endpoint = $('#endpointInput').val();
+            var body = $('#bodyTextarea').val();
+
+            // Thu thập headers
+            var headers = {};
+            $('.header-row').each(function () {
+                var key = $(this).find('.header-key').val();
+                var value = $(this).find('.header-value').val();
+                if (key && value) {
+                    headers[key] = value;
+                }
+            });
+
+            // Gửi AJAX đến endpoint test (giả sử bạn có /EventTrigger/TestHttpRequest)
+            $.ajax({
+                url: '/EventTrigger/TestHttpRequest',  // Thay bằng URL thực tế
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    method: method,
+                    endpoint: endpoint,
+                    headers: headers,
+                    body: body
+                }),
+                success: function (response) {
+                    $('#responsePre').text(JSON.stringify(response, null, 2));
+                },
+                error: function (xhr, status, error) {
+                    $('#responsePre').text('Error: ' + xhr.responseText);
+                }
+            });
+        });
+    });
+</script>

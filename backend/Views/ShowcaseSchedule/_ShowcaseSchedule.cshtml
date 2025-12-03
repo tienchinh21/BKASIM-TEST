@@ -1,0 +1,517 @@
+@using MiniAppGIBA.Base.Dependencies.Extensions
+@using MiniAppGIBA.Entities.Showcase
+@model Showcase?
+@{
+    var canEdit = User.IsEditable();
+    var scheduleId = ViewBag.ScheduleId as string;
+    var isEdit = !string.IsNullOrEmpty(scheduleId) && Model != null;
+}
+
+<style>
+    .form-label.required::after {
+        content: " *";
+        color: red;
+    }
+    
+    .datetime-local-input {
+        position: relative;
+    }
+    
+    .char-counter {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bs-dismiss="modal">
+            <span aria-hidden="true">×</span>
+        </button>
+    </div>
+    
+    <div class="modal-body" style="@(canEdit ? "" : "pointer-events: none;")">
+        <div class="row">
+            <!-- Left Column: Form Fields -->
+            <div class="col-md-8">
+                <div class="row">
+                    <!-- Group Selection -->
+                    <div class="col-md-6 mb-3">
+                        <label for="groupId" class="form-label required">Nhóm</label>
+                        <select id="groupId" class="form-select" required>
+                            <option value="">-- Chọn nhóm --</option>
+                            @if (isEdit && Model != null)
+                            {
+                                <option value="@Model.GroupId" selected>@Model.GroupName</option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">Chọn nhóm tổ chức showcase</small>
+                    </div>
+
+                    <!-- Speaker Selection (Cascade from Group) -->
+                    <div class="col-md-6 mb-3">
+                        <label for="speakerId" class="form-label required">Diễn giả</label>
+                        <select id="speakerId" class="form-select" required>
+                            <option value="">-- Chọn nhóm trước --</option>
+                            @if (isEdit && Model != null)
+                            {
+                                <option value="@Model.MembershipId" 
+                                        data-avatar="@(Model.MemberShipAvatar ?? "")" 
+                                        data-member-id="@Model.MembershipId"
+                                        selected>@Model.MembershipName</option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">Chọn diễn giả thực hiện showcase</small>
+                    </div>
+
+                    <!-- Start Time -->
+                    <div class="col-md-6 mb-3">
+                        <label for="startTime" class="form-label required">Thời gian bắt đầu</label>
+                        <input type="datetime-local" 
+                               id="startTime" 
+                               class="form-control" 
+                               value="@(isEdit && Model != null ? Model.StartDate.ToString("yyyy-MM-ddTHH:mm") : "")"
+                               required>
+                        <small class="form-text text-muted">Chọn ngày và giờ bắt đầu</small>
+                    </div>
+
+                    <!-- End Time -->
+                    <div class="col-md-6 mb-3">
+                        <label for="endTime" class="form-label required">Thời gian kết thúc</label>
+                        <input type="datetime-local" 
+                               id="endTime" 
+                               class="form-control" 
+                               value="@(isEdit && Model != null ? Model.EndDate.ToString("yyyy-MM-ddTHH:mm") : "")"
+                               required>
+                        <small class="form-text text-muted">Chọn ngày và giờ kết thúc</small>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="col-md-12 mb-3">
+                        <label for="location" class="form-label required">Địa điểm</label>
+                        <input type="text" 
+                               id="location" 
+                               class="form-control" 
+                               placeholder="Nhập địa điểm tổ chức (VD: Phòng họp A, Tầng 5, Tòa nhà ABC)"
+                               value="@(isEdit && Model != null ? Model.Location : "")"
+                               maxlength="200"
+                               required>
+                        <small class="form-text text-muted">Địa điểm tổ chức showcase</small>
+                    </div>
+
+                    <!-- Topic -->
+                    <div class="col-md-12 mb-3">
+                        <label for="topic" class="form-label required">Chủ đề</label>
+                        <div class="position-relative">
+                            <input type="text" 
+                                   id="topic" 
+                                   class="form-control" 
+                                   placeholder="Nhập chủ đề showcase"
+                                   value="@(isEdit && Model != null ? Model.Title : "")"
+                                   maxlength="500"
+                                   required>
+                            <span id="topic-counter" class="char-counter position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%);">@(isEdit && Model != null ? Model.Title?.Length ?? 0 : 0)/500</span>
+                        </div>
+                        <small class="form-text text-muted">Chủ đề chính của buổi showcase</small>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="col-md-12 mb-3">
+                        <label for="description" class="form-label">Mô tả chi tiết</label>
+                        <textarea id="description" 
+                                  class="form-control" 
+                                  rows="4" 
+                                  placeholder="Nhập mô tả chi tiết về nội dung showcase (không bắt buộc)">@(isEdit && Model != null ? Model.Description : "")</textarea>
+                        <small class="form-text text-muted">Mô tả chi tiết về nội dung, mục tiêu của buổi showcase</small>
+                    </div>
+
+                    <!-- Public/Private Selection -->
+                    <div class="col-md-6 mb-3">
+                        <label for="isPublic" class="form-label required">Phạm vi</label>
+                        <select id="isPublic" class="form-select" required>
+                            <option value="false" selected="@(isEdit && Model != null && !Model.IsPublic)">Nội bộ</option>
+                            <option value="true" selected="@(isEdit && Model != null && Model.IsPublic)">Public</option>
+                        </select>
+                        <small class="form-text text-muted">Chọn phạm vi hiển thị của showcase</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Preview/Info -->
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            <i class="ri-information-line me-2"></i>Thông tin showcase
+                        </h6>
+                        
+                        <div id="preview-info">
+                            <!-- Group Info -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Nhóm:</small>
+                                <strong id="preview-group">Chưa chọn</strong>
+                            </div>
+
+                            <!-- Speaker Info -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Diễn giả:</small>
+                                <div id="preview-speaker" class="d-flex align-items-center">
+                                    <span class="text-muted">Chưa chọn</span>
+                                </div>
+                            </div>
+
+                            <!-- Time Info -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Thời gian:</small>
+                                <div id="preview-time">
+                                    <i class="ri-calendar-line me-1"></i>
+                                    <span class="text-muted">Chưa chọn</span>
+                                </div>
+                            </div>
+
+                            <!-- Duration -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Thời lượng:</small>
+                                <div id="preview-duration">
+                                    <i class="ri-time-line me-1"></i>
+                                    <span class="text-muted">--</span>
+                                </div>
+                            </div>
+
+                            <!-- Location Info -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Địa điểm:</small>
+                                <div id="preview-location">
+                                    <i class="ri-map-pin-line me-1"></i>
+                                    <span class="text-muted">Chưa nhập</span>
+                                </div>
+                            </div>
+
+                            <!-- Topic Info -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Chủ đề:</small>
+                                <div id="preview-topic" class="text-muted">
+                                    Chưa nhập
+                                </div>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Trạng thái:</small>
+                                <span id="preview-status" class="badge bg-info">Đã lên lịch</span>
+                            </div>
+
+                            <!-- Public/Private Badge -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Phạm vi:</small>
+                                <span id="preview-scope" class="badge bg-secondary">Nội bộ</span>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="alert alert-info mb-0" role="alert">
+                            <small>
+                                <i class="ri-lightbulb-line me-1"></i>
+                                <strong>Lưu ý:</strong> Vui lòng kiểm tra kỹ thông tin trước khi lưu. 
+                                Thời gian kết thúc phải sau thời gian bắt đầu.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-close-line me-1"></i>Đóng
+        </button>
+        @if (canEdit)
+        {
+            <button type="button" class="btn btn-primary" onclick="HandleSaveOrUpdate(@(string.IsNullOrEmpty(scheduleId) ? "null" : $"'{scheduleId}'"))">
+                <i class="ri-save-line me-1"></i>@ViewBag.Button
+            </button>
+        }
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Setup real-time preview updates
+        setupPreviewUpdates();
+        
+        // Initialize status preview
+        if (typeof updateStatusPreview === 'function') {
+            updateStatusPreview();
+        }
+        
+        // If editing, populate preview with existing data
+        @if (isEdit && Model != null)
+        {
+            <text>
+            // Update preview with existing data
+            $('#preview-group').text('@Html.Raw(Model.GroupName)');
+            
+            // Update speaker preview with avatar if exists
+            @if (!string.IsNullOrEmpty(Model.MemberShipAvatar))
+            {
+                <text>
+                $('#preview-speaker').html(`
+                    <img src="@Model.MemberShipAvatar" 
+                         class="rounded-circle me-2" 
+                         style="width: 32px; height: 32px; object-fit: cover;"
+                         onerror="this.style.display='none';">
+                    <span>@Html.Raw(Model.MembershipName)</span>
+                `);
+                </text>
+            }
+            else
+            {
+                <text>
+                $('#preview-speaker').html('<span>@Html.Raw(Model.MembershipName)</span>');
+                </text>
+            }
+            
+            // Update time preview
+            const startTime = '@Model.StartDate.ToString("yyyy-MM-ddTHH:mm")';
+            const endTime = '@Model.EndDate.ToString("yyyy-MM-ddTHH:mm")';
+            if (startTime && endTime && typeof moment !== 'undefined') {
+                const start = moment(startTime);
+                const end = moment(endTime);
+                const timeText = `${start.format('DD/MM/YYYY HH:mm')} - ${end.format('HH:mm')}`;
+                $('#preview-time').html(`
+                    <i class="ri-calendar-line me-1"></i>
+                    <span>${timeText}</span>
+                `);
+                
+                const duration = moment.duration(end.diff(start));
+                const hours = Math.floor(duration.asHours());
+                const minutes = duration.minutes();
+                const durationText = hours > 0 
+                    ? `${hours} giờ ${minutes} phút` 
+                    : `${minutes} phút`;
+                $('#preview-duration').html(`
+                    <i class="ri-time-line me-1"></i>
+                    <span>${durationText}</span>
+                `);
+                
+                // Update status preview
+                if (typeof updateStatusPreview === 'function') {
+                    updateStatusPreview();
+                }
+            }
+            
+            // Update location
+            $('#preview-location').html(`
+                <i class="ri-map-pin-line me-1"></i>
+                <span>@Html.Raw(Model.Location ?? "Chưa nhập")</span>
+            `);
+            
+            // Update topic
+            $('#preview-topic').text('@Html.Raw(Model.Title ?? "Chưa nhập")');
+            
+            // Update status
+            const statusMap = {
+                '1': { text: 'Đã lên lịch', class: 'bg-info' },
+                '2': { text: 'Đang diễn ra', class: 'bg-success' },
+                '3': { text: 'Đã hoàn thành', class: 'bg-secondary' },
+                '4': { text: 'Đã hủy', class: 'bg-danger' }
+            };
+            const status = statusMap['@Model.Status'];
+            if (status) {
+                $('#preview-status').attr('class', `badge ${status.class}`).text(status.text);
+            }
+            
+            // Update scope
+            const isPublic = @(Model.IsPublic ? "true" : "false");
+            const scopeText = isPublic ? 'Public' : 'Nội bộ';
+            const scopeClass = isPublic ? 'bg-primary' : 'bg-secondary';
+            $('#preview-scope').attr('class', `badge ${scopeClass}`).text(scopeText);
+            </text>
+        }
+    });
+
+    // Global function to update speaker preview - can be called from anywhere
+    window.updateSpeakerPreview = function() {
+        const speakerId = $('#speakerId').val();
+        if (!speakerId) {
+            $('#preview-speaker').html('<span class="text-muted">Chưa chọn</span>');
+            return;
+        }
+        
+        // Get the selected option element directly from the original select
+        const selectedOption = $('#speakerId option:selected');
+        const selectedText = selectedOption.text();
+        
+        // Get avatar from data attribute of the option element
+        let avatarUrl = selectedOption.attr('data-avatar');
+        if (!avatarUrl || avatarUrl.trim() === '') {
+            // Fallback: try to get from Select2 data if available
+            try {
+                if ($('#speakerId').hasClass('select2-hidden-accessible')) {
+                    const select2Data = $('#speakerId').select2('data');
+                    if (select2Data && select2Data.length > 0 && select2Data[0].element) {
+                        avatarUrl = $(select2Data[0].element).attr('data-avatar');
+                    }
+                }
+            } catch (e) {
+                console.log('Could not get avatar from Select2:', e);
+            }
+        }
+        
+        // Validate selected text
+        if (selectedText && 
+            selectedText !== '-- Chọn nhóm trước --' && 
+            selectedText !== '-- Chọn diễn giả --' && 
+            selectedText !== '-- Không có diễn giả nào --' &&
+            selectedText !== '-- Không có diễn giả nào được duyệt --') {
+            // Only show avatar if it exists
+            if (avatarUrl && avatarUrl.trim() !== '') {
+                $('#preview-speaker').html(`
+                    <img src="${avatarUrl}" 
+                         class="rounded-circle me-2" 
+                         style="width: 32px; height: 32px; object-fit: cover;"
+                         onerror="this.style.display='none';">
+                    <span>${selectedText}</span>
+                `);
+            } else {
+                $('#preview-speaker').html(`<span>${selectedText}</span>`);
+            }
+        } else {
+            $('#preview-speaker').html('<span class="text-muted">Chưa chọn</span>');
+        }
+    };
+
+    function setupPreviewUpdates() {
+        // Group change preview
+        $('#groupId').on('change', function() {
+            const selectedText = $(this).find('option:selected').text();
+            $('#preview-group').text(selectedText !== '-- Chọn nhóm --' ? selectedText : 'Chưa chọn');
+        });
+
+        // Speaker change preview
+        $('#speakerId').on('change', function() {
+            if (typeof window.updateSpeakerPreview === 'function') {
+                window.updateSpeakerPreview();
+            }
+        });
+
+        // Time change preview
+        $('#startTime, #endTime').on('change', function() {
+            updateTimePreview();
+        });
+
+        // Location change preview
+        $('#location').on('input', function() {
+            const value = $(this).val();
+            $('#preview-location').html(`
+                <i class="ri-map-pin-line me-1"></i>
+                <span>${value || '<span class="text-muted">Chưa nhập</span>'}</span>
+            `);
+        });
+
+        // Topic change preview
+        $('#topic').on('input', function() {
+            const value = $(this).val();
+            $('#preview-topic').text(value || 'Chưa nhập');
+        });
+
+        // Status auto-calculate preview (based on startTime and endTime)
+        function updateStatusPreview() {
+            const startTime = $('#startTime').val();
+            const endTime = $('#endTime').val();
+            let statusText = '';
+            let statusClass = '';
+            
+            if (startTime && endTime) {
+                const now = moment();
+                const start = moment(startTime);
+                const end = moment(endTime);
+                
+                if (start.isAfter(now)) {
+                    statusText = 'Đã lên lịch';
+                    statusClass = 'bg-info';
+                } else if (start.isSameOrBefore(now) && end.isSameOrAfter(now)) {
+                    statusText = 'Đang diễn ra';
+                    statusClass = 'bg-success';
+                } else {
+                    statusText = 'Đã hoàn thành';
+                    statusClass = 'bg-secondary';
+                }
+            } else {
+                statusText = 'Chưa xác định';
+                statusClass = 'bg-secondary';
+            }
+            
+            if ($('#preview-status').length) {
+                $('#preview-status').attr('class', `badge ${statusClass}`).text(statusText);
+            }
+        }
+        
+        // Update status preview when time changes
+        $('#startTime, #endTime').on('change', function() {
+            updateStatusPreview();
+        });
+
+        // Scope (Public/Private) change preview
+        $('#isPublic').on('change', function() {
+            const isPublic = $(this).val() === 'true';
+            const scopeText = isPublic ? 'Public' : 'Nội bộ';
+            const scopeClass = isPublic ? 'bg-primary' : 'bg-secondary';
+            $('#preview-scope').attr('class', `badge ${scopeClass}`).text(scopeText);
+        });
+    }
+
+    function updateTimePreview() {
+        const startTime = $('#startTime').val();
+        const endTime = $('#endTime').val();
+
+        if (startTime && endTime) {
+            const start = moment(startTime);
+            const end = moment(endTime);
+            
+            // Format time display
+            const timeText = `${start.format('DD/MM/YYYY HH:mm')} - ${end.format('HH:mm')}`;
+            $('#preview-time').html(`
+                <i class="ri-calendar-line me-1"></i>
+                <span>${timeText}</span>
+            `);
+
+            // Calculate duration
+            const duration = moment.duration(end.diff(start));
+            const hours = Math.floor(duration.asHours());
+            const minutes = duration.minutes();
+            const durationText = hours > 0 
+                ? `${hours} giờ ${minutes} phút` 
+                : `${minutes} phút`;
+            
+            $('#preview-duration').html(`
+                <i class="ri-time-line me-1"></i>
+                <span>${durationText}</span>
+            `);
+
+            // Validate time range
+            if (end <= start) {
+                $('#preview-duration').html(`
+                    <i class="ri-error-warning-line me-1 text-danger"></i>
+                    <span class="text-danger">Thời gian không hợp lệ</span>
+                `);
+            }
+        } else {
+            $('#preview-time').html(`
+                <i class="ri-calendar-line me-1"></i>
+                <span class="text-muted">Chưa chọn</span>
+            `);
+            $('#preview-duration').html(`
+                <i class="ri-time-line me-1"></i>
+                <span class="text-muted">--</span>
+            `);
+        }
+        
+        // Update status preview when time changes
+        updateStatusPreview();
+    }
+</script>
+

@@ -1,0 +1,553 @@
+@using MiniAppGIBA.Base.Dependencies.Extensions
+@using MiniAppGIBA.Entities.Meetings
+@using MiniAppGIBA.Enum
+@model Meeting?
+@{
+    var canEdit = User.IsEditable();
+    var meetingId = ViewBag.MeetingId as string;
+    var isEdit = !string.IsNullOrEmpty(meetingId) && Model != null;
+}
+
+<style>
+    .form-label.required::after {
+        content: " *";
+        color: red;
+    }
+    
+    .char-counter {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bs-dismiss="modal">
+            <span aria-hidden="true">×</span>
+        </button>
+    </div>
+    
+    <div class="modal-body" style="@(canEdit ? "" : "pointer-events: none;")">
+        <div class="row">
+            <!-- Left Column: Form Fields -->
+            <div class="col-md-8">
+                <div class="row">
+                    <!-- Group Selection -->
+                    <div class="col-md-6 mb-3">
+                        <label for="groupId" class="form-label required">Nhóm</label>
+                        <select id="groupId" class="form-select" required>
+                            <option value="">-- Chọn nhóm --</option>
+                            @if (isEdit && Model != null)
+                            {
+                                <option value="@Model.GroupId" selected>@Model.GroupName</option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">Chọn nhóm tổ chức cuộc họp</small>
+                    </div>
+
+                    <!-- Start Date -->
+                    <div class="col-md-6 mb-3">
+                        <label for="startDate" class="form-label required">Thời gian bắt đầu</label>
+                        <input type="datetime-local" 
+                               id="startDate" 
+                               class="form-control" 
+                               value="@(isEdit && Model != null ? Model.StartDate.ToString("yyyy-MM-ddTHH:mm") : "")"
+                               required>
+                        <small class="form-text text-muted">Chọn ngày và giờ bắt đầu</small>
+                    </div>
+
+                    <!-- End Date -->
+                    <div class="col-md-6 mb-3">
+                        <label for="endDate" class="form-label required">Thời gian kết thúc</label>
+                        <input type="datetime-local" 
+                               id="endDate" 
+                               class="form-control" 
+                               value="@(isEdit && Model != null ? Model.EndDate.ToString("yyyy-MM-ddTHH:mm") : "")"
+                               required>
+                        <small class="form-text text-muted">Chọn ngày và giờ kết thúc</small>
+                    </div>
+
+                    <!-- Meeting Type -->
+                    <div class="col-md-6 mb-3">
+                        <label for="meetingType" class="form-label required">Hình thức</label>
+                        <select id="meetingType" class="form-select" required onchange="toggleMeetingFields()">
+                            <option value="1" selected="@(isEdit && Model != null && Model.MeetingType == MeetingType.Online)">Online</option>
+                            <option value="2" selected="@(isEdit && Model != null && Model.MeetingType == MeetingType.Offline)">Offline</option>
+                        </select>
+                        <small class="form-text text-muted">Chọn hình thức tổ chức cuộc họp</small>
+                    </div>
+
+                    <!-- Public/Private Selection -->
+                    <div class="col-md-6 mb-3">
+                        <label for="isPublic" class="form-label required">Phạm vi</label>
+                        <select id="isPublic" class="form-select" required>
+                            <option value="false" selected="@(isEdit && Model != null && !Model.IsPublic)">Nội bộ</option>
+                            <option value="true" selected="@(isEdit && Model != null && Model.IsPublic)">Công khai</option>
+                        </select>
+                        <small class="form-text text-muted">Chọn phạm vi hiển thị của cuộc họp</small>
+                    </div>
+
+
+                    <!-- Meeting Link (for Online) -->
+                    <div id="meeting-link-group" class="col-md-12 mb-3" style="display: @(isEdit && Model != null && Model.MeetingType == MeetingType.Online ? "block" : "none");">
+                        <label for="meetingLink" class="form-label required">Link meeting</label>
+                        <input type="url" 
+                               id="meetingLink" 
+                               class="form-control" 
+                               placeholder="https://zoom.us/j/123456789 hoặc https://meet.google.com/abc-defg-hij"
+                               value="@(isEdit && Model != null ? Model.MeetingLink : "")">
+                        <small class="form-text text-muted">Nhập link cuộc họp online (Zoom, Google Meet, Teams, ...)</small>
+                    </div>
+
+                    <!-- Location (for Offline) -->
+                    <div id="location-group" class="col-md-12 mb-3" style="display: @(isEdit && Model != null && Model.MeetingType == MeetingType.Offline ? "block" : "none");">
+                        <label for="location" class="form-label required">Địa điểm</label>
+                        <input type="text" 
+                               id="location" 
+                               class="form-control" 
+                               placeholder="Nhập địa điểm tổ chức (VD: Phòng họp A, Tầng 5, Tòa nhà ABC)"
+                               value="@(isEdit && Model != null ? Model.Location : "")"
+                               maxlength="200">
+                        <small class="form-text text-muted">Địa điểm tổ chức cuộc họp offline</small>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="col-md-12 mb-3">
+                        <label for="title" class="form-label required">Chủ đề</label>
+                        <div class="position-relative">
+                            <input type="text" 
+                                   id="title" 
+                                   class="form-control" 
+                                   placeholder="Nhập chủ đề cuộc họp"
+                                   value="@(isEdit && Model != null ? Model.Title : "")"
+                                   maxlength="500"
+                                   required>
+                            <span id="title-counter" class="char-counter position-absolute" style="right: 10px; top: 50%; transform: translateY(-50%);">@(isEdit && Model != null ? Model.Title?.Length ?? 0 : 0)/500</span>
+                        </div>
+                        <small class="form-text text-muted">Chủ đề chính của cuộc họp</small>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="col-md-12 mb-3">
+                        <label for="description" class="form-label">Mô tả chi tiết</label>
+                        <textarea id="description" 
+                                  class="form-control" 
+                                  rows="4" 
+                                  placeholder="Nhập mô tả chi tiết về nội dung cuộc họp (không bắt buộc)">@(isEdit && Model != null ? Model.Description : "")</textarea>
+                        <small class="form-text text-muted">Mô tả chi tiết về nội dung, mục tiêu của cuộc họp</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Preview/Info -->
+            <div class="col-md-4">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            <i class="ri-information-line me-2"></i>Thông tin lịch họp
+                        </h6>
+                        
+                        <div id="preview-info">
+                            <!-- Group Info -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Nhóm:</small>
+                                <strong id="preview-group">Chưa chọn</strong>
+                            </div>
+
+                            <!-- Time Info -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Thời gian:</small>
+                                <div id="preview-time">
+                                    <i class="ri-calendar-line me-1"></i>
+                                    <span class="text-muted">Chưa chọn</span>
+                                </div>
+                            </div>
+
+                            <!-- Meeting Type -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Hình thức:</small>
+                                <span id="preview-type" class="badge bg-success">Online</span>
+                            </div>
+
+                            <!-- Location/Link Info -->
+                            <div id="preview-location-container" class="mb-3" style="display: none;">
+                                <small class="text-muted d-block">Địa điểm:</small>
+                                <div id="preview-location">
+                                    <i class="ri-map-pin-line me-1"></i>
+                                    <span class="text-muted">Chưa nhập</span>
+                                </div>
+                            </div>
+
+                            <div id="preview-link-container" class="mb-3" style="display: none;">
+                                <small class="text-muted d-block">Link meeting:</small>
+                                <div id="preview-link">
+                                    <i class="ri-link me-1"></i>
+                                    <span class="text-muted">Chưa nhập</span>
+                                </div>
+                            </div>
+
+                            <!-- Title Info -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Chủ đề:</small>
+                                <div id="preview-title" class="text-muted">
+                                    Chưa nhập
+                                </div>
+                            </div>
+
+                            <!-- Public/Private Badge -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Phạm vi:</small>
+                                <span id="preview-scope" class="badge bg-secondary">Nội bộ</span>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div class="mb-3">
+                                <small class="text-muted d-block">Trạng thái:</small>
+                                <span id="preview-status" class="badge bg-info">Sắp diễn ra</span>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="alert alert-info mb-0" role="alert">
+                            <small>
+                                <i class="ri-lightbulb-line me-1"></i>
+                                <strong>Lưu ý:</strong> Vui lòng kiểm tra kỹ thông tin trước khi lưu.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    @if (canEdit)
+    {
+        <div class="modal-footer">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+            <button type="button" class="btn btn-primary" onclick="SaveMeeting()">
+                @ViewBag.Button
+            </button>
+        </div>
+    }
+</div>
+
+<script>
+    // Helper function to show notification
+    function showNotification(message, type = 'info') {
+        if (typeof Swal !== 'undefined') {
+            const iconMap = {
+                'success': 'success',
+                'error': 'error',
+                'warning': 'warning',
+                'info': 'info'
+            };
+            Swal.fire({
+                text: message,
+                icon: iconMap[type] || 'info',
+                confirmButtonText: 'OK',
+                timer: type === 'success' ? 2000 : undefined,
+                timerProgressBar: type === 'success'
+            });
+        } else {
+            alert(message);
+        }
+    }
+
+    $(document).ready(function() {
+        // Load groups first
+        LoadGroups();
+
+        // Initialize Select2 for group dropdown
+        $('#groupId').select2({
+            dropdownParent: $('#modal-meeting'),
+            placeholder: '-- Chọn nhóm --'
+        });
+
+        // Character counter for title
+        $('#title').on('input', function() {
+            const length = $(this).val().length;
+            $('#title-counter').text(`${length}/500`);
+        });
+
+        // Set initial meeting type
+        toggleMeetingFields();
+
+        // Initialize preview with existing values (if edit mode)
+        updatePreview();
+
+        // Add event listeners for real-time preview
+        $('#groupId').on('change', updatePreview);
+        $('#startDate, #endDate').on('change', updatePreview);
+        $('#meetingType').on('change', updatePreview);
+        $('#title').on('input', updatePreview);
+        $('#location').on('input', updatePreview);
+        $('#meetingLink').on('input', updatePreview);
+        $('#isPublic').on('change', updatePreview);
+    });
+
+    async function LoadGroups() {
+        try {
+            const response = await fetch('/Groups/GetAll');
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const $select = $('#groupId');
+                // Keep existing selected value if edit mode
+                const currentValue = $select.val();
+                const currentText = $select.find('option:selected').text();
+                
+                // Clear all options
+                $select.empty();
+                
+                // Add placeholder
+                $select.append('<option value="">-- Chọn nhóm --</option>');
+                
+                // Add all groups
+                result.data.forEach(group => {
+                    const isSelected = group.id === currentValue;
+                    $select.append(`<option value="${group.id}" ${isSelected ? 'selected' : ''}>${group.name}</option>`);
+                });
+
+                // If in edit mode and current value exists, ensure it's selected
+                if (currentValue) {
+                    $select.val(currentValue);
+                }
+
+                // Reinitialize Select2
+                $select.trigger('change');
+            }
+        } catch (error) {
+            showNotification('Không thể tải danh sách nhóm', 'error');
+        }
+    }
+
+    function toggleMeetingFields() {
+        const meetingType = parseInt($('#meetingType').val());
+        
+        if (meetingType === 1) { // Online
+            $('#meeting-link-group').show();
+            $('#meetingLink').prop('required', true);
+            $('#location-group').hide();
+            $('#location').prop('required', false);
+            // Show/hide preview elements
+            $('#preview-link-container').show();
+            $('#preview-location-container').hide();
+        } else if (meetingType === 2) { // Offline
+            $('#meeting-link-group').hide();
+            $('#meetingLink').prop('required', false);
+            $('#location-group').show();
+            $('#location').prop('required', true);
+            // Show/hide preview elements
+            $('#preview-link-container').hide();
+            $('#preview-location-container').show();
+        }
+        // Update preview
+        updatePreview();
+    }
+
+    function updatePreview() {
+        // Update group
+        const groupName = $('#groupId option:selected').text();
+        $('#preview-group').text(groupName === '-- Chọn nhóm --' ? 'Chưa chọn' : groupName);
+
+        // Get date values once
+        const startDate = $('#startDate').val();
+        const endDate = $('#endDate').val();
+        
+        // Update time
+        if (startDate && endDate) {
+            const startObj = new Date(startDate);
+            const endObj = new Date(endDate);
+            const formattedStart = startObj.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const formattedEnd = endObj.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            $('#preview-time').html(`<i class="ri-calendar-line me-1"></i>${formattedStart} - ${formattedEnd}`);
+        } else {
+            $('#preview-time').html('<i class="ri-calendar-line me-1"></i><span class="text-muted">Chưa chọn</span>');
+        }
+
+        // Update meeting type
+        const meetingType = parseInt($('#meetingType').val());
+        if (meetingType === 1) {
+            $('#preview-type').attr('class', 'badge bg-success').text('Online');
+        } else {
+            $('#preview-type').attr('class', 'badge bg-info').text('Offline');
+        }
+
+        // Update location or link
+        const location = $('#location').val().trim();
+        if (location) {
+            $('#preview-location').html(`<i class="ri-map-pin-line me-1"></i>${location}`);
+        } else {
+            $('#preview-location').html('<i class="ri-map-pin-line me-1"></i><span class="text-muted">Chưa nhập</span>');
+        }
+
+        const meetingLink = $('#meetingLink').val().trim();
+        if (meetingLink) {
+            $('#preview-link').html(`<i class="ri-link me-1"></i><a href="${meetingLink}" target="_blank">${meetingLink.substring(0, 30)}...</a>`);
+        } else {
+            $('#preview-link').html('<i class="ri-link me-1"></i><span class="text-muted">Chưa nhập</span>');
+        }
+
+        // Update title
+        const title = $('#title').val().trim();
+        $('#preview-title').text(title || 'Chưa nhập');
+
+        // Update scope
+        const isPublic = $('#isPublic').val() === 'true';
+        if (isPublic) {
+            $('#preview-scope').attr('class', 'badge bg-primary').text('Công khai');
+        } else {
+            $('#preview-scope').attr('class', 'badge bg-secondary').text('Nội bộ');
+        }
+
+        // Update status - auto-calculate based on startDate and endDate
+        let statusText = '';
+        let statusClass = '';
+        
+        if (startDate && endDate) {
+            const now = new Date();
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (start > now) {
+                statusText = 'Sắp diễn ra';
+                statusClass = 'bg-info';
+            } else if (start <= now && end >= now) {
+                statusText = 'Đang diễn ra';
+                statusClass = 'bg-success';
+            } else {
+                statusText = 'Đã kết thúc';
+                statusClass = 'bg-secondary';
+            }
+        } else {
+            statusText = 'Chưa xác định';
+            statusClass = 'bg-secondary';
+        }
+        
+        if ($('#preview-status').length) {
+            $('#preview-status').attr('class', `badge ${statusClass}`).text(statusText);
+        }
+    }
+
+
+    // Define SaveMeeting in global scope
+    window.SaveMeeting = async function() {
+        try {
+            // Validate form
+            const groupId = $('#groupId').val();
+            const startDate = $('#startDate').val();
+            const endDate = $('#endDate').val();
+            const meetingType = parseInt($('#meetingType').val());
+            const title = $('#title').val().trim();
+            const description = $('#description').val().trim() || null;
+            const isPublic = $('#isPublic').val() === 'true';
+            const meetingLink = $('#meetingLink').val().trim();
+            const location = $('#location').val().trim();
+
+            if (!groupId) {
+                showNotification('Vui lòng chọn nhóm', 'error');
+                return;
+            }
+
+            if (!startDate) {
+                showNotification('Vui lòng chọn thời gian bắt đầu', 'error');
+                return;
+            }
+
+            if (!endDate) {
+                showNotification('Vui lòng chọn thời gian kết thúc', 'error');
+                return;
+            }
+
+            // Validate date range
+            const startObj = new Date(startDate);
+            const endObj = new Date(endDate);
+            if (endObj <= startObj) {
+                showNotification('Thời gian kết thúc phải sau thời gian bắt đầu', 'error');
+                return;
+            }
+
+            if (!title) {
+                showNotification('Vui lòng nhập chủ đề', 'error');
+                return;
+            }
+
+            if (meetingType === 1 && !meetingLink) {
+                showNotification('Vui lòng nhập link meeting cho cuộc họp online', 'error');
+                return;
+            }
+
+            if (meetingType === 2 && !location) {
+                showNotification('Vui lòng nhập địa điểm cho cuộc họp offline', 'error');
+                return;
+            }
+
+            // Get group name
+            const groupName = $('#groupId option:selected').text();
+
+            // Format dates like Event does - use the value directly from datetime-local input
+            // datetime-local format: "yyyy-MM-ddTHH:mm" which ASP.NET Core can parse
+            const formattedStartDate = startDate; // Already in "yyyy-MM-ddTHH:mm" format
+            const formattedEndDate = endDate; // Already in "yyyy-MM-ddTHH:mm" format
+
+            // Prepare request data (status will be auto-calculated on server)
+            // Note: Property names must match C# model (PascalCase)
+            const requestData = {
+                GroupId: groupId,
+                GroupName: groupName,
+                Title: title,
+                Description: description,
+                StartDate: formattedStartDate,
+                EndDate: formattedEndDate,
+                MeetingType: meetingType,
+                Location: meetingType === 2 ? location : null,
+                MeetingLink: meetingType === 1 ? meetingLink : null,
+                IsPublic: isPublic
+            };
+
+            // Determine if creating or updating
+            const meetingId = '@meetingId';
+            const isEdit = meetingId && meetingId !== '';
+            const url = isEdit ? `/api/Meeting/${meetingId}` : '/api/Meeting/Create';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            // Send request
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            const data = await response.json();
+
+            if (data.code === 0) {
+                showNotification(isEdit ? 'Cập nhật lịch họp thành công' : 'Tạo lịch họp thành công', 'success');
+                $('#modal-meeting').modal('hide');
+                if (typeof onClickReloadTable === 'function') {
+                    onClickReloadTable();
+                }
+            } else {
+                showNotification(data.message || 'Có lỗi xảy ra', 'error');
+            }
+        } catch (error) {
+            showNotification('Có lỗi xảy ra khi lưu lịch họp', 'error');
+        }
+    };
+</script>
+

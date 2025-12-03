@@ -1,0 +1,7 @@
+services:
+  giba:
+    container_name: dotnet-bkasim
+    build: .
+    image: bkasim:latest
+    ports:
+      - "5002:5002"

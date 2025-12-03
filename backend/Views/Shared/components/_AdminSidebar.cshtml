@@ -1,0 +1,353 @@
+@using Microsoft.AspNetCore.Http
+@using MiniAppGIBA.Constants
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+
+    string controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+
+    string action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    bool isGiba = User?.IsInRole(CTRole.GIBA) == true;
+}
+
+<div class="data-scrollbar" data-bs-scrollbar="true" style="overflow: auto; outline: none;" tabindex="-1">
+    <nav class="iq-sidebar-menu" style="padding-bottom: 100px">
+        <ul id="iq-sidebar-toggle" class="iq-menu">
+
+            @* Dashboard *@
+            @if (isGiba)
+            {
+                    <li class="@(new string[] { "Dashboard" }.Contains(controller) ? "active" : "")">
+                        <a href="/Dashboard" class="svg-icon">
+                            <i class="ri-dashboard-line" style="font-size: 20px;"></i>
+                            <span class="ml-4">Tổng Quan</span>
+                        </a>
+                    </li>
+
+            }
+
+            @* SUPER ADMIN Section *@
+            @if (isGiba)
+            {
+                    <li class="iq-menu-title"><i class="ri-subtract-line"></i><span>GIBA</span></li>
+
+                @* Quản Lý Tài Khoản ADMIN *@
+                    <li class="@(new string[] { "AdminManagement" }.Contains(controller) ? "active" : "")">
+                        <a href="/AdminManagement" class="svg-icon">
+                            <i class="ri-admin-line" style="font-size: 20px;"></i>
+                            <span class="ml-4">Danh Sách Tài Khoản</span>
+                        </a>
+                    </li>
+
+                @* Lịch Sử Hoạt Động *@
+                    <li
+                    class="@(new string[] { "ActivityLog", "ReferralLog", "ProfileShareLog" }.Contains(controller) ? "active" : "")">
+                        <a href="#logs" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                            <i class="ri-history-line" style="font-size: 20px;"></i>
+                            <span class="ml-4">Lịch Sử Hoạt Động</span>
+                            <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                        </a>
+                        <ul id="logs"
+                        class="iq-submenu collapse @(new string[] { "ActivityLog", "ReferralLog", "ProfileShareLog" }.Contains(controller) ? "show" : "")"
+                        data-parent="#iq-sidebar-toggle">
+                            <li class="@(new string[] { "ActivityLog" }.Contains(controller) ? "active" : "")">
+                                <a href="/ActivityLog">
+                                    <i class="ri-subtract-line"></i><span>Hoạt Động ADMIN</span>
+                                </a>
+                            </li>
+                            <li class="@(new string[] { "ReferralLog" }.Contains(controller) ? "active" : "")">
+                                <a href="/ReferralLog">
+                                    <i class="ri-subtract-line"></i><span>Giới Thiệu Thành Viên</span>
+                                </a>
+                            </li>
+                            <li class="@(new string[] { "ProfileShareLog" }.Contains(controller) ? "active" : "")">
+                                <a href="/ProfileShareLog">
+                                    <i class="ri-subtract-line"></i><span>Chia Sẻ Profile</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="iq-menu-title"><i class="ri-subtract-line"></i><span>QUẢN LÝ HỆ THỐNG</span></li>
+
+            }
+
+            @* Hội Nhóm *@
+            <li class="@(new string[] { "Groups", "SubscriptionPlan" }.Contains(controller) ? "active" : "")">
+                <a href="#groups" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="ri-team-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Nhóm</span>
+                    <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                </a>
+                <ul id="groups"
+                    class="iq-submenu collapse @(new string[] { "Groups", "SubscriptionPlan" }.Contains(controller) ? "show" : "")"
+                    data-parent="#iq-sidebar-toggle">
+                    <li class="@(new string[] { "Groups" }.Contains(controller) ? "active" : "")">
+                        <a href="/Groups">
+                            <i class="ri-subtract-line"></i><span>Quản Lý Hội Nhóm</span>
+                        </a>
+                    </li>
+                    @if (isGiba)
+                    {
+                            <li class="@(new string[] { "SubscriptionPlan" }.Contains(controller) ? "active" : "")">
+                                <a href="/SubscriptionPlan">
+                                    <i class="ri-subtract-line"></i><span>Quản Lý Gói Cước</span>
+                                </a>
+                            </li>
+                    }
+                    <li class="">
+                        <a href="/Membership/PendingApproval">
+                            <i class="ri-subtract-line"></i><span>Chờ Phê Duyệt</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            @* Lĩnh Vực *@
+            @if (isGiba)
+            {
+                    <li class="@(new string[] { "Field" }.Contains(controller) ? "active" : "")">
+                        <a href="/Field" class="svg-icon">
+                            <i class="ri-briefcase-line" style="font-size: 20px;"></i>
+                            <span class="ml-4">Quản Lý Lĩnh Vực</span>
+                        </a>
+                    </li>
+            }
+
+            @* Sự Kiện *@
+            <li
+                class="@(new string[] { "Event", "EventRegistrations", "EventGuests", "EventGift", "Sponsor", "SponsorshipTier" }.Contains(controller) ? "active" : "")">
+                <a href="#event" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="ri-calendar-event-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Sự Kiện</span>
+                    <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                </a>
+                <ul id="event"
+                    class="iq-submenu collapse @(new string[] { "Event", "EventRegistrations", "EventGuests", "EventGift", "Sponsor", "SponsorshipTier" }.Contains(controller) ? "show" : "")"
+                    data-parent="#iq-sidebar-toggle">
+                    <li class="">
+                        <a href="/Event">
+                            <i class="ri-subtract-line"></i><span>Danh Sách Sự Kiện</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/EventGuests/Index">
+                            <i class="ri-subtract-line"></i><span>Tham Dự</span>
+                        </a>
+                    </li>
+                    @* <li class="">
+                        <a href="/EventGift">
+                        <i class="ri-subtract-line"></i><span>Danh Sách Phần Quà</span>
+                        </a>
+                        </li> *@
+                    <li class="">
+                        <a href="/Sponsor">
+                            <i class="ri-subtract-line"></i><span>Danh Sách Nhà Tài Trợ</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/SponsorshipTier">
+                            <i class="ri-subtract-line"></i><span>Danh Sách Hạng Nhà Tài Trợ</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            @if (isGiba)
+            {       
+                @* Thành Viên *@
+                <li class="@(new string[] { "Membership", "MembershipApproval" }.Contains(controller) ? "active" : "")">
+                    <a href="#membership" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                        <i class="ri-user-settings-line" style="font-size: 20px;"></i>
+                        <span class="ml-4">Quản Lý Thành Viên</span>
+                        <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                    </a>
+                    <ul id="membership"
+                    class="iq-submenu collapse @(new string[] { "Membership", "MembershipApproval" }.Contains(controller) ? "show" : "")"
+                    data-parent="#iq-sidebar-toggle">
+                        <li class="@(new string[] { "Membership" }.Contains(controller) ? "active" : "")">
+                            <a href="/Membership">
+                                <i class="ri-subtract-line"></i><span>Danh Sách Thành Viên</span>
+                            </a>
+                        </li>
+
+                            <li class="@(new string[] { "MembershipApproval" }.Contains(controller) ? "active" : "")">
+                                <a href="/MembershipApproval">
+                                    <i class="ri-subtract-line"></i><span>Phê Duyệt Thành Viên</span>
+                                </a>
+                            </li>
+
+                    </ul>
+                </li>
+
+            }
+            @* Quản Lý Giới Thiệu *@
+            <li class="@(new string[] { "Refs" }.Contains(controller) ? "active" : "")">
+                <a href="/Refs" class="svg-icon">
+                    <i class="ri-share-forward-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Quản Lý Giới Thiệu</span>
+                </a>
+            </li>
+
+            @* Lịch Hẹn 1-1 *@
+            <li class="@(new string[] { "Appointment" }.Contains(controller) ? "active" : "")">
+                <a href="/Appointment" class="svg-icon">
+                    <i class="ri-calendar-check-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Lịch Hẹn 1-1</span>
+                </a>
+            </li>
+            @* Lịch Họp *@
+            <li class="@(new string[] { "Meeting" }.Contains(controller) ? "active" : "")">
+                <a href="/Meeting" class="svg-icon">
+                    <i class="ri-calendar-check-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Lịch Họp</span>
+                </a>
+            </li>
+            @* Tin Tức *@
+
+            <li class="@(new string[] { "Article", "ArticleCategory" }.Contains(controller) ? "active" : "")">
+                <a href="#article" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="ri-newspaper-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Tin Tức</span>
+                    <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                </a>
+                <ul id="article"
+                    class="iq-submenu collapse @(new string[] { "Article", "ArticleCategory" }.Contains(controller) ? "show" : "")"
+                    data-parent="#iq-sidebar-toggle">
+                    <li class="@(new string[] { "Article" }.Contains(controller) ? "active" : "")">
+                        <a href="/Article">
+                            <i class="ri-subtract-line"></i><span>Danh Sách Tin Tức</span>
+                        </a>
+                    </li>
+                    @if (isGiba)
+
+                    {
+                            <li class="@(new string[] { "ArticleCategory" }.Contains(controller) ? "active" : "")">
+                                <a href="/ArticleCategory">
+                                    <i class="ri-subtract-line"></i><span>Danh Mục Tin Tức</span>
+                                </a>
+                            </li>
+
+                    }
+                </ul>
+            </li>
+
+            @* Showcase *@
+            <li class="@(new string[] { "Showcase" }.Contains(controller) ? "active" : "")">
+                <a href="#showcase" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="ri-slideshow-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Showcase</span>
+                    <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                </a>
+                <ul id="showcase"
+                    class="iq-submenu collapse @(new string[] { "Showcase" }.Contains(controller) ? "show" : "")"
+                    data-parent="#iq-sidebar-toggle">
+                    <li class="">
+                        <a href="/Showcase">
+                            <i class="ri-subtract-line"></i><span>Danh Sách Showcase</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            @* Tài Khoản Admin *@
+            @* @if (isAdmin)
+                {
+                <li class="@(new string[] { "Account" }.Contains(controller) ? "active" : "")">
+                <a asp-controller="Account" asp-action="Index" class="svg-icon">
+                <i class="ri-admin-line" style="font-size: 20px;"></i>
+                <span class="ml-4">Quản Lý Tài Khoản</span>
+                </a>
+                </li>
+                } *@
+
+            <li class="@(new string[] { "OmniTool", "Campaign", "EventTrigger" }.Contains(controller) ? "active" : "")">
+                <a href="#omniTool" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="ri-magic-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Omni Mini Tool</span>
+                    <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                </a>
+                <ul id="omniTool"
+                    class="iq-submenu collapse @(new string[] { "OmniTool", "Campaign", "EventTrigger" }.Contains(controller) ? "show" : "")"
+                    data-parent="#iq-sidebar-toggle">
+                    @* <li class="">
+                        <a asp-controller="OmniTool" asp-action="IndexCampaign">
+                        <i class="ri-subtract-line"></i><span>Danh sách Campaign</span>
+                        </a>
+                        </li>
+                        <li class="">
+                        <a asp-controller="OmniTool" asp-action="HistoryCampaign">
+                        <i class="ri-subtract-line"></i><span>Nhật kí gửi tin (Campaign)</span>
+                        </a>
+                        </li> *@
+                    <li class="">
+                        <a href="/EventTrigger">
+                            <i class="ri-subtract-line"></i><span>Event Trigger Messaging</span>
+                        </a>
+                    </li>
+                    <li class="@(action == "Datasource")">
+                        <a href="/EventTrigger/Datasource">
+                            <i class="ri-subtract-line"></i><span>Dữ liệu ETM</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/EventTrigger/History">
+                            <i class="ri-subtract-line"></i><span>Nhật kí gửi tin (ETM)</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a href="/OmniTool/IndexTemplateUid">
+                            <i class="ri-subtract-line"></i><span>Quản lý mẫu tin UID</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            @* Cài Đặt *@
+            @if (isGiba)
+            {
+                    <li class="@(new string[] { "Setting", "SystemSetting", "HomePins" }.Contains(controller) ? "active" : "")">
+                        <a href="#setting" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                            <i class="ri-settings-3-line" style="font-size: 20px;"></i>
+                            <span class="ml-4">Cài Đặt Hệ Thống</span>
+                            <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                        </a>
+                        <ul id="setting"
+                        class="iq-submenu collapse @(new string[] { "Setting", "SystemSetting", "HomePins" }.Contains(controller) ? "show" : "")"
+                        data-parent="#iq-sidebar-toggle">
+                            <li class="@(new string[] { "SystemSetting" }.Contains(controller))">
+                                <a href="/SystemSetting">
+                                    <i class="ri-subtract-line"></i><span>Thông tin ứng dụng</span>
+                                </a>
+                            </li>
+                            <li class="@(new string[] { "HomePins" }.Contains(controller) ? "active" : "")">
+                                <a href="/HomePins">
+                                    <i class="ri-subtract-line"></i><span>Quản lý ghim trang chủ</span>
+                                </a>
+                            </li>
+                        @* <li
+                            class="@(new string[] { "Setting" }.Contains(controller) && action == "BehaviorRules" ? "active" : "")">
+                            <a href="/Setting/BehaviorRules">
+                            <i class="ri-subtract-line"></i><span>Cấu hình quy tắc ứng xử</span>
+                            </a>
+                            </li> *@
+                            <li
+                            class="@(new string[] { "Setting" }.Contains(controller) && action == "BehaviorRules2" ? "active" : "")">
+                                <a href="/Setting/BehaviorRulesV2"> 
+                                    <i class="ri-subtract-line"></i><span>Cấu hình quy tắc ứng xử </span>
+                                </a>
+                            </li>
+                            <li
+                            class="@(new string[] { "Setting" }.Contains(controller) && action == "AppBrief" ? "active" : "")">
+                                <a href="/Setting/AppBrief">
+                                    <i class="ri-subtract-line"></i><span>Brief Giới Thiệu App</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+            }
+
+        </ul>
+    </nav>
+    <div style="height:40px;"></div>
+</div>

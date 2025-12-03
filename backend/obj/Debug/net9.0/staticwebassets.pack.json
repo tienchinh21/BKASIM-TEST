@@ -1,0 +1,1173 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\obj\\Debug\\net9.0\\scopedcss\\projectbundle\\MiniAppGIBA.bundle.scp.css",
+      "PackagePath": "staticwebassets\\MiniAppGIBA.vxfo5mmgst.bundle.scp.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\audios\\scanner-beep.mp3",
+      "PackagePath": "staticwebassets\\audios\\scanner-beep.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\css\\backend-plugin.min.css",
+      "PackagePath": "staticwebassets\\css\\backend-plugin.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\css\\backend.css",
+      "PackagePath": "staticwebassets\\css\\backend.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\css\\site.css",
+      "PackagePath": "staticwebassets\\css\\site.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\css\\style.css",
+      "PackagePath": "staticwebassets\\css\\style.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\css\\survey.css",
+      "PackagePath": "staticwebassets\\css\\survey.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\favicon.ico",
+      "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\01.png",
+      "PackagePath": "staticwebassets\\images\\01.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\02.png",
+      "PackagePath": "staticwebassets\\images\\02.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\03.png",
+      "PackagePath": "staticwebassets\\images\\03.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\faviconn.ico",
+      "PackagePath": "staticwebassets\\images\\faviconn.ico"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\input.txt",
+      "PackagePath": "staticwebassets\\images\\input.txt"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\logo-footer.png",
+      "PackagePath": "staticwebassets\\images\\logo-footer.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\logo.png",
+      "PackagePath": "staticwebassets\\images\\logo.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\no-image-1.png",
+      "PackagePath": "staticwebassets\\images\\no-image-1.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\no-image-2.jpg",
+      "PackagePath": "staticwebassets\\images\\no-image-2.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\no-image.png",
+      "PackagePath": "staticwebassets\\images\\no-image.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\profile-bg.jpg",
+      "PackagePath": "staticwebassets\\images\\profile-bg.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\images\\user.png",
+      "PackagePath": "staticwebassets\\images\\user.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\app.js",
+      "PackagePath": "staticwebassets\\js\\app.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\booking-qr-checkin.js",
+      "PackagePath": "staticwebassets\\js\\booking-qr-checkin.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\customEditor.js",
+      "PackagePath": "staticwebassets\\js\\customEditor.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\event.js",
+      "PackagePath": "staticwebassets\\js\\event.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\helper.js",
+      "PackagePath": "staticwebassets\\js\\helper.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\input-validator.js",
+      "PackagePath": "staticwebassets\\js\\input-validator.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\mappingStatus.js",
+      "PackagePath": "staticwebassets\\js\\mappingStatus.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\order-custom-fields.js",
+      "PackagePath": "staticwebassets\\js\\order-custom-fields.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\order-detail.js",
+      "PackagePath": "staticwebassets\\js\\order-detail.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\order.js",
+      "PackagePath": "staticwebassets\\js\\order.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\product-search-utils.js",
+      "PackagePath": "staticwebassets\\js\\product-search-utils.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\rating-modal.js",
+      "PackagePath": "staticwebassets\\js\\rating-modal.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\site.js",
+      "PackagePath": "staticwebassets\\js\\site.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\survey.js",
+      "PackagePath": "staticwebassets\\js\\survey.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\js\\table-treeview.js",
+      "PackagePath": "staticwebassets\\js\\table-treeview.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\LICENSE",
+      "PackagePath": "staticwebassets\\lib\\bootstrap"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.js.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\chartjs\\chart.min.js",
+      "PackagePath": "staticwebassets\\lib\\chartjs\\chart.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\datatables\\datatables.css",
+      "PackagePath": "staticwebassets\\lib\\datatables\\datatables.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\datatables\\datatables.js",
+      "PackagePath": "staticwebassets\\lib\\datatables\\datatables.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\datatables\\datatables.min.css",
+      "PackagePath": "staticwebassets\\lib\\datatables\\datatables.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\datatables\\datatables.min.js",
+      "PackagePath": "staticwebassets\\lib\\datatables\\datatables.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery-ui\\jquery-ui.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-ui\\jquery-ui.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery-validation\\LICENSE.md",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\LICENSE.md"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\additional-methods.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\additional-methods.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery-validation\\dist\\jquery.validate.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\jquery.validate.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery-validation\\dist\\jquery.validate.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\jquery.validate.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery\\LICENSE.txt",
+      "PackagePath": "staticwebassets\\lib\\jquery\\LICENSE.txt"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery\\dist\\jquery.js",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery\\dist\\jquery.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\jquery\\dist\\jquery.min.map",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.min.map"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\loading\\loading.js",
+      "PackagePath": "staticwebassets\\lib\\loading\\loading.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\moment\\moment-locale.js",
+      "PackagePath": "staticwebassets\\lib\\moment\\moment-locale.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\moment\\moment.js",
+      "PackagePath": "staticwebassets\\lib\\moment\\moment.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\qrcodejs\\qrcode.js",
+      "PackagePath": "staticwebassets\\lib\\qrcodejs\\qrcode.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\quill\\image-resize.min.js",
+      "PackagePath": "staticwebassets\\lib\\quill\\image-resize.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\quill\\quill.css",
+      "PackagePath": "staticwebassets\\lib\\quill\\quill.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\quill\\quill.js",
+      "PackagePath": "staticwebassets\\lib\\quill\\quill.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\select2\\select2.css",
+      "PackagePath": "staticwebassets\\lib\\select2\\select2.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\select2\\select2.full.min.js",
+      "PackagePath": "staticwebassets\\lib\\select2\\select2.full.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\sweetalert\\sweetalert.min.js",
+      "PackagePath": "staticwebassets\\lib\\sweetalert\\sweetalert.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\table-treeview\\table-treeview.js",
+      "PackagePath": "staticwebassets\\lib\\table-treeview\\table-treeview.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\tinymce\\tinymce-webcomponent.min.js",
+      "PackagePath": "staticwebassets\\lib\\tinymce\\tinymce-webcomponent.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\.gitignore",
+      "PackagePath": "staticwebassets\\lib\\toasty\\.gitignore"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\.npmignore",
+      "PackagePath": "staticwebassets\\lib\\toasty\\.npmignore"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\Gruntfile.js",
+      "PackagePath": "staticwebassets\\lib\\toasty\\Gruntfile.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\LICENSE",
+      "PackagePath": "staticwebassets\\lib\\toasty"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\README.md",
+      "PackagePath": "staticwebassets\\lib\\toasty\\README.md"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\favicon.ico",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\favicon.ico"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\HELP-US-OUT.txt",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\HELP-US-OUT.txt"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\css\\font-awesome.css",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\css\\font-awesome.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\css\\font-awesome.min.css",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\css\\font-awesome.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\FontAwesome.otf",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\FontAwesome.otf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.eot",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.eot"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.svg",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.svg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.ttf",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.ttf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.woff",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.woff"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.woff2",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\fonts\\fontawesome-webfont.woff2"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\animated.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\animated.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\bordered-pulled.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\bordered-pulled.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\core.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\core.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\fixed-width.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\fixed-width.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\font-awesome.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\font-awesome.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\icons.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\icons.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\larger.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\larger.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\list.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\list.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\mixins.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\mixins.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\path.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\path.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\rotated-flipped.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\rotated-flipped.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\screen-reader.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\screen-reader.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\stacked.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\stacked.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\variables.less",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\less\\variables.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_animated.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_animated.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_bordered-pulled.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_bordered-pulled.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_core.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_core.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_fixed-width.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_fixed-width.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_icons.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_icons.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_larger.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_larger.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_list.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_list.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_mixins.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_mixins.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_path.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_path.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_rotated-flipped.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_rotated-flipped.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_screen-reader.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_screen-reader.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_stacked.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_stacked.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_variables.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\_variables.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\font-awesome.scss",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\font-awesome-4.7.0\\scss\\font-awesome.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\main.js",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\main.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\prism\\prism.css",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\prism\\prism.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\prism\\prism.js",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\prism\\prism.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\style.css",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\style.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\assets\\toasty-custom-styles.css",
+      "PackagePath": "staticwebassets\\lib\\toasty\\assets\\toasty-custom-styles.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\error\\1.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\error\\1.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\error\\2.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\error\\2.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\error\\3.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\error\\3.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\info\\1.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\info\\1.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\info\\2.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\info\\2.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\info\\3.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\info\\3.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\success\\1.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\success\\1.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\success\\2.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\success\\2.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\success\\3.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\success\\3.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\warning\\1.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\warning\\1.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\warning\\2.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\warning\\2.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\sounds\\warning\\3.mp3",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\sounds\\warning\\3.mp3"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\toasty.css",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\toasty.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\toasty.js",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\toasty.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\toasty.min.css",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\toasty.min.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\dist\\toasty.min.js",
+      "PackagePath": "staticwebassets\\lib\\toasty\\dist\\toasty.min.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\index.html",
+      "PackagePath": "staticwebassets\\lib\\toasty\\index.html"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\package-lock.json",
+      "PackagePath": "staticwebassets\\lib\\toasty\\package-lock.json"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\package.json",
+      "PackagePath": "staticwebassets\\lib\\toasty\\package.json"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\src\\toasty.css",
+      "PackagePath": "staticwebassets\\lib\\toasty\\src\\toasty.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\lib\\toasty\\src\\toasty.js",
+      "PackagePath": "staticwebassets\\lib\\toasty\\src\\toasty.js"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\app_brief\\ad0af97b266849ef810c041999e67260_7a3867d044a84ee48dec7720ed6eb006_3e88ed52bbc5431c967a3d801916844e.pdf",
+      "PackagePath": "staticwebassets\\uploads\\app_brief\\ad0af97b266849ef810c041999e67260_7a3867d044a84ee48dec7720ed6eb006_3e88ed52bbc5431c967a3d801916844e.pdf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\app\\6375cb62-cb0b-4ded-b08a-93db99fe4886.pdf",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\app\\6375cb62-cb0b-4ded-b08a-93db99fe4886.pdf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\app\\d44dbe6f-aa94-41fb-b822-9e0b12217eb7.pdf",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\app\\d44dbe6f-aa94-41fb-b822-9e0b12217eb7.pdf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\groups\\80a68f0ce0794760bf5c0f5dbca30c6c\\c189bf77-8327-4400-962e-b910035573b7.pdf",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\groups\\80a68f0ce0794760bf5c0f5dbca30c6c\\c189bf77-8327-4400-962e-b910035573b7.pdf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\groups\\82576954c2b54917958540cfc10ccd52\\BaoCaoDoAn_LTM_40d14adb3fe342a6a505ab485fc3786d.docx",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\groups\\82576954c2b54917958540cfc10ccd52\\BaoCaoDoAn_LTM_40d14adb3fe342a6a505ab485fc3786d.docx"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\groups\\d943f244662f4c9b830b63f53b3928ee\\33ce4f8c-3f23-4546-a6be-16fd05df08cc.png",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\groups\\d943f244662f4c9b830b63f53b3928ee\\33ce4f8c-3f23-4546-a6be-16fd05df08cc.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\groups\\df87d603dc5d4c6f81b4e41cf094de4d\\6ba5431a-17d3-4d03-8d01-56e869dfa63c.pdf",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\groups\\df87d603dc5d4c6f81b4e41cf094de4d\\6ba5431a-17d3-4d03-8d01-56e869dfa63c.pdf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\groups\\df87d603dc5d4c6f81b4e41cf094de4d\\96beb800-8745-4c2c-a6f8-1c45c694a3da.pdf",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\groups\\df87d603dc5d4c6f81b4e41cf094de4d\\96beb800-8745-4c2c-a6f8-1c45c694a3da.pdf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\groups\\df87d603dc5d4c6f81b4e41cf094de4d\\a97c3743-9774-4d0e-aced-ad1c465cb617.pdf",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\groups\\df87d603dc5d4c6f81b4e41cf094de4d\\a97c3743-9774-4d0e-aced-ad1c465cb617.pdf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\superadmin\\15576_cr_1190_0ca015e3dfab4a2f86fd64e30737077e.jpg",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\superadmin\\15576_cr_1190_0ca015e3dfab4a2f86fd64e30737077e.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\superadmin\\9b140171072b7881cb8d3e3c5924c162_4e8a4ce5b15d439682a3d8e74fb26b9b.jpg",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\superadmin\\9b140171072b7881cb8d3e3c5924c162_4e8a4ce5b15d439682a3d8e74fb26b9b.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\behavior_rules\\superadmin\\ad0af97b266849ef810c041999e67260_7a3867d044a84ee48dec7720ed6eb006_d172c7da0df34d7494c31aec5f4ffcb3.pdf",
+      "PackagePath": "staticwebassets\\uploads\\behavior_rules\\superadmin\\ad0af97b266849ef810c041999e67260_7a3867d044a84ee48dec7720ed6eb006_d172c7da0df34d7494c31aec5f4ffcb3.pdf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\01d6a0ef-3d00-401c-a70a-5ce0c06cdd94.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\01d6a0ef-3d00-401c-a70a-5ce0c06cdd94.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\078f426c-6b97-4c3e-9432-37009d5989d6.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\078f426c-6b97-4c3e-9432-37009d5989d6.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\17201063-1217-4cee-8d8d-e33a5195911d.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\17201063-1217-4cee-8d8d-e33a5195911d.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\18a5db6e-b22c-4cbb-9d75-366756571dbf.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\18a5db6e-b22c-4cbb-9d75-366756571dbf.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\1e4235fc-f8a3-450a-b4d0-6334150fd6eb.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\1e4235fc-f8a3-450a-b4d0-6334150fd6eb.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\27df3e71-9761-409d-9623-b7eb895182ad.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\27df3e71-9761-409d-9623-b7eb895182ad.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\2c2b27d1-4df8-4ee1-a4da-ffbbe77f5848.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\2c2b27d1-4df8-4ee1-a4da-ffbbe77f5848.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\3e9f976a-11ab-4217-82bf-324bf143a423.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\3e9f976a-11ab-4217-82bf-324bf143a423.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\405ccc9e-ea74-494d-8de5-78f88c8b5bab.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\405ccc9e-ea74-494d-8de5-78f88c8b5bab.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\4b2f43f0-8191-4a95-9280-a7c526d89d63.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\4b2f43f0-8191-4a95-9280-a7c526d89d63.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\54274b3c-6320-472c-99b7-fb11e87b5865.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\54274b3c-6320-472c-99b7-fb11e87b5865.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\662fdae0-317c-470e-9b59-b7b636e7ce27.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\662fdae0-317c-470e-9b59-b7b636e7ce27.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\6c01b34e-e2fa-4314-8c24-74a64aff85b6.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\6c01b34e-e2fa-4314-8c24-74a64aff85b6.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\6e44d8b9-d227-4cba-bd14-6314c5800887.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\6e44d8b9-d227-4cba-bd14-6314c5800887.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\74616dc7-a85d-4956-aad3-ffe541ca64a4.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\74616dc7-a85d-4956-aad3-ffe541ca64a4.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\7c22a4c0-59ad-42bf-a11d-9efd30f02192.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\7c22a4c0-59ad-42bf-a11d-9efd30f02192.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\89f1d8f0-6a53-49a4-aaba-63eb73a2f070.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\89f1d8f0-6a53-49a4-aaba-63eb73a2f070.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\8a97795f-93b0-40a4-9dc7-dad20972e1aa.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\8a97795f-93b0-40a4-9dc7-dad20972e1aa.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\8dde3f26-d39a-41ea-8d8f-1f521024328d.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\8dde3f26-d39a-41ea-8d8f-1f521024328d.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\9197cabc-f82e-4e9b-93e3-dd5b7c266120.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\9197cabc-f82e-4e9b-93e3-dd5b7c266120.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\963dfdf9-3701-4624-a2a3-fe14a03b4b39.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\963dfdf9-3701-4624-a2a3-fe14a03b4b39.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\9bc50876-7146-4c82-b92e-79d84afe54b6.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\9bc50876-7146-4c82-b92e-79d84afe54b6.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\abab76d0-1be7-459a-9ae8-38bcb34ed0e0.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\abab76d0-1be7-459a-9ae8-38bcb34ed0e0.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\b47c5bc1-8435-4c01-b644-ecc5b8572f8b.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\b47c5bc1-8435-4c01-b644-ecc5b8572f8b.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\bfd210e0-f87b-4e5f-bac9-34ba68d930ec.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\bfd210e0-f87b-4e5f-bac9-34ba68d930ec.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\c9fe5efb-9582-424b-acad-499d3b040e96.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\c9fe5efb-9582-424b-acad-499d3b040e96.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\d31757cd-f76c-41a9-8f16-d142a77d6ee9.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\d31757cd-f76c-41a9-8f16-d142a77d6ee9.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\df855b66-65ce-4fd2-a936-de7d584b2d76.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\df855b66-65ce-4fd2-a936-de7d584b2d76.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\e3a968a6-d28e-499f-a64d-cbd8ec16f181.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\e3a968a6-d28e-499f-a64d-cbd8ec16f181.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\eeba0aa2-b316-4db8-9bca-de981e6fa878.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\eeba0aa2-b316-4db8-9bca-de981e6fa878.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\f3df5512-9b13-4eba-a72b-33af38dc07a3.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\f3df5512-9b13-4eba-a72b-33af38dc07a3.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\f6b3f9e3-01ae-46da-86ea-4c39b3f881ad.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\f6b3f9e3-01ae-46da-86ea-4c39b3f881ad.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\articles\\f9f67a80-7809-45ae-b22a-a981dbbec3f5.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\articles\\f9f67a80-7809-45ae-b22a-a981dbbec3f5.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\company-logos\\574d5935-0c37-4a39-b4bf-0eeb56570699.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\company-logos\\574d5935-0c37-4a39-b4bf-0eeb56570699.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\company-logos\\667b4cd6-71b6-4f10-a52e-8bab6c6932ea.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\company-logos\\667b4cd6-71b6-4f10-a52e-8bab6c6932ea.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\company-logos\\67f29381-5b06-4792-af0b-0aadb683193d.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\company-logos\\67f29381-5b06-4792-af0b-0aadb683193d.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\070930e9-2fe6-48b9-b8cd-674027b36e9b.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\070930e9-2fe6-48b9-b8cd-674027b36e9b.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\1102f13f-f926-4c3c-8cf1-ee8b27fb5b55.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\1102f13f-f926-4c3c-8cf1-ee8b27fb5b55.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\138da65f-18b4-43a0-98f3-7f0f158ab6cc.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\138da65f-18b4-43a0-98f3-7f0f158ab6cc.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\2af9885a-c248-4210-8fcc-472f3a5f7ce9.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\2af9885a-c248-4210-8fcc-472f3a5f7ce9.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\2dd07fb1-8a03-4327-82a2-b9c9af6e44f7.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\2dd07fb1-8a03-4327-82a2-b9c9af6e44f7.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\35499a13-4d94-408f-86a4-32ac1829a689.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\35499a13-4d94-408f-86a4-32ac1829a689.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\4835df72-7541-42f2-a057-bdbccdef4504.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\4835df72-7541-42f2-a057-bdbccdef4504.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\4a65b1d3-98d3-480d-bcfe-9dcf62cc7c0e.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\4a65b1d3-98d3-480d-bcfe-9dcf62cc7c0e.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\61d79640-52ee-4bc3-a9db-62909413e646.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\61d79640-52ee-4bc3-a9db-62909413e646.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\67a5b2bd-28af-41b5-b50b-456659cec8a3.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\67a5b2bd-28af-41b5-b50b-456659cec8a3.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\7d480bf3-d195-43e1-889e-2a8b3121a9d2.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\7d480bf3-d195-43e1-889e-2a8b3121a9d2.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\97a2d586-0e14-4eac-ac96-31a94bf94f0c.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\97a2d586-0e14-4eac-ac96-31a94bf94f0c.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\9835c0ac-8766-4557-b5ef-741efc966036.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\9835c0ac-8766-4557-b5ef-741efc966036.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\9fa5682b-469e-4b69-818c-1d92d4b89fd2.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\9fa5682b-469e-4b69-818c-1d92d4b89fd2.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\events\\aa6d6bc6-1be2-4e92-8a51-4dc2d02d2d2a.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\events\\aa6d6bc6-1be2-4e92-8a51-4dc2d02d2d2a.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\01f1fa91-3868-456f-ab68-ed86c3a3a715.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\01f1fa91-3868-456f-ab68-ed86c3a3a715.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\22faf9f0-98c2-4987-93c4-74044f167f92.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\22faf9f0-98c2-4987-93c4-74044f167f92.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\26289383-4f74-4b65-a943-8ab2f9f6864a.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\26289383-4f74-4b65-a943-8ab2f9f6864a.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\2c551f12-3992-422b-b4af-53cdcd29e710.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\2c551f12-3992-422b-b4af-53cdcd29e710.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\2ccedf0a-9de9-4475-8f4c-ecf5ce7357bc.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\2ccedf0a-9de9-4475-8f4c-ecf5ce7357bc.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\2e84cedc-2b4e-4da0-b73e-12a1a6a1aefe.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\2e84cedc-2b4e-4da0-b73e-12a1a6a1aefe.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\4db79f15-ac25-402f-bcc3-a23894dfacbc.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\4db79f15-ac25-402f-bcc3-a23894dfacbc.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\5e8533e4-d324-41e2-80e3-c2df9bbc20a9.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\5e8533e4-d324-41e2-80e3-c2df9bbc20a9.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\63332dd2-36eb-4d91-8a38-5afae28c8353.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\63332dd2-36eb-4d91-8a38-5afae28c8353.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\67519fa1-7f8b-4cf9-8fff-41089bf6afb2.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\67519fa1-7f8b-4cf9-8fff-41089bf6afb2.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\8006e0ce-53e4-43aa-ba65-45f0d2dd1b64.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\8006e0ce-53e4-43aa-ba65-45f0d2dd1b64.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\8a242060-80a9-4f14-98cc-e8b91ad81024.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\8a242060-80a9-4f14-98cc-e8b91ad81024.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\8b1021b5-2720-4b87-9da4-b7463704a565.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\8b1021b5-2720-4b87-9da4-b7463704a565.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\8f0175f7-5ea8-427b-a8f8-f389adbe7392.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\8f0175f7-5ea8-427b-a8f8-f389adbe7392.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\910668ee-79ea-44b6-ad3e-77c2c111d3eb.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\910668ee-79ea-44b6-ad3e-77c2c111d3eb.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\91d0fc26-0363-4df5-85a9-9205a90b83db.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\91d0fc26-0363-4df5-85a9-9205a90b83db.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\aa73fddd-36e2-485f-82bb-5bbf14534aa8.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\aa73fddd-36e2-485f-82bb-5bbf14534aa8.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\b2707396-5f75-40f2-aaa6-c566f069b22d.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\b2707396-5f75-40f2-aaa6-c566f069b22d.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\d2238f99-2117-4995-86e1-8538b9934df8.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\d2238f99-2117-4995-86e1-8538b9934df8.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\d29dc834-e946-4eba-b542-a61365508d17.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\d29dc834-e946-4eba-b542-a61365508d17.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\d87a1165-195f-40c4-bfc2-b15faf8690ca.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\d87a1165-195f-40c4-bfc2-b15faf8690ca.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\dbbd5357-51c4-41af-a95e-58a26a0bbf62.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\dbbd5357-51c4-41af-a95e-58a26a0bbf62.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\f652d744-6349-446c-8c8a-e22ea2782741.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\f652d744-6349-446c-8c8a-e22ea2782741.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\gifts\\f6a0ade2-59d5-4bf2-88fc-c6ca1ae07a3c.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\gifts\\f6a0ade2-59d5-4bf2-88fc-c6ca1ae07a3c.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\group-logos\\1f81e809-395a-414f-8583-3433a20c35fa.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\group-logos\\1f81e809-395a-414f-8583-3433a20c35fa.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\group-logos\\6a2dbfae-739a-41a4-b8c8-ae614e6cdde6.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\group-logos\\6a2dbfae-739a-41a4-b8c8-ae614e6cdde6.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\group-logos\\7227ce18-5f19-4bce-b38f-7b8674f083b0.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\group-logos\\7227ce18-5f19-4bce-b38f-7b8674f083b0.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\group-logos\\877204cf-4185-4344-86dd-257aa971ead8.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\group-logos\\877204cf-4185-4344-86dd-257aa971ead8.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\sponsors\\89b1e2e0-e05d-4a6e-ad95-ac627bdb3719.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\sponsors\\89b1e2e0-e05d-4a6e-ad95-ac627bdb3719.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\sponsors\\cfc0830c-1dfa-4200-9620-2e42a6c22771.jpg",
+      "PackagePath": "staticwebassets\\uploads\\images\\sponsors\\cfc0830c-1dfa-4200-9620-2e42a6c22771.jpg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\sponsorship-tiers\\2bab4e78-dc4b-4616-8224-59593c779325.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\sponsorship-tiers\\2bab4e78-dc4b-4616-8224-59593c779325.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\sponsorship-tiers\\90078156-a027-4096-8f2a-2a7c3d56c5f7.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\sponsorship-tiers\\90078156-a027-4096-8f2a-2a7c3d56c5f7.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\sponsorship-tiers\\ac5a3c91-002a-4d4d-ab8c-6d5a2f3a6b78.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\sponsorship-tiers\\ac5a3c91-002a-4d4d-ab8c-6d5a2f3a6b78.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\sponsorship-tiers\\cecf74bb-d58a-4797-a770-b3e9f4faaefa.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\sponsorship-tiers\\cecf74bb-d58a-4797-a770-b3e9f4faaefa.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\uploads\\images\\sponsorship-tiers\\dcb02ef6-aaf1-474b-ba29-71e551f052c4.png",
+      "PackagePath": "staticwebassets\\uploads\\images\\sponsorship-tiers\\dcb02ef6-aaf1-474b-ba29-71e551f052c4.png"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\License",
+      "PackagePath": "staticwebassets\\vendor\\remixicon"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.css",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.css"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.eot",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.eot"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.glyph.json",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.glyph.json"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.less",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.module.less",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.module.less"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.scss",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.scss"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.styl",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.styl"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.svg",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.svg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.symbol.svg",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.symbol.svg"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.ttf",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.ttf"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.woff",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.woff"
+    },
+    {
+      "Id": "D:\\MiniApp\\BKASIM\\backend\\wwwroot\\vendor\\remixicon\\fonts\\remixicon.woff2",
+      "PackagePath": "staticwebassets\\vendor\\remixicon\\fonts\\remixicon.woff2"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.MiniAppGIBA.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.MiniAppGIBA.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.build.MiniAppGIBA.props",
+      "PackagePath": "build\\MiniAppGIBA.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.buildMultiTargeting.MiniAppGIBA.props",
+      "PackagePath": "buildMultiTargeting\\MiniAppGIBA.props"
+    },
+    {
+      "Id": "obj\\Debug\\net9.0\\staticwebassets\\msbuild.buildTransitive.MiniAppGIBA.props",
+      "PackagePath": "buildTransitive\\MiniAppGIBA.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

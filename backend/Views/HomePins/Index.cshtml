@@ -1,0 +1,482 @@
+@{
+    ViewData["Title"] = "Quản lý ghim trang chủ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .pin-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        background: white;
+        transition: all 0.3s;
+    }
+    
+    .pin-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .pin-item.dragging {
+        opacity: 0.5;
+    }
+    
+    .drag-handle {
+        cursor: move;
+        color: #999;
+        font-size: 20px;
+    }
+    
+    .entity-type-badge {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .entity-type-event { background: #e3f2fd; color: #1976d2; }
+    .entity-type-meeting { background: #f3e5f5; color: #7b1fa2; }
+    .entity-type-showcase { background: #e8f5e9; color: #388e3c; }
+    
+    .pin-counter {
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .pin-counter.warning {
+        color: #f57c00;
+        font-weight: 600;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="mb-2">Quản lý ghim trang chủ</h4>
+                <p class="text-muted mb-0">Sắp xếp và quản lý các mục hiển thị trong phần "Sắp diễn ra"</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddPinModal()">
+                <i class="ri-pushpin-line me-2"></i>Ghim mới
+            </button>
+        </div>
+    </div>
+    
+    <div class="col-lg-12 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <label class="form-label mb-2">Lọc theo loại:</label>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="filterType" id="filterAll" value="" checked>
+                            <label class="btn btn-outline-secondary" for="filterAll">Tất cả</label>
+                            
+                            <input type="radio" class="btn-check" name="filterType" id="filterEvent" value="1">
+                            <label class="btn btn-outline-primary" for="filterEvent">Sự kiện</label>
+                            
+                            <input type="radio" class="btn-check" name="filterType" id="filterMeeting" value="2">
+                            <label class="btn btn-outline-purple" for="filterMeeting">Lịch họp</label>
+                            
+                            <input type="radio" class="btn-check" name="filterType" id="filterShowcase" value="3">
+                            <label class="btn btn-outline-success" for="filterShowcase">Lịch showcase</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="pin-counter" id="pinCounter">
+                            Đang hiển thị: <strong>0/10</strong> ghim
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-12">
+        <div id="pinsList">
+        </div>
+        
+        <div id="emptyState" class="text-center py-5" style="display: none;">
+            <i class="ri-pushpin-line" style="font-size: 64px; color: #ccc;"></i>
+            <p class="text-muted mt-3">Chưa có mục nào được ghim</p>
+            <button class="btn btn-primary" onclick="openAddPinModal()">
+                Ghim mục đầu tiên
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addPinModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ri-pushpin-line me-2"></i>Ghim mục lên trang chủ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Loại nội dung <span class="text-danger">*</span></label>
+                    <select id="entityTypeSelect" class="form-select" onchange="loadEntitiesByType()">
+                        <option value="">-- Chọn loại --</option>
+                        <option value="1">Sự kiện</option>
+                        <option value="2">Lịch họp</option>
+                        <option value="3">Lịch showcase</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Chọn mục <span class="text-danger">*</span></label>
+                    <select id="entitySelect" class="form-select" disabled>
+                        <option value="">-- Chọn loại nội dung trước --</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Ghi chú (tùy chọn)</label>
+                    <textarea id="pinNotes" class="form-control" rows="3" 
+                        placeholder="Thêm ghi chú về lý do ghim mục này..." maxlength="500"></textarea>
+                    <div class="form-text">Tối đa 500 ký tự</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="createPin()">
+                    <i class="ri-pushpin-line me-2"></i>Ghim lên
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    let currentPins = [];
+    let maxPinsAllowed = 10;
+    
+    $(document).ready(function() {
+        loadPins();
+        initializeFilters();
+        initializeSortable();
+    });
+    
+    function initializeFilters() {
+        $('input[name="filterType"]').on('change', function() {
+            loadPins($(this).val());
+        });
+    }
+    
+    function initializeSortable() {
+        const pinsList = document.getElementById('pinsList');
+        if (pinsList) {
+            Sortable.create(pinsList, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: function(evt) {
+                    handleReorder(evt.oldIndex, evt.newIndex);
+                }
+            });
+        }
+    }
+    
+    async function loadPins(filterType = '') {
+        try {
+            const response = await fetch(`/HomePins/GetAll?filterType=${filterType}`);
+            const result = await response.json();
+            
+            if (result.isSuccess) {
+                currentPins = result.data.pins;
+                maxPinsAllowed = result.data.maxPinsAllowed;
+                const totalPinsCount = result.data.totalPinsCount; // Total across all types
+                renderPins(currentPins);
+                updatePinCounter(totalPinsCount, maxPinsAllowed); // Use total, not filtered count
+            }
+        } catch (error) {
+            console.error('Error loading pins:', error);
+        }
+    }
+    
+    function renderPins(pins) {
+        const container = $('#pinsList');
+        const emptyState = $('#emptyState');
+        
+        if (pins.length === 0) {
+            container.empty();
+            emptyState.show();
+            return;
+        }
+        
+        emptyState.hide();
+        container.empty();
+        
+        pins.forEach(pin => {
+            const pinHtml = createPinHtml(pin);
+            container.append(pinHtml);
+        });
+    }
+    
+    function createPinHtml(pin) {
+        const entityTypeName = getEntityTypeName(pin.entityType);
+        const entityTypeClass = getEntityTypeClass(pin.entityType);
+        const entityDetails = pin.entityDetails;
+        const startDate = entityDetails.startTime || entityDetails.startDate;
+        
+        return `
+            <div class="pin-item" data-pin-id="${pin.id}">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <span class="drag-handle">☰</span>
+                    </div>
+                    <div class="col-auto">
+                        <h5 class="mb-0">${pin.displayOrder}</h5>
+                    </div>
+                    <div class="col">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="entity-type-badge ${entityTypeClass} me-2">
+                                ${entityTypeName}
+                            </span>
+                            <h6 class="mb-0">${entityDetails.title}</h6>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="ri-calendar-line me-1"></i>
+                            ${formatDate(startDate)}
+                            <span class="mx-2">|</span>
+                            <i class="ri-user-line me-1"></i>
+                            ${pin.pinnedByName}
+                            <span class="mx-2">|</span>
+                            <i class="ri-time-line me-1"></i>
+                            ${formatRelativeTime(pin.pinnedAt)}
+                        </div>
+                        ${pin.notes ? `<div class="mt-2 small"><strong>Ghi chú:</strong> ${pin.notes}</div>` : ''}
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="moveUp('${pin.id}')" 
+                                ${pin.displayOrder === 1 ? 'disabled' : ''}>
+                                <i class="ri-arrow-up-line"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" 
+                                onclick="moveDown('${pin.id}')" 
+                                ${pin.displayOrder === currentPins.length ? 'disabled' : ''}>
+                                <i class="ri-arrow-down-line"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" 
+                                onclick="confirmUnpin('${pin.id}', '${entityDetails.title.replace(/'/g, "\\'")}')">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function getEntityTypeName(type) {
+        const types = { 1: 'Sự kiện', 2: 'Lịch họp', 3: 'Lịch showcase' };
+        return types[type] || 'Unknown';
+    }
+    
+    function getEntityTypeClass(type) {
+        const classes = { 1: 'entity-type-event', 2: 'entity-type-meeting', 3: 'entity-type-showcase' };
+        return classes[type] || '';
+    }
+    
+    function updatePinCounter(current, max) {
+        const counter = $('#pinCounter');
+        const isNearLimit = current >= max * 0.8;
+        counter.html(`Đang hiển thị: <strong>${current}/${max}</strong> ghim`);
+        counter.toggleClass('warning', isNearLimit);
+    }
+    
+    function openAddPinModal() {
+        if (currentPins.length >= maxPinsAllowed) {
+            alert(`Đã đạt giới hạn ${maxPinsAllowed} ghim. Vui lòng gỡ ghim một số mục trước.`);
+            return;
+        }
+        
+        $('#entityTypeSelect').val('');
+        $('#entitySelect').val('').prop('disabled', true).html('<option value="">-- Chọn loại nội dung trước --</option>');
+        $('#pinNotes').val('');
+        $('#addPinModal').modal('show');
+    }
+    
+    async function loadEntitiesByType() {
+        const entityType = $('#entityTypeSelect').val();
+        const entitySelect = $('#entitySelect');
+        
+        if (!entityType) {
+            entitySelect.prop('disabled', true).html('<option value="">-- Chọn loại nội dung trước --</option>');
+            return;
+        }
+        
+        entitySelect.prop('disabled', true).html('<option value="">Đang tải...</option>');
+        
+        try {
+            // Use admin endpoint to get ALL entities (no privacy filtering)
+            const response = await fetch(`/HomePins/GetAvailableEntities?entityType=${entityType}`);
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.message || 'Lỗi khi tải danh sách');
+            }
+            
+            const entities = result.data || [];
+            
+            let options = '<option value="">-- Chọn mục --</option>';
+            entities.forEach(entity => {
+                const alreadyPinned = currentPins.some(p => 
+                    p.entityType == entityType && p.entityId === entity.id
+                );
+                
+                if (!alreadyPinned) {
+                    const title = entity.title || entity.name || 'Không có tiêu đề';
+                    options += `<option value="${entity.id}">${title}</option>`;
+                }
+            });
+            
+            entitySelect.prop('disabled', false).html(options);
+        } catch (error) {
+            console.error('Error loading entities:', error);
+            entitySelect.html('<option value="">Lỗi khi tải dữ liệu</option>');
+        }
+    }
+    
+    async function createPin() {
+        const entityType = $('#entityTypeSelect').val();
+        const entityId = $('#entitySelect').val();
+        const notes = $('#pinNotes').val().trim();
+        
+        if (!entityType || !entityId) {
+            alert('Vui lòng chọn loại nội dung và mục cần ghim');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/HomePins/Create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                body: JSON.stringify({
+                    entityType: parseInt(entityType),
+                    entityId: entityId,
+                    notes: notes || null
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(result.message);
+                $('#addPinModal').modal('hide');
+                loadPins();
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Error creating pin:', error);
+            alert('Không thể tạo ghim');
+        }
+    }
+    
+    async function handleReorder(oldIndex, newIndex) {
+        if (oldIndex === newIndex) return;
+        
+        const pin = currentPins[oldIndex];
+        const newDisplayOrder = newIndex + 1;
+        
+        try {
+            const response = await fetch('/HomePins/Reorder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                body: JSON.stringify({
+                    pinId: pin.id,
+                    newDisplayOrder: newDisplayOrder
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                loadPins();
+            } else {
+                alert(result.message);
+                loadPins();
+            }
+        } catch (error) {
+            console.error('Error reordering:', error);
+            loadPins();
+        }
+    }
+    
+    function moveUp(pinId) {
+        const index = currentPins.findIndex(p => p.id === pinId);
+        if (index > 0) {
+            handleReorder(index, index - 1);
+        }
+    }
+    
+    function moveDown(pinId) {
+        const index = currentPins.findIndex(p => p.id === pinId);
+        if (index < currentPins.length - 1) {
+            handleReorder(index, index + 1);
+        }
+    }
+    
+    function confirmUnpin(pinId, title) {
+        if (confirm(`Bạn có chắc chắn muốn gỡ ghim "${title}"?`)) {
+            unpin(pinId);
+        }
+    }
+    
+    async function unpin(pinId) {
+        try {
+            const response = await fetch(`/HomePins/Delete/${pinId}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(result.message);
+                loadPins();
+            } else {
+                alert(result.message);
+            }
+        } catch (error) {
+            console.error('Error unpinning:', error);
+            alert('Không thể gỡ ghim');
+        }
+    }
+    
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN');
+    }
+    
+    function formatRelativeTime(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        return `${diffDays} ngày trước`;
+    }
+</script>
+}

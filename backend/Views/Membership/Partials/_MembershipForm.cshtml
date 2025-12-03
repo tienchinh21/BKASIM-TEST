@@ -1,0 +1,104 @@
+@model MiniAppGIBA.Models.Request.Memberships.UpdateMembershipRequest
+
+<!-- Form edit membership -->
+<!-- Modal Header -->
+<div class="modal-header bg-primary text-white">
+    <h5 class="modal-title" id="membershipFormModalTitle">
+        <i class="ri-edit-line me-2"></i>
+        Chỉnh sửa Thành Viên
+    </h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<!-- Modal Body -->
+<div class="modal-body p-4">
+    <div class="p-0">
+        <form id="membershipForm" onsubmit="submitMembershipForm(event)">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@ViewBag.MembershipId" />
+
+            <div class="row g-3">
+                <!-- Họ tên -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Họ và tên <span class="text-danger">*</span>
+                    </label>
+                    <input name="Fullname" class="form-control" placeholder="Nhập họ và tên" value="@Model.Fullname" />
+                </div>
+
+                <!-- Số điện thoại -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Số điện thoại
+                    </label>
+                    <input name="PhoneNumber" class="form-control" value="@Model.PhoneNumber" />
+                </div>
+
+                <!-- User Zalo Name -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Tên Zalo
+                    </label>
+                    <input name="UserZaloName" class="form-control" value="@Model.UserZaloName" readonly />
+                </div>
+
+                <!-- Zalo Avatar -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Avatar Zalo
+                    </label>
+                    <input name="ZaloAvatar" class="form-control" value="@Model.ZaloAvatar" />
+                </div>
+
+                <!-- Role ID -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Role ID
+                    </label>
+                    <input name="RoleId" class="form-control" value="@Model.RoleId" />
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Footer -->
+<div class="modal-footer border-0 p-3">
+    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+        <i class="ri-arrow-left-line me-1"></i>
+        Quay lại
+    </button>
+    <button type="submit" form="membershipForm" class="btn btn-primary">
+        <i class="ri-save-line me-1"></i>
+        Cập nhật
+    </button>
+</div>
+
+<script>
+    function submitMembershipForm(event) {
+        event.preventDefault();
+
+        const formData = new FormData(document.getElementById('membershipForm'));
+
+        $.ajax({
+            url: '/Membership/Edit',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                if (response.success) {
+                    showSuccess('Thành công', response.message || 'Cập nhật thành công');
+                    $('#membershipModal').modal('hide');
+                    membershipsTable.ajax.reload(null, false);
+                } else {
+                    showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error:', error);
+                showError('Lỗi', 'Có lỗi xảy ra khi cập nhật');
+            }
+        });
+    }
+</script>

@@ -1,0 +1,1121 @@
+@using MiniAppGIBA.Base.Dependencies.Extensions
+@{
+    var canEdit = User.IsEditable();
+    ViewData["Title"] = "Lịch Showcase";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản lý Lịch Showcase</h4>
+                <p class="mb-0">
+                    Quản lý lịch trình các buổi showcase của diễn giả trong các hội nhóm
+                </p>
+            </div>
+            @if (canEdit)
+            {
+                <button type="button" class="btn btn-primary mt-2" onclick="GetFormShowcaseSchedule()">
+                    <i class="ri-add-line mr-3"></i>Thêm mới lịch showcase
+                </button>
+            }
+        </div>
+    </div>
+
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo chủ đề, diễn giả, địa điểm">
+                            <span class="search-icon position-absolute user-select-auto"
+                                style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer"
+                                onclick="onClickReloadTable()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-group" class="form-label">Nhóm</label>
+                        <select id="filter-group" class="form-select select2" onchange="onClickReloadTable()">
+                            <option value="">Tất cả nhóm</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-status" class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-select select2" onchange="onClickReloadTable()">
+                            <option value="">Tất cả</option>
+                            <option value="1">Đã lên lịch</option>
+                            <option value="2">Đang diễn ra</option>
+                            <option value="3">Đã hoàn thành</option>
+                            <option value="4">Đã hủy</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-public" class="form-label">Phạm vi</label>
+                        <select id="filter-public" class="form-select select2" onchange="onClickReloadTable()">
+                            <option value="">Tất cả</option>
+                            <option value="true">Công khai</option>
+                            <option value="false">Nội bộ</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-start-date" class="form-label">Từ ngày</label>
+                        <input id="filter-start-date" type="date" class="form-control" onchange="onClickReloadTable()">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="filter-end-date" class="form-label">Đến ngày</label>
+                        <input id="filter-end-date" type="date" class="form-control" onchange="onClickReloadTable()">
+                    </div>
+
+                    <div class="col-md-12 d-flex justify-content-end mt-3">
+                        <button class="btn btn-primary" onclick="onClickReloadTable()">
+                            <i class="ri-filter-line me-1"></i> Lọc
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div id="showcaseschedule-table" class="table-responsive rounded mb-3">
+            <table id="list-showcaseschedule" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-showcaseschedule" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade">
+    <div id="modal-content" class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 80vw;"></div>
+</div>
+
+@section Scripts {
+    <script>
+        // Use window object to avoid conflicts with other scripts
+        if (typeof window.showcaseTable === 'undefined') {
+            window.showcaseTable = null;
+        }
+        var currentScheduleId = null;
+
+        $(document).ready(function () {
+            // Initialize Select2
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            // Load groups for filter dropdown
+            LoadGroupsForFilter();
+
+            // Set default date range to current month (start of month to end of month)
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            
+            $('#filter-start-date').val(startOfMonth.toISOString().slice(0, 10));
+            $('#filter-end-date').val(endOfMonth.toISOString().slice(0, 10));
+            
+            // Validate date range
+            $('#filter-start-date, #filter-end-date').on('change', function() {
+                const startDate = $('#filter-start-date').val();
+                const endDate = $('#filter-end-date').val();
+                if (startDate && endDate && startDate > endDate) {
+                    Swal.fire('Cảnh báo', 'Ngày bắt đầu không thể lớn hơn ngày kết thúc', 'warning');
+                    // Reset to current month if invalid
+                    const now = new Date();
+                    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                    $('#filter-start-date').val(startOfMonth.toISOString().slice(0, 10));
+                    $('#filter-end-date').val(endOfMonth.toISOString().slice(0, 10));
+                }
+            });
+
+            // Initialize DataTable
+            InitializeDataTable();
+
+            // Add modal event listeners to ensure loading states are cleared
+            $('#modal-showcaseschedule').on('hidden.bs.modal', function () {
+                // When modal is fully hidden, ensure all loading states are cleared
+                console.log('Modal closed, clearing any lingering loading states');
+
+                // Close any open Swal dialogs (safety net)
+                @* if (Swal.isVisible()) {
+                    const swalTitle = $('.swal2-title').text();
+                    // Only close loading dialogs, not success/error messages
+                    if (swalTitle === 'Đang xử lý...' || swalTitle === 'Đang tải lại dữ liệu...') {
+                        Swal.close();
+                    }
+                } *@
+
+                // Ensure DataTable processing is hidden
+                if (window.showcaseTable) {
+                    try {
+                        window.showcaseTable.processing(false);
+                    } catch (e) {
+                        console.error('Error clearing DataTable processing:', e);
+                    }
+                }
+            });
+        });
+
+        // Load groups for filter dropdown
+        function LoadGroupsForFilter() {
+            $.ajax({
+                url: '/Groups/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success && response.data) {
+                        $('#filter-group').empty().append('<option value="">Tất cả nhóm</option>');
+                        response.data.forEach(function (group) {
+                            $('#filter-group').append(`<option value="${group.id}">${group.name}</option>`);
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading groups:', error);
+                    Swal.fire('Lỗi', 'Không thể tải danh sách nhóm', 'error');
+                }
+            });
+        }
+
+        // Initialize search with debounce
+        let searchTimeout;
+        $(document).ready(function() {
+            $('#search').on('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (window.showcaseTable) {
+                        window.showcaseTable.ajax.reload();
+                    }
+                }, 500);
+            });
+        });
+
+        // Initialize DataTable
+        function InitializeDataTable() {
+            window.showcaseTable = $("#list-showcaseschedule").DataTable({
+                processing: true,
+                serverSide: true,
+                searching: false,
+                ordering: false,
+                lengthChange: true,
+                pageLength: 10,
+                language: {
+                    processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+                    emptyTable: "Không có dữ liệu",
+                    info: "Hiển thị _START_ đến _END_ của _TOTAL_ bản ghi",
+                    infoEmpty: "Hiển thị 0 đến 0 của 0 bản ghi",
+                    infoFiltered: "(lọc từ _MAX_ bản ghi)",
+                    lengthMenu: "Hiển thị _MENU_ bản ghi",
+                    zeroRecords: "Không tìm thấy bản ghi nào",
+                    paginate: {
+                        first: "Đầu",
+                        last: "Cuối",
+                        next: "Sau",
+                        previous: "Trước"
+                    }
+                },
+                columns: [
+                    {
+                        title: "STT",
+                        data: null,
+                        width: "50px",
+                        render: function (data, type, row, meta) {
+                            return meta.row + meta.settings._iDisplayStart + 1;
+                        }
+                    },
+                    {
+                        title: "Chủ đề",
+                        data: "topic",
+                        width: "250px",
+                        render: function (data, type, row) {
+                            return `<div class="text-truncate" style="max-width: 250px;" title="${data}">${data}</div>`;
+                        }
+                    },
+                    {
+                        title: "Diễn giả",
+                        data: "speakerName",
+                        width: "150px",
+                        render: function (data, type, row) {
+                            // Only show avatar if it exists, otherwise just show name
+                            if (row.speakerAvatar && row.speakerAvatar.trim() !== '') {
+                                return `<div class="d-flex align-items-center">
+                                            <img src="${row.speakerAvatar}" 
+                                                 class="rounded-circle me-2" 
+                                                 style="width: 32px; height: 32px; object-fit: cover;" 
+                                                 onerror="this.style.display='none';">
+                                            <span>${data}</span>
+                                        </div>`;
+                            } else {
+                                return `<div class="d-flex align-items-center">
+                                            <span>${data}</span>
+                                        </div>`;
+                            }
+                        }
+                    },
+                    {
+                        title: "Nhóm",
+                        data: "groupName",
+                        width: "150px"
+                    },
+                    {
+                        title: "Thời gian",
+                        data: "startTime",
+                        width: "180px",
+                        render: function (data, type, row) {
+                            // Handle null/undefined dates
+                            if (!row.startTime || !row.endTime) {
+                                return '<span class="text-muted">Chưa có thông tin</span>';
+                            }
+                            
+                            try {
+                                // Parse dates - handle both ISO string and Date objects
+                                const startMoment = moment(row.startTime);
+                                const endMoment = moment(row.endTime);
+                                
+                                // Check if dates are valid
+                                if (!startMoment.isValid() || !endMoment.isValid()) {
+                                    return '<span class="text-muted">Ngày không hợp lệ</span>';
+                                }
+                                
+                                const start = startMoment.format('DD/MM/YYYY HH:mm');
+                                const end = endMoment.format('HH:mm');
+                                return `${start} - ${end}`;
+                            } catch (error) {
+                                console.error('Error formatting date:', error, row);
+                                return '<span class="text-muted">Lỗi định dạng</span>';
+                            }
+                        }
+                    },
+                    {
+                        title: "Địa điểm",
+                        data: "location",
+                        width: "150px",
+                        render: function (data, type, row) {
+                            return `<div class="text-truncate" style="max-width: 150px;" title="${data}">${data}</div>`;
+                        }
+                    },
+                    {
+                        title: "Phạm vi",
+                        data: "isPublic",
+                        width: "100px",
+                        render: function (data, type, row) {
+                            if (data === true) {
+                                return '<span class="badge bg-primary">Công khai</span>';
+                            } else {
+                                return '<span class="badge bg-secondary">Nội bộ</span>';
+                            }
+                        }
+                    },
+                    {
+                        title: "Trạng thái",
+                        data: "status",
+                        width: "120px",
+                        render: function (data, type, row) {
+                            const statusMap = {
+                                1: { text: 'Đã lên lịch', class: 'bg-info' },
+                                2: { text: 'Đang diễn ra', class: 'bg-success' },
+                                3: { text: 'Đã hoàn thành', class: 'bg-secondary' },
+                                4: { text: 'Đã hủy', class: 'bg-danger' }
+                            };
+                            const status = statusMap[data] || { text: 'Không xác định', class: 'bg-secondary' };
+                            return `<span class="badge ${status.class}">${status.text}</span>`;
+                        }
+                    },
+                    {
+                        title: "Hành động",
+                        data: null,
+                        width: "120px",
+                        render: function (data, type, row) {
+                            @if (canEdit)
+                            {
+                                @:return `
+                                @:<div class="d-flex gap-2">
+                                @:    <button class="btn btn-sm btn-primary" onclick="GetFormShowcaseSchedule('${row.id}')" title="Sửa">
+                                @:        <i class="ri-edit-line"></i>
+                                @:    </button>
+                                @:    <button class="btn btn-sm btn-danger" onclick="DeleteShowcaseSchedule('${row.id}')" title="Xóa">
+                                @:        <i class="ri-delete-bin-line"></i>
+                                @:    </button>
+                                @:</div>`;
+                            }
+                            else
+                            {
+                                @:return `<span class="text-muted">Không có quyền</span>`;
+                            }
+                        }
+                    }
+                ],
+                ajax: function (data, callback, settings) {
+                    try {
+                        const page = Math.floor(data.start / data.length) + 1;
+                        const keyword = $('#search').val();
+                        const groupId = $('#filter-group').val();
+                        const status = $('#filter-status').val();
+                        const isPublic = $('#filter-public').val();
+                        const startDate = $('#filter-start-date').val();
+                        const endDate = $('#filter-end-date').val();
+
+                        // CRITICAL: Pass data.draw to GetShowcaseSchedules for proper DataTable refresh
+                        GetShowcaseSchedules(page, data.length, keyword, groupId, status, isPublic, startDate, endDate, data.draw, callback);
+                    } catch (error) {
+                        console.error('Error in DataTable ajax function:', error);
+                        callback({
+                            draw: data.draw || 1,
+                            recordsTotal: 0,
+                            recordsFiltered: 0,
+                            data: []
+                        });
+                    }
+                }
+            });
+        }
+
+        // Get showcase schedules
+        // CRITICAL: draw parameter is required for DataTable to accept the response
+        function GetShowcaseSchedules(page, pageSize, keyword, groupId, status, isPublic, startDate, endDate, draw, callback) {
+            console.log('GetShowcaseSchedules called with draw:', draw, 'page:', page);
+
+            // Build query parameters
+            const params = {
+                page: page,
+                pageSize: pageSize
+            };
+            
+            // Add keyword if provided
+            if (keyword && keyword.trim()) {
+                params.keyword = keyword.trim();
+            }
+            
+            // Add groupId if provided
+            if (groupId) {
+                params.groupId = groupId;
+            }
+            
+            // Add status if provided
+            if (status) {
+                params.status = status;
+            }
+
+            // Add isPublic if provided
+            if (isPublic) {
+                params.isPublic = isPublic === 'true';
+            }
+
+            // Add startDate if provided
+            if (startDate && startDate.trim()) {
+                params.startDate = startDate.trim();
+            }
+            
+            // Add endDate if provided
+            if (endDate && endDate.trim()) {
+                params.endDate = endDate.trim();
+            }
+
+            // Add cache busting parameter to ensure fresh data
+            params._t = new Date().getTime();
+
+            console.log('Fetching showcase schedules with params:', params);
+
+            $.ajax({
+                url: '/api/Showcase/GetPage',
+                type: 'GET',
+                data: params,
+                cache: false, // Disable jQuery caching
+                success: function (response) {
+                    console.log('API response received:', response);
+
+                    // Check if response has Code property (API response format)
+                    if (response.code === 0 && response.items) {
+                        // Map response data to DataTable format
+                        const formattedData = response.items.map((item) => {
+                            // Ensure dates are properly formatted
+                            let startDate = item.startDate;
+                            let endDate = item.endDate;
+
+                            // If dates are strings, ensure they're valid ISO format
+                            if (typeof startDate === 'string') {
+                                // Parse and validate
+                                const parsed = moment(startDate);
+                                startDate = parsed.isValid() ? startDate : null;
+                            }
+                            if (typeof endDate === 'string') {
+                                const parsed = moment(endDate);
+                                endDate = parsed.isValid() ? endDate : null;
+                            }
+
+                            return {
+                                id: item.id,
+                                topic: item.title || '',
+                                speakerName: item.membershipName || '',
+                                speakerAvatar: item.memberShipAvatar || '',
+                                groupName: item.groupName || '',
+                                startTime: startDate,
+                                endTime: endDate,
+                                location: item.location || '',
+                                isPublic: item.isPublic || false,
+                                status: item.status || 1
+                            };
+                        });
+
+                        console.log('Calling callback with draw:', draw, 'records:', formattedData.length);
+                        callback({
+                            draw: draw, // CRITICAL: Use the draw parameter from DataTable
+                            recordsTotal: response.totalItems || 0,
+                            recordsFiltered: response.totalItems || 0,
+                            data: formattedData
+                        });
+                    } else if (response.items) {
+                        // Fallback: direct PagedResult format
+                        const formattedData = response.items.map((item) => {
+                            // Ensure dates are properly formatted
+                            let startDate = item.startDate;
+                            let endDate = item.endDate;
+
+                            // If dates are strings, ensure they're valid ISO format
+                            if (typeof startDate === 'string') {
+                                const parsed = moment(startDate);
+                                startDate = parsed.isValid() ? startDate : null;
+                            }
+                            if (typeof endDate === 'string') {
+                                const parsed = moment(endDate);
+                                endDate = parsed.isValid() ? endDate : null;
+                            }
+
+                            return {
+                                id: item.id,
+                                topic: item.title || '',
+                                speakerName: item.membershipName || '',
+                                speakerAvatar: item.memberShipAvatar || '',
+                                groupName: item.groupName || '',
+                                startTime: startDate,
+                                endTime: endDate,
+                                location: item.location || '',
+                                isPublic: item.isPublic || false,
+                                status: item.status || 1
+                            };
+                        });
+
+                        console.log('Calling callback with draw:', draw, 'records:', formattedData.length);
+                        callback({
+                            draw: draw, // CRITICAL: Use the draw parameter from DataTable
+                            recordsTotal: response.totalItems || 0,
+                            recordsFiltered: response.totalItems || 0,
+                            data: formattedData
+                        });
+                    } else {
+                        // Empty response
+                        console.log('Empty response, calling callback with draw:', draw);
+                        callback({
+                            draw: draw, // CRITICAL: Use the draw parameter from DataTable
+                            recordsTotal: 0,
+                            recordsFiltered: 0,
+                            data: []
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading showcase schedules:', error);
+                    console.error('Response:', xhr.responseJSON);
+
+                    // Always call callback to clear DataTable's processing state
+                    console.log('Error occurred, calling callback with draw:', draw);
+                    callback({
+                        draw: draw, // CRITICAL: Use the draw parameter from DataTable
+                        recordsTotal: 0,
+                        recordsFiltered: 0,
+                        data: []
+                    });
+
+                    // Don't show error alert on every reload, only log it
+                    // This prevents annoying popups during auto-refresh
+                },
+                complete: function() {
+                    // Ensure DataTable processing indicator is hidden
+                    // This is a safety net in case callback wasn't called properly
+                    try {
+                        if (window.showcaseTable) {
+                            // Force hide processing indicator
+                            window.showcaseTable.processing(false);
+                        }
+                    } catch (e) {
+                        console.error('Error hiding processing indicator:', e);
+                    }
+                }
+            });
+        }
+
+        // Reload table with optional callback
+        function onClickReloadTable(callback) {
+            console.log('onClickReloadTable called, showcaseTable exists:', !!window.showcaseTable);
+
+            if (window.showcaseTable) {
+                try {
+                    // Reload data from server without resetting paging
+                    // This will trigger the ajax function with a new draw number
+                    console.log('Calling ajax.reload()...');
+                    window.showcaseTable.ajax.reload(function(json) {
+                        // Callback after reload completes
+                        console.log('Table reloaded successfully, received data:', json);
+                        console.log('Number of records:', json?.data?.length || 0);
+
+                        // Execute callback if provided
+                        if (typeof callback === 'function') {
+                            console.log('Executing user callback after reload');
+                            callback();
+                        }
+                    }, false); // false = keep current page, true = reset to first page
+                } catch (error) {
+                    console.error('Error reloading table:', error);
+                    // If reload fails, try to reinitialize
+                    if (window.showcaseTable) {
+                        window.showcaseTable.destroy();
+                    }
+                    InitializeDataTable();
+                    // Execute callback even on error
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            } else {
+                console.warn('showcaseTable not initialized, initializing now...');
+                // If table doesn't exist, reinitialize it
+                InitializeDataTable();
+                // Execute callback
+                if (typeof callback === 'function') {
+                    callback();
+                }
+            }
+        }
+
+        // Get form for create/edit
+        function GetFormShowcaseSchedule(id = null) {
+            const url = id
+                ? `/Showcase/Detail/${id}`
+                : '/Showcase/Create';
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (data) {
+                    $("#modal-content").html(data);
+                    $("#modal-showcaseschedule").modal("show");
+                    ShowcaseScheduleModal.init(id);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading form:', error);
+                    Swal.fire('Lỗi', 'Không thể tải form', 'error');
+                }
+            });
+        }
+
+        // Save or update showcase schedule
+        function HandleSaveOrUpdate(id) {
+            // Normalize id: if it's 'null' string, empty string, or null, treat as create
+            if (!id || id === 'null' || id === '') {
+                id = null;
+            }
+            // Get form values
+            const groupId = $('#groupId').val();
+            const speakerId = $('#speakerId').val();
+            const startTime = $('#startTime').val();
+            const endTime = $('#endTime').val();
+            const location = $('#location').val();
+            const topic = $('#topic').val();
+            const description = $('#description').val() || '';
+            const isPublic = $('#isPublic').val() === 'true';
+
+            // Validate
+            if (!groupId) {
+                Swal.fire('Cảnh báo', 'Vui lòng chọn nhóm', 'warning');
+                return;
+            }
+            if (!speakerId) {
+                Swal.fire('Cảnh báo', 'Vui lòng chọn diễn giả', 'warning');
+                return;
+            }
+            if (!startTime) {
+                Swal.fire('Cảnh báo', 'Vui lòng chọn thời gian bắt đầu', 'warning');
+                return;
+            }
+            if (!endTime) {
+                Swal.fire('Cảnh báo', 'Vui lòng chọn thời gian kết thúc', 'warning');
+                return;
+            }
+            if (!location) {
+                Swal.fire('Cảnh báo', 'Vui lòng nhập địa điểm', 'warning');
+                return;
+            }
+            if (!topic) {
+                Swal.fire('Cảnh báo', 'Vui lòng nhập chủ đề', 'warning');
+                return;
+            }
+
+            // Validate time range
+            const start = new Date(startTime);
+            const end = new Date(endTime);
+            if (end <= start) {
+                Swal.fire('Cảnh báo', 'Thời gian kết thúc phải sau thời gian bắt đầu', 'warning');
+                return;
+            }
+
+            // Get GroupName and MembershipName from selected options
+            const selectedGroupOption = $('#groupId option:selected');
+            const groupName = selectedGroupOption.data('group-name') || selectedGroupOption.text() || '';
+            
+            const selectedSpeakerOption = $('#speakerId option:selected');
+            const membershipName = selectedSpeakerOption.text() || '';
+            const membershipAvatar = selectedSpeakerOption.data('avatar') || null;
+            
+            // Also store membership name in data attribute when loading speakers
+            const membershipId = selectedSpeakerOption.attr('data-member-id') || speakerId;
+
+            // Prepare request data - convert dates to ISO format
+            const startDateObj = new Date(startTime);
+            const endDateObj = new Date(endTime);
+            
+            const requestData = {
+                groupId: groupId,
+                groupName: groupName,
+                title: topic,
+                description: description || null,
+                membershipId: speakerId, // SpeakerId is UserZaloId
+                membershipName: membershipName,
+                startDate: startDateObj.toISOString(),
+                endDate: endDateObj.toISOString(),
+                location: location,
+                isPublic: isPublic
+            };
+            
+            // Only add avatar if it exists and is not empty
+            if (membershipAvatar && membershipAvatar.trim() !== '') {
+                requestData.memberShipAvatar = membershipAvatar;
+            } else {
+                requestData.memberShipAvatar = null;
+            }
+
+            const url = id
+                ? `/api/Showcase/${id}`
+                : '/api/Showcase/Create';
+            const method = id ? 'PUT' : 'POST';
+
+            // Show loading
+            @* Swal.fire({
+                title: 'Đang xử lý...',
+                text: 'Vui lòng chờ',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            }); *@
+
+            $.ajax({
+                url: url,
+                type: method,
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                success: function (response) {
+                    // Close loading immediately
+                    Swal.close();
+
+                    if (response.code === 0 || response.success) {
+                        const successMessage = id
+                            ? (response.message || 'Cập nhật lịch showcase thành công')
+                            : (response.message || 'Tạo lịch showcase thành công');
+
+                        // Hide modal first
+                        $("#modal-showcaseschedule").modal("hide");
+
+                        // Show loading while reloading table
+                        @* Swal.fire({
+                            title: 'Đang tải lại dữ liệu...',
+                            text: 'Vui lòng chờ',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        }); *@
+
+                        // Reload table with callback to hide loading when done
+                        onClickReloadTable(function() {
+                            // Hide loading after table reload completes
+                            Swal.close();
+
+                            // Show success message
+                            Swal.fire({
+                                title: 'Thành công',
+                                text: successMessage,
+                                icon: 'success',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        });
+                    } else {
+                        // Response indicates failure
+                        Swal.fire('Lỗi', response.message || 'Có lỗi xảy ra khi lưu', 'error');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    // Close loading immediately on error
+                    Swal.close();
+
+                    console.error('Error saving:', error);
+                    console.error('Response:', xhr.responseJSON);
+
+                    const message = xhr.responseJSON?.message || xhr.responseJSON?.error || 'Có lỗi xảy ra khi lưu';
+                    Swal.fire('Lỗi', message, 'error');
+                },
+                @* complete: function() {
+                    // Ensure Swal is closed in all cases (safety net)
+                    // This runs after both success and error callbacks
+                    // Use setTimeout to avoid closing success messages prematurely
+                    setTimeout(function() {
+                        // Only close if it's still showing the "Đang xử lý..." message
+                        const swalTitle = $('.swal2-title').text();
+                        if (swalTitle === 'Đang xử lý...' || swalTitle === 'Đang tải lại dữ liệu...') {
+                            Swal.close();
+                        }
+                    }, 100);
+                } *@
+            });
+        }
+
+        // Delete showcase schedule
+        function DeleteShowcaseSchedule(id) {
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                text: 'Bạn có chắc chắn muốn xóa lịch showcase này?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    @* Swal.fire({
+                        title: 'Đang xóa...',
+                        text: 'Vui lòng chờ',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        } *@
+                    @* }); *@
+
+                    $.ajax({
+                        url: `/api/Showcase/${id}`,
+                        type: 'DELETE',
+                        success: function (response) {
+                            Swal.close();
+
+                            if (response.code === 0 || response.success) {
+                                // Show loading while reloading table
+                                @* Swal.fire({
+                                    title: 'Đang tải lại dữ liệu...',
+                                    text: 'Vui lòng chờ',
+                                    allowOutsideClick: false,
+                                    didOpen: () => {
+                                        Swal.showLoading();
+                                    } *@
+                                @* }); *@
+
+                                // Reload table with callback
+                                onClickReloadTable(function() {
+                                    Swal.close();
+                                    Swal.fire({
+                                        title: 'Thành công',
+                                        text: response.message || 'Xóa lịch showcase thành công',
+                                        icon: 'success',
+                                        timer: 2000,
+                                        showConfirmButton: false
+                                    });
+                                });
+                            } else {
+                                Swal.fire('Lỗi', response.message || 'Có lỗi xảy ra khi xóa', 'error');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            Swal.close();
+                            console.error('Error deleting:', error);
+                            console.error('Response:', xhr.responseJSON);
+                            const message = xhr.responseJSON?.message || xhr.responseJSON?.error || 'Có lỗi xảy ra khi xóa';
+                            Swal.fire('Lỗi', message, 'error');
+                        },
+                        complete: function() {
+                            // Safety net to ensure loading is closed
+                            @* setTimeout(function() {
+                                const swalTitle = $('.swal2-title').text();
+                                if (swalTitle === 'Đang xóa...' || swalTitle === 'Đang tải lại dữ liệu...') {
+                                    Swal.close();
+                                }
+                            }, 100); *@
+                        }
+                    });
+                }
+            });
+        }
+
+        // Modal handler object
+        var ShowcaseScheduleModal = {
+            init: function(id) {
+                this.loadGroups();
+                this.setupEventHandlers();
+                if (id) {
+                    this.loadScheduleData(id);
+                }
+            },
+
+            loadGroups: function() {
+                // Get current selected group (if editing)
+                const currentGroupId = $('#groupId').val();
+                const currentGroupName = $('#groupId option:selected').text();
+                
+                $.ajax({
+                    url: '/Groups/GetAll',
+                    type: 'GET',
+                    success: function (response) {
+                        if (response.success && response.data) {
+                            // Preserve current selection if editing
+                            $('#groupId').empty().append('<option value="">-- Chọn nhóm --</option>');
+                            
+                            response.data.forEach(function (group) {
+                                // Store group name in data attribute for later use
+                                const isSelected = currentGroupId && group.id === currentGroupId;
+                                $('#groupId').append(`<option value="${group.id}" data-group-name="${group.name}" ${isSelected ? 'selected' : ''}>${group.name}</option>`);
+                            });
+                            
+                            // If editing and group exists in list, ensure it's selected
+                            if (currentGroupId && !$('#groupId option[value="' + currentGroupId + '"]').length) {
+                                $('#groupId').append(`<option value="${currentGroupId}" data-group-name="${currentGroupName}" selected>${currentGroupName}</option>`);
+                            }
+                            
+                            $('#groupId').select2({
+                                theme: 'bootstrap-5',
+                                dropdownParent: $('#modal-showcaseschedule'),
+                                width: '100%'
+                            });
+                            
+                            // If editing, trigger change to load speakers
+                            if (currentGroupId) {
+                                $('#groupId').trigger('change');
+                            }
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading groups:', error);
+                    }
+                });
+            },
+
+            setupEventHandlers: function() {
+                // When group changes, load speakers
+                $('#groupId').off('change').on('change', function() {
+                    const groupId = $(this).val();
+                    if (groupId) {
+                        ShowcaseScheduleModal.loadSpeakers(groupId);
+                    } else {
+                        $('#speakerId').empty().append('<option value="">-- Chọn nhóm trước --</option>');
+                    }
+                });
+
+                // Initialize Select2 for speaker dropdown (will be re-initialized when loading speakers)
+                if ($('#speakerId').hasClass('select2-hidden-accessible')) {
+                    $('#speakerId').select2('destroy');
+                }
+                $('#speakerId').select2({
+                    theme: 'bootstrap-5',
+                    dropdownParent: $('#modal-showcaseschedule'),
+                    width: '100%',
+                    placeholder: '-- Chọn nhóm trước --'
+                });
+
+                // Character counter for topic
+                $('#topic').on('input', function() {
+                    const length = $(this).val().length;
+                    $('#topic-counter').text(`${length}/500`);
+                });
+            },
+
+            loadSpeakers: function(groupId) {
+                if (!groupId) {
+                    $('#speakerId').empty().append('<option value="">-- Chọn nhóm trước --</option>');
+                    return;
+                }
+
+                // Show loading state
+                $('#speakerId').empty().append('<option value="">Đang tải...</option>');
+                $('#speakerId').prop('disabled', true);
+
+                $.ajax({
+                    url: '/api/memberships/get-membership-by-group',
+                    type: 'GET',
+                    data: { groupId: groupId },
+                    success: function (response) {
+                        $('#speakerId').prop('disabled', false);
+                        
+                        // Parse response format: { success: true, message: "...", data: { message: "...", membership: [...] } }
+                        // API already returns only approved members, so no need to filter again
+                        if (response.success && response.data && response.data.membership && Array.isArray(response.data.membership)) {
+                            const approvedMembers = response.data.membership;
+                            
+                            if (approvedMembers.length > 0) {
+                                $('#speakerId').empty().append('<option value="">-- Chọn diễn giả --</option>');
+                                
+                                approvedMembers.forEach(function (member) {
+                                    const avatarUrl = member.zaloAvatar || '/images/default-avatar.png';
+                                    const memberName = member.memberName || 'N/A';
+                                    const userZaloId = member.userZaloId || '';
+                                    
+                                    // Create option with data attributes for avatar
+                                    const option = $('<option></option>')
+                                        .attr('value', userZaloId)
+                                        .attr('data-avatar', avatarUrl)
+                                        .attr('data-member-id', member.id)
+                                        .text(memberName);
+                                    
+                                    $('#speakerId').append(option);
+                                });
+                                
+                                // Re-initialize Select2 with custom template for avatar
+                                $('#speakerId').select2('destroy');
+                                $('#speakerId').select2({
+                                    theme: 'bootstrap-5',
+                                    dropdownParent: $('#modal-showcaseschedule'),
+                                    width: '100%',
+                                    placeholder: '-- Chọn diễn giả --',
+                                    templateResult: function(data) {
+                                        if (!data.id) {
+                                            return data.text;
+                                        }
+                                        const avatar = $(data.element).data('avatar') || '/images/default-avatar.png';
+                                        const name = data.text;
+                                        return $('<span class="d-flex align-items-center"><img src="' + avatar + '" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;" onerror="this.src=\'/images/default-avatar.png\'"><span>' + name + '</span></span>');
+                                    },
+                                    templateSelection: function(data) {
+                                        if (!data.id) {
+                                            return data.text;
+                                        }
+                                        const avatar = $(data.element).data('avatar') || '/images/default-avatar.png';
+                                        const name = data.text;
+                                        return $('<span class="d-flex align-items-center"><img src="' + avatar + '" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;" onerror="this.src=\'/images/default-avatar.png\'"><span>' + name + '</span></span>');
+                                    },
+                                    escapeMarkup: function(m) {
+                                        return m;
+                                    }
+                                });
+                                
+                                // Trigger change event to update preview after Select2 is initialized
+                                // Select2 will automatically trigger the change event on the original select element
+                                // which will call updateSpeakerPreview function from _ShowcaseSchedule.cshtml
+                            } else {
+                                $('#speakerId').empty().append('<option value="">-- Không có diễn giả nào được duyệt --</option>');
+                                $('#speakerId').select2({
+                                    theme: 'bootstrap-5',
+                                    dropdownParent: $('#modal-showcaseschedule'),
+                                    width: '100%',
+                                    placeholder: '-- Không có diễn giả nào --'
+                                });
+                            }
+                        } else {
+                            $('#speakerId').empty().append('<option value="">-- Không có diễn giả nào --</option>');
+                            $('#speakerId').select2({
+                                theme: 'bootstrap-5',
+                                dropdownParent: $('#modal-showcaseschedule'),
+                                width: '100%',
+                                placeholder: '-- Không có diễn giả nào --'
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading speakers:', error);
+                        $('#speakerId').prop('disabled', false);
+                        $('#speakerId').empty().append('<option value="">-- Lỗi khi tải danh sách --</option>');
+                        $('#speakerId').select2({
+                            theme: 'bootstrap-5',
+                            dropdownParent: $('#modal-showcaseschedule'),
+                            width: '100%'
+                        });
+                        Swal.fire('Lỗi', 'Không thể tải danh sách diễn giả', 'error');
+                    }
+                });
+            },
+
+            loadScheduleData: function(id) {
+                // Data is already loaded from server and populated in the form via Razor
+                // This function is called after modal is shown, so we just need to:
+                // 1. Load groups and set selected group
+                // 2. Load speakers for the selected group and set selected speaker
+                // 3. Initialize Select2 with selected values
+                
+                // Get the selected group and speaker from the form (already set via Razor)
+                const selectedGroupId = $('#groupId').val();
+                const selectedSpeakerId = $('#speakerId').val();
+                
+                if (selectedGroupId) {
+                    // Load speakers for this group
+                    this.loadSpeakers(selectedGroupId);
+                    
+                    // After speakers are loaded, set the selected speaker
+                    setTimeout(() => {
+                        if (selectedSpeakerId) {
+                            $('#speakerId').val(selectedSpeakerId).trigger('change');
+                            
+                            // Update Select2
+                            if ($('#speakerId').hasClass('select2-hidden-accessible')) {
+                                $('#speakerId').select2('destroy');
+                            }
+                            $('#speakerId').select2({
+                                theme: 'bootstrap-5',
+                                dropdownParent: $('#modal-showcaseschedule'),
+                                width: '100%',
+                                placeholder: '-- Chọn diễn giả --',
+                                templateResult: function(data) {
+                                    if (!data.id) {
+                                        return data.text;
+                                    }
+                                    const avatar = $(data.element).data('avatar') || '';
+                                    const name = data.text;
+                                    if (avatar && avatar.trim() !== '') {
+                                        return $('<span class="d-flex align-items-center"><img src="' + avatar + '" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;" onerror="this.style.display=\'none\';"><span>' + name + '</span></span>');
+                                    } else {
+                                        return $('<span>' + name + '</span>');
+                                    }
+                                },
+                                templateSelection: function(data) {
+                                    if (!data.id) {
+                                        return data.text;
+                                    }
+                                    const avatar = $(data.element).data('avatar') || '';
+                                    const name = data.text;
+                                    if (avatar && avatar.trim() !== '') {
+                                        return $('<span class="d-flex align-items-center"><img src="' + avatar + '" class="rounded-circle me-2" style="width: 24px; height: 24px; object-fit: cover;" onerror="this.style.display=\'none\';"><span>' + name + '</span></span>');
+                                    } else {
+                                        return $('<span>' + name + '</span>');
+                                    }
+                                },
+                                escapeMarkup: function(m) {
+                                    return m;
+                                }
+                            });
+                            
+                            // Set selected value again after Select2 is initialized
+                            $('#speakerId').val(selectedSpeakerId).trigger('change');
+                        }
+                    }, 500); // Wait for speakers to load
+                }
+            }
+        };
+    </script>
+}
+

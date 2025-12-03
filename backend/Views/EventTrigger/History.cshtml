@@ -1,0 +1,357 @@
+﻿@{
+    ViewData["Title"] = "Lịch sử gửi tin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Lịch sử gửi tin</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Stats -->
+    <div class="row d-none" id="dashboard-stats">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="text-muted fw-normal mt-0" title="Tổng tin gửi">Tổng tin gửi</h5>
+                            <h3 class="mt-3 mb-3" id="total-sent">0</h3>
+                        </div>
+                        <div class="avatar-sm">
+                            <span class="avatar-title bg-soft-primary rounded">
+                                <i class="fe-mail font-20 text-primary"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="text-muted fw-normal mt-0" title="Thành công">Thành công</h5>
+                            <h3 class="mt-3 mb-3 text-success" id="success-count">0</h3>
+                        </div>
+                        <div class="avatar-sm">
+                            <span class="avatar-title bg-soft-success rounded">
+                                <i class="fe-check-circle font-20 text-success"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="text-muted fw-normal mt-0" title="Thất bại">Thất bại</h5>
+                            <h3 class="mt-3 mb-3 text-danger" id="error-count">0</h3>
+                        </div>
+                        <div class="avatar-sm">
+                            <span class="avatar-title bg-soft-danger rounded">
+                                <i class="fe-x-circle font-20 text-danger"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="text-muted fw-normal mt-0" title="Tỷ lệ thành công">Tỷ lệ thành công</h5>
+                            <h3 class="mt-3 mb-3 text-info" id="success-rate">0%</h3>
+                        </div>
+                        <div class="avatar-sm">
+                            <span class="avatar-title bg-soft-info rounded">
+                                <i class="fe-trending-up font-20 text-info"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="filter-form" class="row g-3 align-items-end">
+                        <div class="col-12 col-md-4">
+                            <label for="keyword" class="form-label mb-1">Từ khóa</label>
+                            <input type="text" class="form-control" id="keyword" name="keyword"
+                                   placeholder="Tìm kiếm tin nhắn, người nhận..." autocomplete="off">
+                        </div>
+
+                        <div class="col-6 col-md-2">
+                            <label for="type-filter" class="form-label mb-1">Loại tin</label>
+                            <select class="form-select" id="type-filter" name="type">
+                                <option value="">Tất cả</option>
+                                <option value="1">Zalo UID</option>
+                                <option value="2">Omni ZNS</option>
+                                <option value="3">Email</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6 col-md-2">
+                            <label for="result-filter" class="form-label mb-1">Trạng thái</label>
+                            <select class="form-select" id="result-filter" name="status">
+                                <option value="">Tất cả</option>
+                                <option value="200">Thành công</option>
+                                <option value="0">Thành công</option>
+                                <option value="error">Lỗi</option>
+                            </select>
+                        </div>
+
+                        <div class="col-6 col-md-2">
+                            <label for="from-date" class="form-label mb-1">Từ ngày</label>
+                            <input type="date" class="form-control" id="from-date" name="fromDate">
+                        </div>
+
+                        <div class="col-6 col-md-2">
+                            <label for="to-date" class="form-label mb-1">Đến ngày</label>
+                            <input type="date" class="form-control" id="to-date" name="toDate">
+                        </div>
+
+                        <div class="col-12 col-md-auto">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="searchLogs()">
+                                    <i class="ri-search-line" aria-hidden="true"></i>
+                                    <span class="d-none d-md-inline">Lọc</span>
+                                </button>
+                                <button type="reset" class="btn btn-outline-secondary" id="btn-reset" onclick="resetFilters()">
+                                    <i class="ri-refresh-line" aria-hidden="true"></i>
+                                    <span class="d-none d-md-inline">Đặt lại</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="header-title">Danh sách log gửi tin</h4>
+                        <button class="btn btn-success btn-sm d-none" onclick="exportData()">
+                            <i class="fe-download"></i> Xuất Excel
+                        </button>
+                    </div>
+                    <table id="logs-table" class="table table-striped dt-responsive nowrap w-100">
+                        <thead>
+                            <tr>
+                                <th>Loại tin</th>
+                                <th>Tin nhắn</th>
+                                <th>Người nhận</th>
+                                <th>Trạng thái</th>
+                                <th>Thời gian</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Log Detail Modal -->
+<div class="modal fade" id="logDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="log-detail-content">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let logsTable;
+
+        $(document).ready(function () {
+            setDefaultDateRange();
+            initializeDataTable();
+            loadDashboardStats();
+        });
+
+        function setDefaultDateRange() {
+            // Set default date range to last 7 days
+            const today = new Date();
+            const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+            $('#from-date').val(moment().startOf('month').format('YYYY-MM-DD'));
+            $('#to-date').val(moment().endOf('month').format('YYYY-MM-DD'));
+        }
+
+        function initializeDataTable() {
+            logsTable = $('#logs-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ordering: false,
+                searching: false,
+                ajax: {
+                    url: '@Url.Action("GetEventLogs")',
+                    data: function (d) {
+                        d.keyword = $('#keyword').val();
+                        d.type = $('#type-filter').val();
+                        d.resultCode = $('#result-filter').val();
+                        d.fromDate = $('#from-date').val();
+                        d.toDate = $('#to-date').val();
+                    }
+                },
+                columns: [
+                    {
+                        data: 'type',
+                        width: '10%',
+                        render: function (data) {
+                            switch (data) {
+                                case '1': return '<span class="badge bg-primary">Zalo UID</span>';
+                                case '2': return '<span class="badge bg-success">Omni ZNS</span>';
+                                case '3': return '<span class="badge bg-warning">Http Request</span>';
+                                default: return '<span class="badge bg-secondary">N/A</span>';
+                            }
+                        }
+                    },
+                    {
+                        data: 'message',
+                        width: '30%',
+                        render: function (data) {
+                            if (!data) return '';
+                            return data.length > 80 ?
+                                '<span title="' + data + '">' + data.substring(0, 80) + '...</span>' :
+                                data;
+                        }
+                    },
+                    {
+                        data: 'recipient',
+                        width: '15%'
+                    },
+                    {
+                        data: 'resultCode',
+                        width: '10%',
+                        render: function (data) {
+                            if (data === '200' || data === '0' || data === "1") {
+                                return '<span class="badge bg-success">Thành công</span>';
+                            } else {
+                                return '<span class="badge bg-danger">Lỗi (' + data + ')</span>';
+                            }
+                        }
+                    },
+                    {
+                        data: 'createdDate',
+                        width: '15%',
+                        render: function (data) {
+                            return new Date(data).toLocaleString('vi-VN');
+                        }
+                    },
+                    {
+                        data: null,
+                        width: '10%',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            return '<button class="btn btn-sm btn-outline-primary" onclick="viewLogDetail(\'' + row.id + '\')">Chi tiết</button>';
+                        }
+                    }
+                ],
+                order: [[4, 'desc']],
+                pageLength: 10,
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+                }
+            });
+        }
+
+        function searchLogs() {
+            logsTable.ajax.reload();
+            loadDashboardStats();
+        }
+
+        function loadDashboardStats() {
+            $.ajax({
+                url: '@Url.Action("GetDashboardStats")',
+                data: {
+                    fromDate: $('#from-date').val(),
+                    toDate: $('#to-date').val(),
+                    keyword: $('#keyword').val(),
+                    type: $('#type-filter').val(),
+                    resultCode: $('#result-filter').val()
+                },
+                success: function (data) {
+                    $('#total-sent').text(data.totalSent.toLocaleString());
+                    $('#success-count').text(data.successCount.toLocaleString());
+                    $('#error-count').text(data.errorCount.toLocaleString());
+                    $('#success-rate').text(data.successRate + '%');
+                },
+                error: function () {
+                    console.error('Không thể tải thống kê dashboard');
+                }
+            });
+        }
+
+        function viewLogDetail(id) {
+            $.ajax({
+                url: '@Url.Action("ViewLogDetail")',
+                data: { id: id },
+                success: function (data) {
+                    $('#log-detail-content').html(data);
+                    $('#logDetailModal').modal('show');
+                }
+            });
+        }
+
+        function resetFilters() {
+            $('#filter-form')[0].reset();
+            setDefaultDateRange();
+            searchLogs();
+        }
+
+        function exportData() {
+            const params = new URLSearchParams({
+                keyword: $('#keyword').val(),
+                type: $('#type-filter').val(),
+                resultCode: $('#result-filter').val(),
+                fromDate: $('#from-date').val(),
+                toDate: $('#to-date').val()
+            });
+
+            window.open('@Url.Action("ExportEventLogs")?' + params.toString(), '_blank');
+        }
+
+        // Auto search when pressing Enter
+        $('#keyword').on('keypress', function (e) {
+            if (e.which === 13) {
+                searchLogs();
+            }
+        });
+
+        $('#filter-form').on('submit', function (e) {
+            e.preventDefault();
+            searchLogs();
+        });
+    </script>
+}

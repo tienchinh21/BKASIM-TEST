@@ -1,0 +1,96 @@
+.input_form {
+  width: 70%;
+  height: 32px;
+  margin-bottom: 10px;
+}
+
+.input_label {
+  font-weight: 600;
+  width: 25%;
+}
+.switch-theme,
+.switch-theme:focus,
+.switch-theme:active {
+  position: fixed !important;
+  left: 16px;
+  bottom: 20px;
+  z-index: 999;
+  background: #141415;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.section-container {
+  width: unset !important;
+  min-height: unset !important;
+  padding: 16px;
+  margin: 16px;
+  background: #ffffff;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+.slide-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.truncate {
+  display: block;
+  max-height: 4.5em;
+  overflow: hidden;
+  position: relative;
+  line-height: 1.5em;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 1) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 1) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 1) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.custom-search .zaui-btn-icon {
+  color: red !important; /* Đổi màu icon thành đỏ */
+}
+
+.item-modal-sheet-share {
+  width: 100%;
+  height: 50px;
+  border-bottom: 2px solid #eeeeee;
+  align-items: center;
+  padding-bottom: 6px;
+  padding-top: 6px;
+  font-size: 18px;
+}
+
+.news-title-home {
+  font-weight: bold;
+  color: #000;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.title-new {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  white-space: normal;
+}

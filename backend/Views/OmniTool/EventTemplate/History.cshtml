@@ -1,0 +1,303 @@
+﻿﻿@{
+    ViewData["Title"] = "Nhật kí gửi tin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h4 class="card-title mb-0">Nhật kí gửi tin</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilters" aria-expanded="true">
+                        <i class="ri-filter-3-line me-1"></i> Bộ lọc
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="resetFilters()">
+                        <i class="ri-refresh-line me-1"></i> Reset
+                    </button>
+                </div>
+            </div>
+            <div class="collapse show" id="collapseFilters">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input id="search" type="text" class="form-control" placeholder="Tìm kiếm">
+                                <button class="btn btn-primary">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <label class="form-label">Loại tin</label>
+                            <select id="type-filter" class="form-select">
+                                <option value="">Tất cả loại tin</option>
+                                <option value="omni">OMNI</option>
+                                <option value="uid">UID</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <select id="status-filter" class="form-select">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="success">Thành công</option>
+                                <option value="error">Lỗi</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">Thời gian gửi tin</label>
+                            <div class="input-group">
+                                <input id="date-from" type="date" class="form-control" onchange="table.ajax.reload()" />
+                                <span class="input-group-text"><i class="ri-arrow-right-line"></i></span>
+                                <input id="date-to" type="date" class="form-control" onchange="table.ajax.reload()" />
+                            </div>
+                        </div>
+
+                        <!-- Export Button -->
+                        <div class="col-12 text-end">
+                            <button class="btn btn-primary" onclick="table.ajax.reload()">
+                                <i class="ri-filter-line me-1"></i>
+                                Lọc dữ liệu
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="exportData()">
+                                <i class="ri-file-excel-line me-1"></i>Xuất Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div id="table-log" class="table-responsive rounded mb-3">
+            <table id="list-log" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .multi-line-truncate {
+        display: -webkit-box;
+        max-width: 100%;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .json-details {
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        font-family: monospace;
+    }
+
+    .status-code {
+        font-weight: bold;
+    }
+
+    .status-code.success {
+        color: #198754;
+    }
+
+    .status-code.error {
+        color: #dc3545;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Thiết lập mặc định: tháng hiện tại
+            setCurrentMonthAsDefault();
+
+            GetLogsHistory();
+            $('#search').on('input', search);
+        });
+
+        function setCurrentMonthAsDefault() {
+            // Sử dụng moment để thiết lập ngày đầu tháng và cuối tháng hiện tại
+            const firstDay = moment().startOf('month').format('YYYY-MM-DD');
+            const lastDay = moment().endOf('month').format('YYYY-MM-DD');
+
+            $('#date-from').val(firstDay);
+            $('#date-to').val(lastDay);
+        }
+
+        function resetFilters() {
+            $("#search").val('');
+            $("#type-filter").val('');
+            $("#status-filter").val('');
+            setCurrentMonthAsDefault();
+            table.ajax.reload();
+        }
+
+        function GetLogsHistory() {
+            table = new DataTable("#list-log", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = Math.floor(data.start / data.length) + 1;
+                    const pageSize = data.length;
+                    const keyword = $("#search").val().trim();
+                    const type = $("#type-filter").val();
+                    const status = $("#status-filter").val();
+                    const dateFrom = $("#date-from").val();
+                    const dateTo = $("#date-to").val();
+
+                    // Gọi API để lấy danh sách log
+                    $.ajax({
+                        url: '@Url.Action("GetMessageHistory", "OmniTools")',
+                        type: 'GET',
+                        contentType: "application/json",
+                        data: {
+                            page: page,
+                            pagesize: pageSize,
+                            keyword: keyword,
+                            type: type,
+                            status: status,
+                            fromDate: dateFrom,
+                            toDate: dateTo
+                        },
+                        success: function (response) {
+                            const formattedData = response.data.map((item, index) => ({
+                                index: data.start + index + 1,
+                                recipient: item.recipient || "-",
+                                type: item.type?.toUpperCase() || "-",
+                                resultCode: `<span class="status-code ${isSuccessCode(item.type, item.resultCode) ? 'success' : 'error'}">${item.resultCode || "-"}</span>`,
+                                request: `<div class="multi-line-truncate">Request: ${item.requestBody}</div>`,
+                                response: `<div class="multi-line-truncate">${item.responseBody}</div>`,
+                                createdDate: FormatDateTime(item.createdDate),
+                                action: `<button class="btn btn-sm btn-info" onclick="viewDetails('${item.id}')"><i class="ri-eye-line mx-0"></i></button>`
+                            }));
+
+                            setTimeout(() => {
+                                callback({
+                                    draw: data.draw,
+                                    recordsTotal: response.totalPages * pageSize,
+                                    recordsFiltered: response.totalCount,
+                                    data: formattedData
+                                });
+                            }, 400);
+                        },
+                        error: function (xhr) {
+                            console.error("Failed to fetch logs: ", xhr);
+                            $("#spinner").html('');
+                            AlertResponse("Đã có lỗi xảy ra khi tải dữ liệu!", "error");
+                        }
+                    });
+                },
+                columns: [
+                    { title: "#", data: "index", className: "text-center", width: "5%" },
+                    { title: "Người nhận", data: "recipient", className: "text-center", width: "12%" },
+                    { title: "Loại tin", data: "type", className: "text-center", width: "8%" },
+                    { title: "Result Code", data: "resultCode", className: "text-center", width: "10%" },
+                    { title: "RequestBody", data: "request", className: "text-left", width: "35%" },
+                    { title: "ResponseBody", data: "response", className: "text-left", width: "45%" },
+                    { title: "Thời gian gửi", data: "createdDate", className: "text-center", width: "15%" },
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": `<p class="text-center m-0">Không tìm thấy kết quả</p>`,
+                     "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng dữ liệu",
+                    "emptyTable": `<p class="text-center m-0">Không có dữ liệu</p>`,
+                    "infoFiltered": ""
+                }
+            });
+
+            $(table.table().header()).addClass('light light-data text-header-sm');
+        }
+
+        function isSuccessCode(type, code) {
+            if (!code) return false;
+            const numCode = parseInt(code);
+            const expectedCode = (type === "omni") ? 1 : 0;
+            return numCode === expectedCode;
+        }
+
+        function exportData() {
+            // Lấy các tham số từ bộ lọc
+            const keyword = $("#search").val().trim();
+            const type = $("#type-filter").val();
+            const status = $("#status-filter").val();
+            const dateFrom = $("#date-from").val();
+            const dateTo = $("#date-to").val();
+
+            // Gọi API để export dữ liệu
+            $.ajax({
+                url: '@Url.Action("ExportMessageHistory", "OmniTools")',
+                type: 'GET',
+                data: {
+                    keyword: keyword,
+                    type: type,
+                    status: status,
+                    fromDate: dateFrom,
+                    toDate: dateTo
+                },
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function (blob) {
+                    $("#spinner").html('');
+                    // Tạo link tải file
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `message-history-${moment().format('YYYY-MM-DD')}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                },
+                error: function (xhr) {
+                    $("#spinner").html('');
+                    AlertResponse("Đã có lỗi xảy ra khi export dữ liệu!", "error");
+                    console.error('Export failed:', xhr);
+                }
+            });
+        }
+
+        // Tìm và thay thế hàm exportData() hiện có hoặc thêm nếu chưa có
+        function exportData() {
+            // Lấy các tham số từ bộ lọc
+            const keyword = $("#search").val().trim();
+            const type = $("#type-filter").val();
+            const status = $("#status-filter").val();
+            const dateFrom = $("#date-from").val();
+            const dateTo = $("#date-to").val();
+
+            // Tạo URL và tham số
+            let url = '@Url.Action("ExportMessageHistory", "OmniTools")';
+            url += `?keyword=${encodeURIComponent(keyword)}`;
+            url += `&type=${encodeURIComponent(type)}`;
+            url += `&status=${encodeURIComponent(status)}`;
+            url += `&fromDate=${encodeURIComponent(dateFrom)}`;
+            url += `&toDate=${encodeURIComponent(dateTo)}`;
+
+            // Tạo một iframe ẩn để tải file
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = url;
+            document.body.appendChild(iframe);
+
+            // Loại bỏ spinner sau một khoảng thời gian
+            setTimeout(() => {
+                $("#spinner").html('');
+                document.body.removeChild(iframe);
+            }, 3000);
+        }
+    </script>
+}

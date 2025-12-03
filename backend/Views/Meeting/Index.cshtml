@@ -1,0 +1,501 @@
+@using MiniAppGIBA.Base.Dependencies.Extensions
+@{
+    var canEdit = User.IsEditable();
+    ViewData["Title"] = "Quản lý Lịch Họp";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản lý Lịch Họp</h4>
+                <p class="mb-0">
+                    Quản lý lịch trình các cuộc họp của hội nhóm
+                </p>
+            </div>
+            @if (canEdit)
+            {
+                <button type="button" class="btn btn-primary mt-2" onclick="GetFormMeeting()">
+                    <i class="ri-add-line mr-3"></i>Thêm mới lịch họp
+                </button>
+            }
+        </div>
+    </div>
+
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo chủ đề, mô tả">
+                            <span class="search-icon position-absolute user-select-auto"
+                                style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer"
+                                onclick="onClickReloadTable()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-group" class="form-label">Nhóm</label>
+                        <select id="filter-group" class="form-select select2" onchange="onClickReloadTable()">
+                            <option value="">Tất cả nhóm</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-meeting-type" class="form-label">Hình thức</label>
+                        <select id="filter-meeting-type" class="form-select select2" onchange="onClickReloadTable()">
+                            <option value="">Tất cả</option>
+                            <option value="1">Online</option>
+                            <option value="2">Offline</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-public" class="form-label">Phạm vi</label>
+                        <select id="filter-public" class="form-select select2" onchange="onClickReloadTable()">
+                            <option value="">Tất cả</option>
+                            <option value="true">Công khai</option>
+                            <option value="false">Nội bộ</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-status" class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-select select2" onchange="onClickReloadTable()">
+                            <option value="">Tất cả</option>
+                            <option value="1">Sắp diễn ra</option>
+                            <option value="2">Đang diễn ra</option>
+                            <option value="3">Đã kết thúc</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <label for="filter-date" class="form-label">Ngày họp</label>
+                        <input id="filter-date" type="date" class="form-control" onchange="onClickReloadTable()">
+                    </div>
+
+                    <div class="col-md-12 d-flex justify-content-end mt-3">
+                        <button class="btn btn-primary" onclick="onClickReloadTable()">
+                            <i class="ri-filter-line me-1"></i> Lọc
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div id="meeting-table" class="table-responsive rounded mb-3">
+            <table id="list-meeting" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-meeting" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade">
+    <div id="modal-content" class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 80vw;"></div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script>
+        let meetingTable;
+
+        let searchTimeout;
+        
+        $(document).ready(function () {
+            InitializeDataTable();
+            LoadGroupsForFilter();
+            
+            // Initialize search with debounce on input
+            $('#search').on('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    onClickReloadTable();
+                }, 500);
+            });
+            
+            // Initialize search on enter key
+            $('#search').on('keypress', function(e) {
+                if (e.which === 13) {
+                    clearTimeout(searchTimeout);
+                    onClickReloadTable();
+                }
+            });
+        });
+
+        // Load groups for filter dropdown
+        async function LoadGroupsForFilter() {
+            try {
+                const response = await fetch('/Groups/GetAll');
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const $select = $('#filter-group');
+                    result.data.forEach(group => {
+                        $select.append(`<option value="${group.id}">${group.name}</option>`);
+                    });
+                }
+            } catch (error) {
+                showNotification('Không thể tải danh sách nhóm', 'error');
+            }
+        }
+
+        function onClickReloadTable() {
+            if (meetingTable) {
+                meetingTable.ajax.reload(null, false);
+            }
+        }
+
+        function InitializeDataTable() {
+            const $table = $('#list-meeting');
+            if ($.fn.DataTable.isDataTable($table)) {
+                $table.DataTable().destroy();
+            }
+
+            meetingTable = $table.DataTable({
+                serverSide: true,
+                processing: true,
+                searching: false,
+                ordering: false,
+                language: {
+                    processing: "Đang tải...",
+                    lengthMenu: "Hiển thị _MENU_ bản ghi",
+                    zeroRecords: "Không tìm thấy dữ liệu",
+                    info: "Hiển thị _START_ đến _END_ của _TOTAL_ bản ghi",
+                    infoEmpty: "Hiển thị 0 đến 0 của 0 bản ghi",
+                    infoFiltered: "(lọc từ _MAX_ bản ghi)",
+                    paginate: {
+                        first: "Đầu",
+                        last: "Cuối",
+                        next: "Sau",
+                        previous: "Trước"
+                    }
+                },
+                columns: [
+                    {
+                        title: "STT",
+                        data: null,
+                        width: "50px",
+                        render: function (data, type, row, meta) {
+                            return meta.row + meta.settings._iDisplayStart + 1;
+                        }
+                    },
+                    {
+                        title: "Chủ đề",
+                        data: "title",
+                        width: "250px",
+                        render: function (data, type, row) {
+                            return `<div class="text-truncate" style="max-width: 250px;" title="${data}">${data}</div>`;
+                        }
+                    },
+                    {
+                        title: "Nhóm",
+                        data: "groupName",
+                        width: "150px"
+                    },
+                    {
+                        title: "Thời gian",
+                        data: "startDate",
+                        width: "200px",
+                        render: function (data, type, row) {
+                            if (!row.startDate || !row.endDate) {
+                                return '<span class="text-muted">Chưa có thông tin</span>';
+                            }
+                            
+                            try {
+                                const startMoment = moment(row.startDate);
+                                const endMoment = moment(row.endDate);
+                                if (!startMoment.isValid() || !endMoment.isValid()) {
+                                    return '<span class="text-muted">Ngày không hợp lệ</span>';
+                                }
+                                
+                                return startMoment.format('DD/MM/YYYY HH:mm') + '<br/>' + 
+                                       '<small class="text-muted">Đến: ' + endMoment.format('DD/MM/YYYY HH:mm') + '</small>';
+                            } catch (error) {
+                                return '<span class="text-muted">Lỗi định dạng</span>';
+                            }
+                        }
+                    },
+                    {
+                        title: "Hình thức",
+                        data: "meetingType",
+                        width: "100px",
+                        render: function (data, type, row) {
+                            if (data === 1) {
+                                return '<span class="badge bg-success">Online</span>';
+                            } else if (data === 2) {
+                                return '<span class="badge bg-info">Offline</span>';
+                            }
+                            return '<span class="badge bg-secondary">N/A</span>';
+                        }
+                    },
+                    {
+                        title: "Địa điểm/Link",
+                        data: null,
+                        width: "200px",
+                        render: function (data, type, row) {
+                            if (row.meetingType === 1 && row.meetingLink) {
+                                return `<a href="${row.meetingLink}" target="_blank" class="text-truncate d-inline-block" style="max-width: 200px;">${row.meetingLink}</a>`;
+                            } else if (row.meetingType === 2 && row.location) {
+                                return `<div class="text-truncate" style="max-width: 200px;" title="${row.location}">${row.location}</div>`;
+                            }
+                            return '<span class="text-muted">N/A</span>';
+                        }
+                    },
+                    {
+                        title: "Phạm vi",
+                        data: "isPublic",
+                        width: "100px",
+                        render: function (data, type, row) {
+                            if (data === true) {
+                                return '<span class="badge bg-primary">Công khai</span>';
+                            } else {
+                                return '<span class="badge bg-secondary">Nội bộ</span>';
+                            }
+                        }
+                    },
+                    {
+                        title: "Trạng thái",
+                        data: null,
+                        width: "120px",
+                        render: function (data, type, row) {
+                            // Calculate status based on StartDate and EndDate (not from backend)
+                            if (!row.startDate || !row.endDate) {
+                                return '<span class="badge bg-secondary">N/A</span>';
+                            }
+                            
+                            try {
+                                const now = moment();
+                                const start = moment(row.startDate);
+                                const end = moment(row.endDate);
+                                
+                                if (!start.isValid() || !end.isValid()) {
+                                    return '<span class="badge bg-secondary">N/A</span>';
+                                }
+                                
+                                // Calculate status dynamically
+                                if (start.isAfter(now)) {
+                                    return '<span class="badge bg-info">Sắp diễn ra</span>';
+                                } else if (start.isSameOrBefore(now) && end.isSameOrAfter(now)) {
+                                    return '<span class="badge bg-success">Đang diễn ra</span>';
+                                } else {
+                                    return '<span class="badge bg-secondary">Đã kết thúc</span>';
+                                }
+                            } catch (error) {
+                                return '<span class="badge bg-secondary">N/A</span>';
+                            }
+                        }
+                    },
+                    {
+                        title: "Hành động",
+                        data: null,
+                        width: "120px",
+                        render: function (data, type, row) {
+                            @if (canEdit)
+                            {
+                                @:return `
+                                @:<div class="d-flex gap-2">
+                                @:    <button class="btn btn-sm btn-primary" onclick="GetFormMeeting('${row.id}')" title="Sửa">
+                                @:        <i class="ri-edit-line"></i>
+                                @:    </button>
+                                @:    <button class="btn btn-sm btn-danger" onclick="DeleteMeeting('${row.id}')" title="Xóa">
+                                @:        <i class="ri-delete-bin-line"></i>
+                                @:    </button>
+                                @:</div>`;
+                            }
+                            else
+                            {
+                                @:return `<span class="text-muted">Không có quyền</span>`;
+                            }
+                        }
+                    }
+                ],
+                ajax: function (data, callback, settings) {
+                    try {
+                        const page = Math.floor(data.start / data.length) + 1;
+                        const keyword = $('#search').val();
+                        const groupId = $('#filter-group').val();
+                        const meetingType = $('#filter-meeting-type').val();
+                        const isPublic = $('#filter-public').val();
+                        const status = $('#filter-status').val();
+                        const date = $('#filter-date').val();
+
+                        GetMeetings(page, data.length, keyword, groupId, meetingType, isPublic, status, date, data.draw, callback);
+                    } catch (error) {
+                        showNotification('Có lỗi xảy ra khi tải dữ liệu', 'error');
+                        callback({
+                            draw: data.draw || 1,
+                            recordsTotal: 0,
+                            recordsFiltered: 0,
+                            data: []
+                        });
+                    }
+                }
+            });
+        }
+
+        function GetMeetings(page, pageSize, keyword, groupId, meetingType, isPublic, status, date, draw, callback) {
+            const params = {
+                page: page,
+                pageSize: pageSize
+            };
+
+            if (keyword && keyword.trim()) {
+                params.keyword = keyword.trim();
+            }
+
+            if (groupId) {
+                params.groupId = groupId;
+            }
+
+            if (meetingType) {
+                params.meetingType = parseInt(meetingType);
+            }
+
+            if (isPublic) {
+                params.isPublic = isPublic === 'true';
+            }
+
+            if (status) {
+                params.status = parseInt(status);
+            }
+
+            if (date) {
+                params.time = date;
+            }
+
+            params._t = new Date().getTime();
+
+            $.ajax({
+                url: '/api/Meeting/GetPage',
+                type: 'GET',
+                data: params,
+                cache: false,
+                success: function (response) {
+                    if (response.code === 0 && response.items) {
+                        const formattedData = response.items.map((item) => {
+                            return {
+                                id: item.id,
+                                title: item.title || '',
+                                groupName: item.groupName || '',
+                                startDate: item.startDate || item.time, // Support both fields
+                                endDate: item.endDate,
+                                meetingType: item.meetingType,
+                                location: item.location || '',
+                                meetingLink: item.meetingLink || '',
+                                isPublic: item.isPublic || false
+                                // Status will be calculated on frontend based on startDate and endDate
+                            };
+                        });
+
+                        callback({
+                            draw: draw,
+                            recordsTotal: response.totalItems || 0,
+                            recordsFiltered: response.totalItems || 0,
+                            data: formattedData
+                        });
+                    } else {
+                        callback({
+                            draw: draw,
+                            recordsTotal: 0,
+                            recordsFiltered: 0,
+                            data: []
+                        });
+                    }
+                },
+                error: function (xhr, status, error) {
+                    showNotification('Không thể tải danh sách lịch họp', 'error');
+                    callback({
+                        draw: draw,
+                        recordsTotal: 0,
+                        recordsFiltered: 0,
+                        data: []
+                    });
+                }
+            });
+        }
+
+        async function GetFormMeeting(id = null) {
+            try {
+                const url = id ? `/Meeting/Detail/${id}` : '/Meeting/Create';
+                const response = await fetch(url);
+                const html = await response.text();
+
+                // Clear previous content and scripts
+                $('#modal-content').empty();
+                
+                // Set HTML (jQuery will automatically execute inline scripts)
+                $('#modal-content').html(html);
+                
+                $('#modal-meeting').modal('show');
+            } catch (error) {
+                showNotification('Có lỗi xảy ra khi tải form', 'error');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            if (typeof Swal !== 'undefined') {
+                const iconMap = {
+                    'success': 'success',
+                    'error': 'error',
+                    'warning': 'warning',
+                    'info': 'info'
+                };
+                Swal.fire({
+                    text: message,
+                    icon: iconMap[type] || 'info',
+                    confirmButtonText: 'OK',
+                    timer: type === 'success' ? 2000 : undefined,
+                    timerProgressBar: type === 'success'
+                });
+            } else {
+                alert(message);
+            }
+        }
+
+        async function DeleteMeeting(id) {
+            const result = await Swal.fire({
+                text: 'Bạn có chắc chắn muốn xóa lịch họp này không?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'OK',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33'
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/Meeting/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.code === 0) {
+                    showNotification('Xóa lịch họp thành công', 'success');
+                    onClickReloadTable();
+                } else {
+                    showNotification(data.message || 'Xóa lịch họp thất bại', 'error');
+                }
+            } catch (error) {
+                showNotification('Có lỗi xảy ra khi xóa lịch họp', 'error');
+            }
+        }
+    </script>
+}
+

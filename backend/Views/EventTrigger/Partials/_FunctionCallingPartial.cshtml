@@ -1,0 +1,165 @@
+﻿@using MiniAppGIBA.Features.EventTrigger;
+@using Newtonsoft.Json;
+@model string // ProcessingStep là JSON string
+@{
+    List<FunctionCalling> functionCallings = string.IsNullOrEmpty(Model)
+    ? new List<FunctionCalling>()
+    : JsonConvert.DeserializeObject<List<FunctionCalling>>(Model) ?? new List<FunctionCalling>();
+}
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <h6 class="fw-semibold mb-3 text-primary">Cấu hình Function Calling (Processing Step)</h6>
+        <p class="text-muted small">Thiết lập các bước xử lý dữ liệu trước khi gửi. Ví dụ: concat để nối chuỗi, split để tách chuỗi.</p>
+
+        <!-- Hidden input để lưu JSON -->
+        <input type="hidden" id="processingStep" name="ProcessingStep" value="@Model" />
+
+        <!-- Container cho list function calls -->
+        <div id="functionCallsContainer">
+            @for (int i = 0; i < functionCallings.Count; i++)
+            {
+                var call = functionCallings[i];
+                <div class="border rounded p-3 mb-3 function-call-item" data-index="@i">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label class="form-label">Function Name</label>
+                            <select class="form-select function-name"
+                                title="@(call.FunctionName == "split" ? "Split: Tách chuỗi theo delimiter (ví dụ: tách tên đầy đủ thành họ và tên)." : call.FunctionName == "concat" ? "Concat: Nối các chuỗi lại với nhau (ví dụ: nối họ và tên thành tên đầy đủ)." : call.FunctionName == "formatnumeric" ? "Format Numeric: Format số với dấu phẩy (ví dụ: 1000 thành '1.000')." : "Chọn hàm để xử lý dữ liệu.")">
+                                <option value="split" selected="@(call.FunctionName == "split")">Tách chuỗi</option>
+                                <option value="concat" selected="@(call.FunctionName == "concat")">Nối chuỗi</option>
+                                <option value="formatnumeric" selected="@(call.FunctionName == "formatnumeric")">Format Numeric</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Output Field</label>
+                            <input type="text" class="form-control output-field" value="@call.OutputField" placeholder="full_info" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Parameters (JSON Array)</label>
+                            <textarea class="form-control parameters" rows="2" placeholder='Ví dụ: ["Họ tên:", "name"] hoặc [" ", "firstName", "lastName"] hoặc ["price"]'
+                            title="Nhập JSON array hợp lệ. Ví dụ: Split cần [delimiter, field]; Concat cần [separator, ...fields]; Format Numeric cần [field].">@JsonConvert.SerializeObject(call.Parameters)</textarea>
+                        </div>
+
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger remove-function-call">
+                                <i class="ri-delete-bin-line"></i> Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Button thêm function call -->
+        <button type="button" class="btn btn-outline-primary btn-sm mt-3" id="addFunctionCall">
+            <i class="ri-add-line me-1"></i> Thêm Function Call
+        </button>
+
+        <!-- Phần mô tả function calling -->
+        <div class="card mt-3 border-light">
+            <div class="card-body">
+                <h6 class="fw-semibold text-secondary">Mô tả Function Calling</h6>
+                <ul class="text-muted small mb-0">
+                    <li><strong>Split (Tách chuỗi)</strong>: Tách một chuỗi thành các phần dựa trên delimiter, sau đó lấy phần tử tại index cụ thể. Parameters: <code>[field, delimiter, index]</code>
+                        (ví dụ: <code>["fullName", " ", 2]</code> tách "Nguyễn Văn A" thành ["Nguyễn", "Văn", "A"] và lấy "A"). Output Field là tên trường đầu ra.</li>
+                    <li><strong>Concat (Nối chuỗi)</strong>: Nối nhiều chuỗi lại với nhau (không có separator riêng; nối trực tiếp). Parameters: Danh sách các phần tử (key trong rawData hoặc literal)
+                        (ví dụ: <code>["firstName", " ", "lastName"]</code> nối "Nguyễn" + " " + "Văn A" thành "Nguyễn Văn A"). Output Field là tên trường đầu ra.</li>
+                    <li><strong>Format Numeric</strong>: Format số thành chuỗi với dấu phẩy ngăn cách hàng nghìn (ví dụ: 1000 thành "1.000"). Parameters: <code>[field]</code> (ví dụ:
+                        <code>["price"]</code>). Output Field là tên trường đầu ra. Nếu không phải số, giữ nguyên giá trị.
+                    </li>
+                </ul>
+                <p class="text-muted small mt-2">Parameters phải là JSON array hợp lệ. Thay đổi sẽ được cập nhật tự động vào rawData.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Sử dụng functionCallings từ Razor (đã deserialize), thống nhất PascalCase
+        var functionCalls = @Html.Raw(JsonConvert.SerializeObject(functionCallings))
+
+            // Event: Add new function call
+            $('#addFunctionCall').click(function () {
+                functionCalls.push({
+                    FunctionName: 'concat',  // PascalCase
+                    Parameters: [],  // PascalCase
+                    OutputField: ''  // PascalCase
+                });
+                renderFunctionCalls(functionCalls);
+            });
+
+        // Function: Render list (sử dụng lại cho add/remove)
+        function renderFunctionCalls(calls) {
+            var container = $('#functionCallsContainer');
+            container.empty();
+            calls.forEach(function (call, index) {
+                var description = call.FunctionName === 'split' ? 'Split: Tách chuỗi theo delimiter (ví dụ: tách tên đầy đủ thành họ và tên).' : call.FunctionName === 'concat' ? 'Concat: Nối các chuỗi lại với nhau (ví dụ: nối họ và tên thành tên đầy đủ).' : call.FunctionName === 'formatnumeric' ? 'Format Numeric: Format số với dấu phẩy (ví dụ: 1000 thành \'1,000\').' : 'Chọn hàm để xử lý dữ liệu.';
+                var placeholder = call.FunctionName === 'split' ? 'Ví dụ: [" ", "fullName"]' : call.FunctionName === 'concat' ? 'Ví dụ: [" ", "firstName", "lastName"]' : call.FunctionName === 'formatnumeric' ? 'Ví dụ: ["price"]' : 'Ví dụ: ["Họ tên:", "name"]';
+                var html = `
+                    <div class="border rounded p-3 mb-3 function-call-item" data-index="${index}">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label">Function Name</label>
+                                <select class="form-select function-name" title="${description}">
+                                    <option value="">-- Chọn Function --</option>
+                                    <option value="concat" ${call.FunctionName === 'concat' ? 'selected' : ''}>Concat</option>
+                                    <option value="split" ${call.FunctionName === 'split' ? 'selected' : ''}>Split</option>
+                                    <option value="formatnumeric" ${call.FunctionName === 'formatnumeric' ? 'selected' : ''}>Format Numeric</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Output Field</label>
+                                <input type="text" class="form-control output-field" value="${call.OutputField}" placeholder="full_info" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Parameters (JSON Array)</label>
+                                <textarea class="form-control parameters" rows="2" placeholder="${placeholder}" title="Nhập JSON array hợp lệ. Ví dụ: Split cần [delimiter, field]; Concat cần [separator, ...fields]; Format Numeric cần [field].">${JSON.stringify(call.Parameters)}</textarea>
+                            </div>
+
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-danger remove-function-call">
+                                    <i class="ri-delete-bin-line"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.append(html);
+            });
+        }
+
+        // Event: Remove function call
+        $(document).on('click', '.remove-function-call', function () {
+            var index = $(this).closest('.function-call-item').data('index');
+            functionCalls.splice(index, 1);
+            renderFunctionCalls(functionCalls);
+        });
+
+        // Event: Update function call on change
+        $(document).on('change', '.function-name, .parameters, .output-field', function () {
+            var index = $(this).closest('.function-call-item').data('index');
+            var item = functionCalls[index];
+            item.FunctionName = $(this).closest('.function-call-item').find('.function-name').val();  // PascalCase
+            try {
+                item.Parameters = JSON.parse($(this).closest('.function-call-item').find('.parameters').val());  // PascalCase
+            } catch (e) {
+                alert('Parameters phải là JSON array hợp lệ, ví dụ: ["Họ tên:", "name"]');
+                item.Parameters = [];  // Reset nếu invalid
+            }
+            item.OutputField = $(this).closest('.function-call-item').find('.output-field').val();  // PascalCase
+            // Re-render để cập nhật placeholder và tooltip
+            renderFunctionCalls(functionCalls);
+        });
+
+        // Event: Serialize to JSON khi submit form
+        $('#eventTemplateForm').on('submit', function () {
+            $('#processingStep').val(JSON.stringify(functionCalls));
+        });
+
+        // Export function để build JSON
+        window.buildFunctionsCall = function () {
+            return JSON.stringify(functionCalls);
+        };
+    });
+</script>

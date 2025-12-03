@@ -1,0 +1,467 @@
+@model MiniAppGIBA.Models.Request.Rules.CreateBehaviorRuleRequest
+
+<style>
+    .upload-area {
+        border: 2px dashed #dee2e6 !important;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        padding: 40px;
+        text-align: center;
+        border-radius: 8px;
+    }
+
+    .upload-area:hover {
+        border-color: #667eea !important;
+        background: #f0f2ff;
+    }
+
+    .upload-area.dragover {
+        border-color: #667eea !important;
+        background: #e7eaff;
+        transform: scale(1.02);
+    }
+
+    .selected-file-info {
+        background: #e7f3ff;
+        padding: 15px;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+</style>
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@(ViewBag.IsEdit ? "Chỉnh sửa" : "Tạo mới") Quy Tắc Ứng Xử</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <form id="behaviorRuleForm" onsubmit="handleFormSubmit(event)">
+            @if (ViewBag.IsEdit)
+            {
+                <input type="hidden" id="ruleId" value="@ViewBag.RuleId" />
+            }
+
+            <div class="row">
+                <!-- Type (Hidden - can be APP or GROUP) -->
+                <input type="hidden" id="ruleType" value="@(ViewBag.Type ?? "APP")" />
+
+                <!-- GroupId (Hidden - only for GROUP type) -->
+                @if (!string.IsNullOrEmpty(ViewBag.GroupId))
+                {
+                    <input type="hidden" id="ruleGroupId" value="@ViewBag.GroupId" />
+                }
+
+                <!-- Title -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+                        <input type="text" id="ruleTitle" class="form-control" value="@Model?.Title" 
+                               placeholder="Nhập tiêu đề quy tắc" required />
+                    </div>
+                </div>
+
+                <!-- Content Type -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Loại nội dung <span class="text-danger">*</span></label>
+                        <select class="form-select" id="contentTypeSelect" onchange="toggleContentType()">
+                            <option value="TEXT" @(Model?.ContentType == "TEXT" || string.IsNullOrEmpty(Model?.ContentType) ? "selected" : "")>TEXT</option>
+                            <option value="FILE" @(Model?.ContentType == "FILE" ? "selected" : "")>FILE</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Sort Order -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Thứ tự sắp xếp</label>
+                        <input type="number" id="sortOrder" class="form-control" value="@(Model?.SortOrder ?? 0)" 
+                               min="0" placeholder="0" />
+                        <small class="text-muted">Số nhỏ hơn sẽ hiển thị trước</small>
+                    </div>
+                </div>
+
+                <!-- TEXT Content Section -->
+                <div class="col-md-12" id="textContentSection">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nội dung TEXT <span class="text-danger">*</span></label>
+                        <div id="textContent" style="min-height: 200px; background: white;">
+                            @if (!string.IsNullOrEmpty(Model?.Content))
+                            {
+                                @Html.Raw(Model.Content)
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FILE Upload Section -->
+                <div class="col-md-12" id="fileUploadSection" style="display: none;">
+                    <div class="form-group mb-3">
+                        <label class="form-label">File đính kèm <span class="text-danger">*</span></label>
+
+                        @if (ViewBag.IsEdit && Model?.ContentType == "FILE" && !string.IsNullOrEmpty(Model?.Content))
+                        {
+                            <div class="alert alert-info mb-3" id="currentFileInfo">
+                                <div>
+                                    <i class="ri-file-line me-2"></i>
+                                    <strong>File hiện tại:</strong>
+                                    <span id="currentFileName">@System.IO.Path.GetFileName(Model.Content)</span>
+                                </div>
+                                <small class="text-muted d-block mt-2">Chọn file mới bên dưới để thay thế</small>
+                            </div>
+                        }
+
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-placeholder">
+                                <i class="ri-upload-cloud-2-line" style="font-size: 48px; color: #667eea;"></i>
+                                <p class="mt-2 mb-0">Kéo thả file vào đây hoặc click để chọn</p>
+                                <small class="text-muted">Hỗ trợ: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF (Tối đa 50MB)</small>
+                            </div>
+                            <div class="selected-file-info" id="selectedFileInfo" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="ri-file-line me-2"></i>
+                                        <span id="selectedFileName"></span>
+                                        <small class="text-muted ms-2">(<span id="selectedFileSize"></span>)</small>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-danger" id="btnRemoveFile">
+                                        <i class="ri-close-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="file" id="fileInput" style="display: none;"
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-close-line me-1"></i>
+            Hủy
+        </button>
+        <button type="submit" form="behaviorRuleForm" class="btn btn-primary">
+            <i class="ri-save-line me-1"></i>
+            @(ViewBag.IsEdit ? "Cập nhật" : "Tạo mới")
+        </button>
+    </div>
+</div>
+
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<script>
+    // Use window scope to avoid redeclaration errors when modal reopens
+    window.behaviorRuleForm = window.behaviorRuleForm || {};
+    window.behaviorRuleForm.selectedFile = null;
+    window.behaviorRuleForm.quillEditor = null;
+
+    $(document).ready(function () {
+        // Initialize content type toggle (this will handle Quill initialization if needed)
+        toggleContentType();
+
+        // File upload handlers
+        $('#uploadArea').on('click', function () {
+            $('#fileInput').click();
+        });
+
+        $('#fileInput').on('change', function () {
+            const file = this.files[0];
+            if (file) handleFileSelection(file);
+        });
+
+        $('#btnRemoveFile').on('click', function(e) {
+            e.stopPropagation();
+            clearFileSelection();
+        });
+
+        // Drag and drop
+        $('#uploadArea').on('dragover', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).addClass('dragover');
+        });
+
+        $('#uploadArea').on('dragleave', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass('dragover');
+        });
+
+        $('#uploadArea').on('drop', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $(this).removeClass('dragover');
+            const files = e.originalEvent.dataTransfer.files;
+            if (files && files.length > 0) {
+                $('#fileInput')[0].files = files;
+                handleFileSelection(files[0]);
+            }
+        });
+    });
+
+    function initQuillEditor() {
+        const contentElement = document.getElementById('textContent');
+        if (!contentElement) {
+            console.log('textContent element not found');
+            return;
+        }
+
+        // Check if this specific DOM element already has Quill initialized
+        // Quill wraps the original div, so check the parent for ql-container
+        const parent = contentElement.parentElement;
+        if (parent && parent.classList.contains('ql-container')) {
+            console.log('Quill editor already initialized on this element');
+            return;
+        }
+
+        // Also check if the element itself was transformed
+        if (contentElement.classList.contains('ql-editor')) {
+            console.log('Element already transformed by Quill');
+            return;
+        }
+
+        if (typeof Quill !== 'undefined') {
+            try {
+                // Clear any existing instance reference
+                window.behaviorRuleForm.quillEditor = null;
+
+                window.behaviorRuleForm.quillEditor = new Quill('#textContent', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                        ]
+                    },
+                    placeholder: 'Nhập nội dung quy tắc ứng xử...'
+                });
+                console.log('Quill editor initialized successfully');
+            } catch (e) {
+                console.error('Error initializing Quill editor:', e);
+                // Reset quillEditor on error to allow retry
+                window.behaviorRuleForm.quillEditor = null;
+            }
+        } else {
+            console.warn('Quill is not loaded');
+        }
+    }
+
+    function toggleContentType() {
+        const type = $('#contentTypeSelect').val();
+        if (type === 'TEXT') {
+            $('#textContentSection').show();
+            $('#fileUploadSection').hide();
+            // Initialize Quill only if not already initialized
+            if (!window.behaviorRuleForm.quillEditor) {
+                // Use setTimeout to ensure the element is visible before initializing
+                setTimeout(function() {
+                    initQuillEditor();
+                }, 50);
+            }
+        } else {
+            $('#textContentSection').hide();
+            $('#fileUploadSection').show();
+        }
+    }
+
+    function handleFileSelection(file) {
+        if (!validateFile(file)) return;
+
+        window.behaviorRuleForm.selectedFile = file;
+        $('#selectedFileName').text(file.name);
+        $('#selectedFileSize').text(formatFileSize(file.size));
+        $('#selectedFileInfo').show();
+        $('.upload-placeholder').hide();
+    }
+
+    function clearFileSelection() {
+        window.behaviorRuleForm.selectedFile = null;
+        $('#fileInput').val('');
+        $('#selectedFileInfo').hide();
+        $('.upload-placeholder').show();
+    }
+
+    function validateFile(file) {
+        const allowed = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png', '.gif'];
+        const ext = ('.' + file.name.split('.').pop()).toLowerCase();
+
+        if (!allowed.includes(ext)) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Lỗi', 'Định dạng file không hỗ trợ: ' + ext, 'error');
+            } else {
+                alert('Định dạng file không hỗ trợ: ' + ext);
+            }
+            return false;
+        }
+
+        if (file.size > 50 * 1024 * 1024) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Lỗi', 'File quá lớn. Giới hạn 50MB.', 'error');
+            } else {
+                alert('File quá lớn. Giới hạn 50MB.');
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function handleFormSubmit(event) {
+        event.preventDefault();
+
+        const isEdit = @(ViewBag.IsEdit ? "true" : "false");
+        const contentType = $('#contentTypeSelect').val();
+        const title = $('#ruleTitle').val().trim();
+
+        // Validation
+        if (!title) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Lỗi', 'Vui lòng nhập tiêu đề.', 'error');
+            } else {
+                alert('Vui lòng nhập tiêu đề.');
+            }
+            return;
+        }
+
+        if (contentType === 'TEXT') {
+            // Get content from Quill editor
+            const textContent = window.behaviorRuleForm.quillEditor ? window.behaviorRuleForm.quillEditor.root.innerHTML.trim() : '';
+            if (!textContent || textContent === '<p><br></p>') {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Lỗi', 'Vui lòng nhập nội dung TEXT.', 'error');
+                } else {
+                    alert('Vui lòng nhập nội dung TEXT.');
+                }
+                return;
+            }
+        } else if (contentType === 'FILE' && !isEdit && !window.behaviorRuleForm.selectedFile) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Lỗi', 'Vui lòng chọn file.', 'error');
+            } else {
+                alert('Vui lòng chọn file.');
+            }
+            return;
+        }
+
+        // Prepare FormData
+        const formData = new FormData();
+
+        if (isEdit) {
+            formData.append('id', $('#ruleId').val());
+        }
+
+        // Read type from hidden field (can be 'APP' or 'GROUP')
+        const ruleType = $('#ruleType').val() || 'APP';
+        console.log('=== Form Submission Debug ===');
+        console.log('ruleType field value:', $('#ruleType').val());
+        console.log('ruleType to submit:', ruleType);
+
+        formData.append('type', ruleType);
+
+        // If type is GROUP, also append groupId
+        if (ruleType === 'GROUP') {
+            const groupId = $('#ruleGroupId').val();
+            console.log('ruleGroupId field value:', groupId);
+            if (groupId) {
+                formData.append('groupId', groupId);
+                console.log('✓ Submitting GROUP rule with groupId:', groupId);
+            } else {
+                console.warn('✗ GROUP type but no groupId found!');
+            }
+        } else {
+            console.log('Submitting APP rule (no groupId needed)');
+        }
+
+        formData.append('contentType', contentType);
+        formData.append('title', title);
+        formData.append('sortOrder', $('#sortOrder').val() || '0');
+
+        if (contentType === 'TEXT') {
+            // Get HTML content from Quill editor
+            const htmlContent = window.behaviorRuleForm.quillEditor ? window.behaviorRuleForm.quillEditor.root.innerHTML : '';
+            formData.append('content', htmlContent);
+        } else if (window.behaviorRuleForm.selectedFile) {
+            formData.append('file', window.behaviorRuleForm.selectedFile);
+        }
+
+        // Log all FormData entries for debugging
+        console.log('FormData contents:');
+        for (let pair of formData.entries()) {
+            console.log('  ' + pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
+        }
+        console.log('=== End Form Submission Debug ===');
+
+        // API call
+        const url = isEdit ? '/api/BehaviorRuleV2/update' : '/api/BehaviorRuleV2/create';
+        const token = localStorage.getItem('token') || localStorage.getItem('_tk') || '';
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: { 'Authorization': 'Bearer ' + token },
+            success: function (res) {
+                if (res && res.success) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            title: 'Thành công',
+                            text: isEdit ? 'Đã cập nhật quy tắc.' : 'Đã tạo quy tắc mới.',
+                            icon: 'success',
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        alert(isEdit ? 'Đã cập nhật quy tắc.' : 'Đã tạo quy tắc mới.');
+                    }
+
+                    // Close the appropriate modal
+                    $('#behaviorRuleModal').modal('hide');
+                    $('#groupBehaviorRuleFormModal').modal('hide');
+
+                    // Reload page data for APP-level rules
+                    if (typeof window.loadPage === 'function') {
+                        window.loadPage();
+                    }
+
+                    // Trigger custom event for GROUP-level rules
+                    $(document).trigger('behaviorRuleFormSuccess');
+                } else {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Lỗi', res.message || 'Không thể lưu.', 'error');
+                    } else {
+                        alert('Lỗi: ' + (res.message || 'Không thể lưu.'));
+                    }
+                }
+            },
+            error: function (xhr) {
+                const errorMsg = xhr.responseJSON?.message || xhr.statusText || 'Có lỗi xảy ra';
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Lỗi', 'Không thể lưu: ' + errorMsg, 'error');
+                } else {
+                    alert('Lỗi: Không thể lưu: ' + errorMsg);
+                }
+            }
+        });
+    }
+</script>
+

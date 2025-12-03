@@ -1,0 +1,1766 @@
+@using MiniAppGIBA.Constants;
+@{
+    ViewData["Title"] = "Quản Lý Hội Nhóm";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var canEdit = User?.IsInRole(CTRole.GIBA) == true;
+}
+
+<style>
+    .table-success {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    .table-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background-color: #d1edff;
+        color: #0c63e4;
+    }
+
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    #sortableMembers {
+        list-style: none;
+        padding: 0;
+    }
+
+    #sortableMembers li {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        padding: 15px;
+        background: #fff;
+        transition: box-shadow 0.2s ease;
+        will-change: transform;
+        position: relative;
+    }
+
+    #sortableMembers li:hover:not(.ui-sortable-helper) {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    #sortableMembers li.ui-sortable-helper {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25) !important;
+        opacity: 1 !important;
+        transform: none !important;
+        z-index: 9999 !important;
+        cursor: grabbing !important;
+        pointer-events: none !important;
+    }
+    
+    #sortableMembers li.ui-sortable-helper * {
+        pointer-events: none !important;
+    }
+
+    #sortableMembers li.ui-sortable-placeholder {
+        height: 60px;
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        visibility: visible !important;
+    }
+
+    .drag-handle {
+        user-select: none;
+        touch-action: none;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    .sort-order-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #e9ecef;
+        border-radius: 12px;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    /* Style cho dropdown filter - giới hạn chiều cao và cho phép scroll */
+    .custom-select-wrapper {
+        position: relative;
+    }
+
+    .custom-select-scrollable {
+        width: 100%;
+    }
+
+    /* Style cho select khi có size attribute (khi mở với scroll) */
+    .custom-select-scrollable[size] {
+        position: absolute;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        max-height: calc(1.5rem * 5 + 0.75rem * 2); /* 5 dòng + padding */
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    /* Custom scrollbar cho dropdown */
+    .custom-select-scrollable::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-select-scrollable::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .custom-select-scrollable::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    .custom-select-scrollable::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Style cho options */
+    .custom-select-scrollable option {
+        padding: 8px 12px;
+        line-height: 1.5;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản Lý Hội Nhóm</h4>
+                <p class="mb-0 text-muted">Quản lý các hội nhóm trong hệ thống</p>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between">
+                @if (canEdit)
+                {
+                    <a class="btn btn-primary shadow-sm" href="#" onclick="openCreateModal(); return false;">
+                        <i class="ri-add-line me-2"></i>
+                        Tạo Hội Nhóm
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Thống kê -->
+    @* <div class="col-lg-12">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">Tổng Hội Nhóm</h6>
+                                <h3 class="mb-0">@ViewBag.TotalGroups</h3>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <i class="ri-team-line fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">Đang Hoạt Động</h6>
+                                <h3 class="mb-0">@ViewBag.ActiveGroups</h3>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <i class="ri-check-line fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">Không Hoạt Động</h6>
+                                <h3 class="mb-0">@ViewBag.InactiveGroups</h3>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <i class="ri-close-line fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> *@
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Thanh tìm kiếm -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input id="search" type="text" class="form-control"
+                                    placeholder="Tìm theo tên, mô tả..." />
+                                <button class="btn btn-primary" onclick="groupsTable.ajax.reload()">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bộ lọc theo nhóm -->
+                    <div class="col-md-3">
+                        <label class="form-label">Hội nhóm</label>
+                        <div class="custom-select-wrapper">
+                            <select id="filter-group" class="form-control custom-select-scrollable" onchange="groupsTable.ajax.reload()">
+                                <option value="">Tất cả hội nhóm</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Bộ lọc trạng thái -->
+                    <div class="col-md-2">
+                        <label class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-control" onchange="groupsTable.ajax.reload()">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true">Đang hoạt động</option>
+                            <option value="false">Không hoạt động</option>
+                        </select>
+                    </div>
+
+                    <!-- Nút lọc và xuất excel -->
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light border flex-fill" onclick="resetFilters()">
+                                <i class="ri-refresh-line me-1"></i>
+                                Đặt lại
+                            </button>
+                            <button class="btn btn-primary flex-fill" onclick="groupsTable.ajax.reload()">
+                                <i class="ri-filter-line me-1"></i>
+                                Lọc dữ liệu
+                            </button>
+                            @if (canEdit)
+                            {
+                                <button type="button" class="btn btn-success flex-fill" onclick="HandleExportData()">
+                                    <i class="ri-file-excel-line me-1"></i>
+                                    Xuất Excel
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <!-- <div id="spinner" style="margin: 20px 0"></div> -->
+        <div class="table-responsive rounded mb-3">
+            <table id="list-groups" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+
+    <!-- Gán Gói Cước Cho Hội Nhóm (merged from GroupPackageConfig) -->
+    <div class="col-lg-12 mt-4">
+        <partial name="~/Views/Groups/Partials/_GroupPackageConfig.cshtml" />
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa hội nhóm này không?</p>
+                <p class="text-muted small">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Group Modal -->
+<div class="modal fade" id="groupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="ri-team-line me-2"></i>
+                    Quản Lý Hội Nhóm
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Behavior Rules Modal for GROUP -->
+<div class="modal fade" id="behaviorRulesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="ri-file-list-3-line me-2"></i>
+                    <span id="behaviorRulesModalTitle">Quy Tắc Ứng Xử Nhóm</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="behaviorRulesModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa thành viên -->
+<div class="modal fade" id="deleteMemberModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa thành viên "<span id="deleteMemberName"></span>" khỏi nhóm này không?</p>
+                <p class="text-muted small">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteMember">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xem thành viên -->
+<div class="modal fade" id="viewMembersModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    <i class="ri-team-line me-2"></i>
+                    <span id="viewMembersModalTitle">Danh Sách Thành Viên</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="viewMembersModalBody">
+                <!-- Nội dung sẽ được load vào đây (danh sách hoặc form edit) -->
+                <div id="membersListView">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="badge bg-primary" id="totalMembersBadge">0 thành viên</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-secondary" id="btnToggleSortMode">
+                                <i class="ri-arrow-up-down-line me-1"></i> Sắp xếp
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" id="btnShowAddMember">
+                                <i class="ri-user-add-line me-1"></i> Thêm thành viên
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Chế độ sắp xếp -->
+                    <div id="sortModeView" style="display: none;">
+                        <div class="alert alert-info mb-3">
+                            <i class="ri-information-line me-2"></i>
+                            <strong>Hướng dẫn:</strong> Kéo thả các thành viên để sắp xếp thứ tự. Nhập chức vụ cho từng thành viên trong nhóm.
+                        </div>
+                        <div id="sortableMembersContainer">
+                            <!-- Danh sách thành viên có thể kéo thả sẽ được load vào đây -->
+                        </div>
+                        <div class="mt-3 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnCancelSort">
+                                Hủy
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" id="btnSaveSort">
+                                <i class="ri-save-line me-1"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Form thêm thành viên -->
+                    <div id="addMemberForm" style="display: none;" class="mb-3">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">
+                                    <i class="ri-user-add-line me-2"></i>Thêm thành viên vào nhóm
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Tên thành viên</label>
+                                        <input type="text" class="form-control" id="searchMemberName" placeholder="Nhập tên thành viên">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Số điện thoại</label>
+                                        <input type="text" class="form-control" id="searchMemberPhone" placeholder="Nhập số điện thoại">
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-primary btn-sm" id="btnSearchMember">
+                                            <i class="ri-search-line me-1"></i> Tìm kiếm
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btnCancelAddMember">
+                                            <i class="ri-close-line me-1"></i> Hủy
+                                        </button>
+                                    </div>
+                                    <div class="col-12" id="searchResultsContainer" style="display: none;">
+                                        <label class="form-label">Kết quả tìm kiếm</label>
+                                        <div id="searchResultsList" class="border rounded p-2" style="max-height: 400px; overflow-y: auto;">
+                                            <!-- Kết quả sẽ được load vào đây -->
+                                        </div>
+                                        <div class="mt-2" id="selectedMemberInfo" style="display: none;">
+                                            <div class="alert alert-info mb-2">
+                                                <strong>Thông tin thành viên:</strong>
+                                                <div id="memberInfoDetails"></div>
+                                            </div>
+                                            <button type="button" class="btn btn-success btn-sm" id="btnConfirmAddMember">
+                                                <i class="ri-check-line me-1"></i> Thêm vào nhóm
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="normalView">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="membersTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="5%">STT</th>
+                                        <th width="20%">Họ tên</th>
+                                        <th width="15%">Số điện thoại</th>
+                                        <th width="15%">Công ty</th>
+                                        <th width="15%">Chức vụ trong nhóm</th>
+                                        <th width="12%">Trạng thái</th>
+                                        <th width="18%">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="membersTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted py-3">
+                                            <i class="ri-loader-4-line ri-spin"></i> Đang tải...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="editMemberView" style="display: none;">
+                    <!-- Form edit sẽ được load vào đây -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var groupsTable;
+        var deleteId;
+        var deleteMemberId;
+        var deleteMemberName;
+        var searchTimeout;
+
+        $(document).ready(function () {
+            loadGroupsFilter();
+            GetListGroups();
+            
+            // Thiết lập scroll cho các dropdown filter khác
+            setupSelectScroll(document.getElementById('filter-status'));
+            
+            $('#search').on('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    groupsTable.ajax.reload();
+                }, 500);
+            });
+
+            // Xử lý xóa thành viên
+            $('#confirmDeleteMember').click(function () {
+                if (deleteMemberId) {
+                    console.log('Deleting member with ID:', deleteMemberId);
+
+                    var token = $('input[name="__RequestVerificationToken"]').val();
+                    console.log('Antiforgery token:', token ? 'Found' : 'Not found');
+                    console.log('Sending POST request to /Groups/DeleteMember');
+
+                    $.ajax({
+                        url: '/Groups/DeleteMember',
+                        type: 'POST',
+                        data: {
+                            membershipGroupId: deleteMemberId,
+                            __RequestVerificationToken: token
+                        },
+                        success: function (response) {
+                            console.log('Delete response:', response);
+                            if (response.success) {
+                                AlertResponse(response.message, 'success');
+                                $('#deleteMemberModal').modal('hide');
+                                $('#viewMembersModal').modal('hide');
+                                // Reload trang để cập nhật số thành viên
+                                location.reload();
+                            } else {
+                                AlertResponse(response.message, 'error');
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Delete member error:', {
+                                status: xhr.status,
+                                statusText: xhr.statusText,
+                                error: error,
+                                response: xhr.responseText
+                            });
+                            AlertResponse('Có lỗi xảy ra khi xóa thành viên', 'error');
+                            $('#deleteMemberModal').modal('hide');
+                        }
+                    });
+                }
+            });
+
+            // Set tên thành viên vào modal khi mở
+            $('#deleteMemberModal').on('show.bs.modal', function () {
+                $('#deleteMemberName').text(deleteMemberName || '');
+            });
+
+            // Khi đóng modal xóa, đảm bảo modal xem thành viên vẫn hiển thị
+            $('#deleteMemberModal').on('hidden.bs.modal', function () {
+                // Restore body class to keep viewMembersModal open
+                if ($('#viewMembersModal').hasClass('show')) {
+                    $('body').addClass('modal-open');
+                }
+            });
+
+            // Reset modal khi đóng
+            $('#viewMembersModal').on('hidden.bs.modal', function () {
+                backToMembersList();
+                resetAddMemberForm();
+                // Reset về chế độ xem bình thường
+                if (isSortMode) {
+                    toggleSortMode();
+                }
+            });
+
+            // Toggle sort mode
+            $('#btnToggleSortMode').click(function() {
+                toggleSortMode();
+            });
+
+            // Cancel sort
+            $('#btnCancelSort').click(function() {
+                toggleSortMode();
+            });
+
+            // Save sort
+            $('#btnSaveSort').click(function() {
+                saveMembersOrderAndPosition();
+            });
+
+            // Xử lý hiện form thêm thành viên
+            $('#btnShowAddMember').click(function() {
+                $('#addMemberForm').slideDown();
+                $('#btnShowAddMember').hide();
+            });
+
+            // Xử lý hủy thêm thành viên
+            $('#btnCancelAddMember').click(function() {
+                resetAddMemberForm();
+            });
+
+            // Xử lý tìm kiếm thành viên
+            $('#btnSearchMember').click(function() {
+                searchMembers();
+            });
+
+            // Enter key để tìm kiếm
+            $('#searchMemberName, #searchMemberPhone').keypress(function(e) {
+                if (e.which === 13) {
+                    searchMembers();
+                }
+            });
+
+            // Xử lý xác nhận thêm thành viên
+            $('#btnConfirmAddMember').click(function() {
+                var selectedMember = $('#searchResultsList').data('selectedMember');
+                if (selectedMember && selectedMember.userZaloId) {
+                    addMemberToGroup(selectedMember.userZaloId);
+                }
+            });
+        });
+
+        function GetListGroups() {
+            groupsTable = new DataTable("#list-groups", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const status = $("#filter-status").val();
+                    const groupId = $("#filter-group").val();
+                    let keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '/Groups/GetPage',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pageSize: data.length,
+                            keyword: keyword,
+                            status: status,
+                            groupId: groupId
+                        },
+                        success: function (response) {
+                            // Helper function to truncate text
+                            function truncateText(text, maxLength) {
+                                if (!text) return 'Không có mô tả';
+                                if (text.length <= maxLength) return text;
+                                return text.substring(0, maxLength) + '...';
+                            }
+
+                            const formattedData = response.data.map((item, index) => ({
+                                index: data.start + index + 1,
+                                name: `<div class="d-flex align-items-center gap-2">
+                                                                                                                                                                        ${item.logo ? `<img src="${item.logo}" alt="${item.name}" style="width: 40px; height: 40px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 2px; background: white;" />` : '<div style="width: 40px; height: 40px; border: 1px solid #ddd; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #f8f9fa;"><i class="ri-image-line text-muted"></i></div>'}
+                                                                                                                                                                        <div class="flex-grow-1">
+                                                                                                                                                                            <h6 class="mb-1">${item.name}</h6>
+                                                                                                                                                                            <small class="text-muted" title="${item.description || ''}">${truncateText(item.description, 40)}</small>
+                                                                                                                                                                        </div>
+                                                                                                                                                                    </div>`,
+                                memberCount: `<span class="badge bg-info">${item.memberCount} thành viên</span>`,
+                                status: `<span class="status-badge ${item.status ? 'status-active' : 'status-inactive'}">
+                                                                                                                                                                        ${item.status ? 'Đang hoạt động' : 'Không hoạt động'}
+                                                                                                                                                                    </span>`,
+                                createdDate: item.createdDate,
+                                actions: `<div class="d-flex align-items-center justify-content-center gap-1">
+                                                                                                                                                                        <button onclick="openViewMembersModal('${item.id}', '${item.name}')"
+                                                                                                                                                                                class="btn btn-sm btn-outline-warning" title="Xem thành viên">
+                                                                                                                                                                            <i class="ri-team-line"></i>
+                                                                                                                                                                        </button>
+                                                                                                                                                                        <button onclick="openBehaviorRulesModal('${item.id}', '${item.name}')"
+                                                                                                                                                                                class="btn btn-sm btn-outline-info" title="Quy Tắc Ứng Xử">
+                                                                                                                                                                            <i class="ri-file-list-3-line"></i>
+                                                                                                                                                                        </button>
+                                                                                                                                                                        <button onclick="viewLeaderboard('${item.id}')"
+                                                                                                                                                                                class="btn btn-sm btn-outline-success" title="Xem Leaderboard">
+                                                                                                                                                                            <i class="ri-trophy-line"></i>
+                                                                                                                                                                        </button>
+                                                                                                                                                                        <button onclick="openEditModal('${item.id}')"
+                                                                                                                                                                                class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                                                                                                                                                            <i class="ri-edit-line"></i>
+                                                                                                                                                                        </button>
+                                                                                                                                                                        <button onclick="confirmDelete('${item.id}')"
+                                                                                                                                                                                class="btn btn-sm btn-outline-danger" title="Xóa">
+                                                                                                                                                                            <i class="ri-delete-bin-line"></i>
+                                                                                                                                                                        </button>
+                                                                                                                                                                    </div>`
+                            }));
+
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: response.totalItems,
+                                recordsFiltered: response.totalItems,
+                                data: formattedData
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: 0,
+                                recordsFiltered: 0,
+                                data: []
+                            });
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: "index", className: 'text-center', width: "60px" },
+                    { title: "Tên Hội Nhóm", data: "name", className: 'col-4' },
+                    { title: "Thành Viên", data: "memberCount", className: 'text-center', width: "120px" },
+                    { title: "Trạng thái", data: "status", className: 'text-center', width: "120px" },
+                    { title: "Ngày tạo", data: "createdDate", className: 'text-center', width: "120px" },
+                    { title: "Thao tác", data: "actions", className: 'text-center', width: "150px" }
+
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+                }
+            });
+
+            $(groupsTable.table().header()).addClass('ligth ligth-data');
+        }
+
+
+        function resetFilters() {
+            $('#search').val('');
+            $('#filter-status').val('');
+            $('#filter-group').val('');
+            groupsTable.ajax.reload();
+        }
+
+        function loadGroupsFilter() {
+            $.ajax({
+                url: '/Groups/GetAll',
+                type: 'GET',
+                success: function (response) {
+                    if (response.success && response.data) {
+                        const select = $('#filter-group');
+                        select.find('option:not(:first)').remove();
+                        response.data.forEach(group => {
+                            select.append(`<option value="${group.id}">${group.name}</option>`);
+                        });
+                        
+                        // Thiết lập scroll cho dropdown nếu có nhiều hơn 5 options
+                        setupSelectScroll(select[0]);
+                    }
+                },
+                error: function () {
+                    console.error('Error loading groups for filter');
+                }
+            });
+        }
+
+        function setupSelectScroll(selectElement) {
+            if (!selectElement) return;
+            
+            const maxVisibleOptions = 5;
+            const totalOptions = selectElement.options.length;
+            
+            // Nếu có nhiều hơn 5 options, thêm event để hiển thị scroll
+            if (totalOptions > maxVisibleOptions) {
+                // Khi focus, set size để hiển thị scroll
+                $(selectElement).on('focus', function() {
+                    if (this.size === 0 || this.size === 1) {
+                        this.size = Math.min(maxVisibleOptions, totalOptions);
+                        this.style.position = 'relative';
+                        this.style.zIndex = '1000';
+                    }
+                });
+                
+                // Khi blur, reset về dropdown bình thường
+                $(selectElement).on('blur', function() {
+                    this.size = 0;
+                    this.style.position = '';
+                    this.style.zIndex = '';
+                });
+                
+                // Khi change, reset size
+                $(selectElement).on('change', function() {
+                    setTimeout(() => {
+                        this.size = 0;
+                        this.style.position = '';
+                        this.style.zIndex = '';
+                    }, 100);
+                });
+            }
+        }
+
+
+        function confirmDelete(id) {
+            deleteId = id;
+            $('#deleteModal').modal('show');
+        }
+
+        $('#confirmDelete').click(function () {
+            if (deleteId) {
+                $.ajax({
+                    url: '@Url.Action("Delete", "Groups")',
+                    type: 'POST',
+                    data: {
+                        id: deleteId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            AlertResponse(response.message, 'success');
+                            groupsTable.ajax.reload(null, false);
+                        } else {
+                            AlertResponse(response.message, 'error');
+                        }
+                        $('#deleteModal').modal('hide');
+                    },
+                    error: function () {
+                        AlertResponse('Có lỗi xảy ra khi xóa hội nhóm', 'error');
+                        $('#deleteModal').modal('hide');
+                    }
+                });
+            }
+        });
+
+        function HandleExportData() {
+            const status = $("#filter-status").val() || "";
+            const groupId = $("#filter-group").val() || "";
+            const keyword = $("#search").val() || "";
+
+            const queryParams = new URLSearchParams({
+                status: status,
+                groupId: groupId,
+                keyword: keyword
+            }).toString();
+
+            const apiUrl = `/api/Groups/Export?${queryParams}`;
+
+            // Tạo form ẩn để submit
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = apiUrl;
+            form.target = '_blank';
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function openCreateModal() {
+            try {
+                // Load partial view vào modal
+                $.get('/Groups/GetCreateForm', function (data) {
+                    $('#groupModal .modal-body').html(data);
+                    $('#groupModal').modal('show');
+                }).fail(function (xhr, status, error) {
+                showError('Lỗi', 'Không thể tải form tạo hội nhóm');
+            });
+        } catch (e) {
+            showError('Lỗi', 'Có lỗi xảy ra');
+        }
+        }
+
+        function openEditModal(groupId) {
+            try {
+                // Load partial view edit vào modal
+                $.get(`/Groups/GetEditForm/${groupId}`, function (data) {
+                    $('#groupModal .modal-body').html(data);
+
+                    // Load group data và fill vào form
+                    loadGroupDataAndFillForm(groupId);
+
+                    $('#groupModal').modal('show');
+                }).fail(function (xhr, status, error) {
+                showError('Lỗi', 'Không thể tải form chỉnh sửa hội nhóm');
+            });
+        } catch (e) {
+            showError('Lỗi', 'Có lỗi xảy ra');
+        }
+        }
+
+        // Reset modal khi đóng để tránh conflict
+        $(document).ready(function() {
+            $('#groupModal').on('hidden.bs.modal', function () {
+                $(this).find('.modal-body').empty();
+            });
+        });
+
+        function loadGroupDataAndFillForm(groupId) {
+            // Gọi API để lấy data hội nhóm
+            $.ajax({
+                url: `/api/groups/${groupId}`,
+                cache: false,
+                success: function (response) {
+
+                if (response.code === 0 && response.data) {
+                    const groupData = response.data;
+
+                    // Fill data vào form (sử dụng camelCase properties từ API)
+                    $('input[name="GroupName"]').val(groupData.groupName);
+                    $('textarea[name="Rule"]').val(groupData.rule);
+                    
+                    // Set content vào Quill Editor cho Description và MainActivities (đợi Quill khởi tạo)
+                    setTimeout(function() {
+                        if (window.descriptionQuillEditor && groupData.description) {
+                            window.descriptionQuillEditor.root.innerHTML = groupData.description;
+                        }
+                        if (window.mainActivitiesQuillEditor && groupData.mainActivities) {
+                            window.mainActivitiesQuillEditor.root.innerHTML = groupData.mainActivities;
+                        }
+                    }, 200);
+                    
+                    $('select[name="IsActive"]').val(groupData.isActive.toString());
+                    
+                    // Load logo hiện tại nếu có
+                    if (groupData.logo) {
+                        $('#currentLogoImg').attr('src', groupData.logo);
+                        $('#currentLogoSection').show();
+                    }
+
+                } else {
+                    // Failed to load
+                }
+                },
+                error: function (xhr, status, error) {
+                    // Error loading
+                }
+            });
+        }
+
+        function viewLeaderboard(groupId) {
+            window.location.href = `/Groups/Detail?id=${groupId}`;
+        }
+
+        var isSortMode = false;
+
+        function toggleSortMode() {
+            isSortMode = !isSortMode;
+            
+            if (isSortMode) {
+                // Chuyển sang chế độ sắp xếp
+                $('#normalView').hide();
+                $('#sortModeView').show();
+                $('#btnToggleSortMode').html('<i class="ri-list-check me-1"></i> Xem danh sách').removeClass('btn-secondary').addClass('btn-info');
+                $('#btnShowAddMember').hide();
+                
+                // Load lại danh sách ở chế độ sortable
+                if (currentGroupId) {
+                    loadMembersForSort(currentGroupId);
+                }
+            } else {
+                // Chuyển về chế độ xem bình thường
+                $('#sortModeView').hide();
+                $('#normalView').show();
+                $('#btnToggleSortMode').html('<i class="ri-arrow-up-down-line me-1"></i> Sắp xếp').removeClass('btn-info').addClass('btn-secondary');
+                $('#btnShowAddMember').show();
+                
+                // Reload danh sách bình thường
+                if (currentGroupId) {
+                    loadGroupMembers(currentGroupId);
+                }
+            }
+        }
+
+        function loadMembersForSort(groupId) {
+            $('#sortableMembersContainer').html('<div class="text-center py-3"><i class="ri-loader-4-line ri-spin"></i> Đang tải...</div>');
+            
+            $.ajax({
+                url: '/Groups/GetGroupMembers',
+                type: 'GET',
+                data: { groupId: groupId },
+                success: function (response) {
+                    if (response.success && response.data) {
+                        renderSortableMembersList(response.data);
+                    } else {
+                        $('#sortableMembersContainer').html('<div class="text-center text-danger py-3">Không thể tải danh sách thành viên</div>');
+                    }
+                },
+                error: function () {
+                    $('#sortableMembersContainer').html('<div class="text-center text-danger py-3">Có lỗi xảy ra khi tải danh sách thành viên</div>');
+                }
+            });
+        }
+
+        function renderSortableMembersList(members) {
+            var html = '<ul id="sortableMembers" class="list-group">';
+            members.forEach(function(member, index) {
+                html += `
+                    <li class="list-group-item d-flex align-items-center gap-3" data-membership-group-id="${member.id}" style="cursor: move;">
+                        <div class="drag-handle text-muted" style="cursor: grab;">
+                            <i class="ri-drag-move-2-line fs-5"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                ${member.zaloAvatar ? `<img src="${member.zaloAvatar}" alt="${member.memberName}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" />` : '<div style="width: 40px; height: 40px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center;"><i class="ri-user-line text-muted"></i></div>'}
+                                <div>
+                                    <h6 class="mb-0">${member.memberName || 'N/A'}</h6>
+                                    <small class="text-muted">${member.phoneNumber || 'N/A'}</small>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label class="form-label small mb-1">Chức vụ trong nhóm:</label>
+                                <input type="text" class="form-control form-control-sm group-position-input" 
+                                       value="${(member.groupPosition || '').replace(/"/g, '&quot;')}" 
+                                       placeholder="Nhập chức vụ..." 
+                                       data-membership-group-id="${member.id}">
+                            </div>
+                        </div>
+                        <div class="text-muted">
+                            <small>Thứ tự: <span class="sort-order-badge">${index + 1}</span></small>
+                        </div>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            $('#sortableMembersContainer').html(html);
+            
+            // Initialize sortable với tối ưu hiệu năng
+            if ($('#sortableMembers').length) {
+                $('#sortableMembers').sortable({
+                    handle: '.drag-handle',
+                    axis: 'y',
+                    tolerance: 'pointer',
+                    cursor: 'grabbing',
+                    cursorAt: { top: 30, left: 20 },
+                    distance: 5,
+                    helper: function(e, item) {
+                        // Tạo helper clone đi theo cursor
+                        var helper = item.clone();
+                        var itemOffset = item.offset();
+                        var mouseY = e.pageY - itemOffset.top;
+                        
+                        helper.css({
+                            'width': item.outerWidth(),
+                            'opacity': 1,
+                            'background': '#fff',
+                            'box-shadow': '0 8px 24px rgba(0,0,0,0.25)',
+                            'transform': 'none',
+                            'z-index': 9999,
+                            'pointer-events': 'none'
+                        });
+                        
+                        // Đặt vị trí cursor trên helper
+                        helper.data('cursor-offset', mouseY);
+                        return helper;
+                    },
+                    placeholder: 'ui-sortable-placeholder',
+                    start: function(e, ui) {
+                        // Ẩn hoàn toàn item gốc khi kéo
+                        ui.item.css({
+                            'opacity': '0',
+                            'visibility': 'hidden'
+                        });
+                        ui.placeholder.height(ui.item.outerHeight());
+                        ui.placeholder.css('margin-bottom', '10px');
+                    },
+                    drag: function(e, ui) {
+                        // Đảm bảo helper đi theo cursor
+                        var cursorOffset = ui.helper.data('cursor-offset') || 30;
+                        ui.position.top = e.pageY - $(this).offset().top - cursorOffset;
+                    },
+                    stop: function(e, ui) {
+                        // Hiện lại item và reset style
+                        ui.item.css({
+                            'opacity': '1',
+                            'transition': 'opacity 0.2s ease',
+                            'visibility': 'visible'
+                        });
+                        // Reset sau một chút để animation mượt
+                        setTimeout(function() {
+                            ui.item.css('transition', 'box-shadow 0.2s ease');
+                        }, 200);
+                    },
+                    update: function(event, ui) {
+                        updateSortOrderNumbers();
+                    },
+                    change: function(event, ui) {
+                        // Cập nhật placeholder height khi di chuyển
+                        if (ui.placeholder) {
+                            ui.placeholder.height(ui.item.outerHeight());
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateSortOrderNumbers() {
+            $('#sortableMembers li').each(function(index) {
+                $(this).find('.sort-order-badge').text(index + 1);
+            });
+        }
+
+        function saveMembersOrderAndPosition() {
+            if (!currentGroupId) {
+                AlertResponse('Không tìm thấy thông tin nhóm', 'error');
+                return;
+            }
+
+            var membersData = [];
+            $('#sortableMembers li').each(function(index) {
+                var membershipGroupId = $(this).data('membership-group-id');
+                var groupPosition = $(this).find('.group-position-input').val() || '';
+                membersData.push({
+                    membershipGroupId: membershipGroupId,
+                    sortOrder: index + 1,
+                    groupPosition: groupPosition
+                });
+            });
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/Groups/UpdateMembersOrderAndPosition',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    groupId: currentGroupId,
+                    members: membersData,
+                    __RequestVerificationToken: token
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        AlertResponse(response.message, 'success');
+                        // Chuyển về chế độ xem bình thường và reload
+                        toggleSortMode();
+                        loadGroupMembers(currentGroupId);
+                    } else {
+                        AlertResponse(response.message, 'error');
+                    }
+                },
+                error: function () {
+                    AlertResponse('Có lỗi xảy ra khi lưu thứ tự thành viên', 'error');
+                }
+            });
+        }
+
+        var currentGroupId = null;
+        var currentGroupName = null;
+
+        function openViewMembersModal(groupId, groupName) {
+            try {
+                currentGroupId = groupId;
+                currentGroupName = groupName;
+                $('#viewMembersModalTitle').text(`Danh Sách Thành Viên - ${groupName}`);
+                $('#viewMembersModal').modal('show');
+
+                // Fix z-index for modal and backdrop
+                setTimeout(function() {
+                    $('#viewMembersModal').css('z-index', 1050);
+                    $('.modal-backdrop').first().css('z-index', 1040);
+                }, 10);
+
+                loadGroupMembers(groupId);
+            } catch (e) {
+                showError('Lỗi', 'Có lỗi xảy ra');
+            }
+        }
+
+        function loadGroupMembers(groupId) {
+            $('#membersTableBody').html(`
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-3">
+                        <i class="ri-loader-4-line ri-spin"></i> Đang tải...
+                    </td>
+                </tr>
+            `);
+
+            $.ajax({
+                url: '/Groups/GetGroupMembers',
+                type: 'GET',
+                data: { groupId: groupId },
+                success: function (response) {
+                    if (response.success && response.data) {
+                        $('#totalMembersBadge').text(`${response.totalItems} thành viên`);
+                        
+                        if (response.data.length === 0) {
+                            $('#membersTableBody').html(`
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-3">
+                                        <i class="ri-user-line"></i> Chưa có thành viên
+                                    </td>
+                                </tr>
+                            `);
+                            return;
+                        }
+
+                        let membersHtml = '';
+                        response.data.forEach((member, index) => {
+                            const statusBadge = member.isApproved === true 
+                                ? '<span class="badge bg-success">Đã duyệt</span>'
+                                : member.isApproved === false
+                                ? '<span class="badge bg-danger">Từ chối</span>'
+                                : '<span class="badge bg-warning">Chờ duyệt</span>';
+                            
+                            const groupPosition = member.groupPosition || 'N/A';
+                            
+                            membersHtml += `
+                                <tr>
+                                    <td class="text-center">${index + 1}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            ${member.zaloAvatar ? `<img src="${member.zaloAvatar}" alt="${member.memberName}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />` : '<div style="width: 32px; height: 32px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center;"><i class="ri-user-line text-muted"></i></div>'}
+                                            <span>${member.memberName || 'N/A'}</span>
+                                        </div>
+                                    </td>
+                                    <td>${member.phoneNumber || 'N/A'}</td>
+                                    <td>${member.company || 'N/A'}</td>
+                                    <td>${groupPosition}</td>
+                                    <td>${statusBadge}</td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editMember('${member.membershipId}')" title="Chỉnh sửa">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteMember('${member.id}', '${member.memberName.replace(/'/g, "\\'")}')" title="Xóa">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        $('#membersTableBody').html(membersHtml);
+                    } else {
+                        $('#membersTableBody').html(`
+                            <tr>
+                                <td colspan="7" class="text-center text-danger py-3">
+                                    <i class="ri-error-warning-line"></i> ${response.message || 'Không thể tải danh sách thành viên'}
+                                </td>
+                            </tr>
+                        `);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    $('#membersTableBody').html(`
+                        <tr>
+                            <td colspan="7" class="text-center text-danger py-3">
+                                <i class="ri-error-warning-line"></i> Có lỗi xảy ra khi tải danh sách thành viên
+                            </td>
+                        </tr>
+                    `);
+                }
+            });
+        }
+
+        function editMember(membershipId) {
+            console.log('editMember called with membershipId:', membershipId);
+
+            if (!membershipId) {
+                AlertResponse('Không tìm thấy thông tin thành viên', 'error');
+                return;
+            }
+
+            // Ẩn danh sách, hiển thị form edit
+            $('#membersListView').hide();
+            $('#editMemberView').show();
+            // Ẩn header của modal chính
+            $('#viewMembersModal .modal-header').hide();
+            $('#editMemberView').html(`
+                <div class="text-center py-3">
+                    <i class="ri-loader-4-line ri-spin"></i> Đang tải form chỉnh sửa...
+                </div>
+            `);
+
+            // Load form edit
+            $.ajax({
+                url: `/Membership/Edit?id=${membershipId}`,
+                type: 'GET',
+                success: function (data) {
+                    console.log('Edit form loaded successfully');
+                    console.log('Response type:', typeof data);
+                    console.log('Response length:', data.length);
+
+                    // Kiểm tra nếu response là JSON error
+                    if (typeof data === 'object' && data.success === false) {
+                        AlertResponse(data.message || 'Không thể tải form chỉnh sửa thành viên', 'error');
+                        backToMembersList();
+                        return;
+                    }
+                    $('#editMemberView').html(data);
+
+                    // Log form values after loading
+                    setTimeout(function() {
+                        console.log('Form values after loading:');
+                        console.log('Fullname:', $('input[name="Fullname"]').val());
+                        console.log('Email:', $('input[name="Email"]').val());
+                        console.log('Company:', $('input[name="Company"]').val());
+                        console.log('Position:', $('input[name="Position"]').val());
+                    }, 50);
+
+                    // Hiển thị nút quay lại sau khi load form
+                    setTimeout(function() {
+                        $('#backButtonContainer').show();
+                        // Update modal title to show group name
+                        if (currentGroupName && $('#membershipFormModalTitle').length > 0) {
+                            $('#membershipFormModalTitle').html(`
+                                <i class="ri-edit-line me-2"></i>
+                                Danh Sách Thành Viên - ${currentGroupName}
+                            `);
+                        }
+                    }, 100);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading edit form:', error);
+                    console.error('XHR:', xhr);
+
+                    let errorMessage = 'Không thể tải form chỉnh sửa thành viên';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    AlertResponse(errorMessage, 'error');
+                    backToMembersList();
+                }
+            });
+        }
+
+        function backToMembersList() {
+            // Ẩn form edit, hiển thị danh sách
+            $('#editMemberView').hide();
+            $('#editMemberView').empty();
+            $('#membersListView').show();
+            // Hiện lại header của modal chính
+            $('#viewMembersModal .modal-header').show();
+
+            // Reload danh sách nếu cần
+            if (currentGroupId) {
+                loadGroupMembers(currentGroupId);
+            }
+        }
+
+        function deleteMember(membershipGroupId, memberName) {
+            // Sử dụng modal xác nhận thay vì confirm
+            deleteMemberId = membershipGroupId;
+            deleteMemberName = memberName;
+
+            // Show delete modal with proper z-index handling
+            $('#deleteMemberModal').modal('show');
+
+            // Ensure delete modal and its backdrop are above view members modal
+            setTimeout(function() {
+                $('#deleteMemberModal').css('z-index', 1060);
+                $('.modal-backdrop').last().css('z-index', 1055);
+            }, 10);
+        }
+
+        function openBehaviorRulesModal(groupId, groupName) {
+            try {
+                // Update modal title
+                $('#behaviorRulesModalTitle').text(`Quy Tắc Ứng Xử Nhóm - ${groupName}`);
+
+                // Load the behavior rules content into modal
+                $.get(`/Groups/GetBehaviorRulesContent?groupId=${groupId}`, function (data) {
+                    $('#behaviorRulesModalBody').html(data);
+                    $('#behaviorRulesModal').modal('show');
+
+                    // Initialize the behavior rules page after modal is shown
+                    $('#behaviorRulesModal').on('shown.bs.modal', function () {
+                        if (typeof initGroupBehaviorRules === 'function') {
+                            initGroupBehaviorRules(groupId, groupName);
+                        }
+                    });
+                }).fail(function (xhr, status, error) {
+                    showError('Lỗi', 'Không thể tải nội dung quy tắc ứng xử');
+                });
+            } catch (e) {
+                showError('Lỗi', 'Có lỗi xảy ra');
+            }
+        }
+
+        // ===== Gán Gói Cước Cho Hội Nhóm (merged scripts) =====
+        let assignCurrentPage = 1;
+        let assignPageSize = 10;
+        let assignSelectedPlans = [];
+        let assignEditSelectedPlans = [];
+
+        $(document).ready(function () {
+            loadAssignData();
+            loadAssignGroups();
+            loadAssignSubscriptionPlans();
+            initializeAssignCustomDropdowns();
+        });
+
+        function loadAssignData() {
+            const keyword = $('#searchInput').val();
+
+            $.ajax({
+                url: '/GroupPackageConfig/GetPaged',
+                type: 'GET',
+                data: { page: assignCurrentPage, pageSize: assignPageSize, keyword: keyword },
+                success: function (response) {
+                    if (response.success) { renderAssignTable(response.data); }
+                    else { showError('Lỗi', response.message); }
+                },
+                error: function () { showError('Lỗi', 'Có lỗi xảy ra khi tải dữ liệu'); }
+            });
+        }
+
+        function renderAssignTable(data) {
+            const tbody = $('#configsTableBody');
+            tbody.empty();
+
+            if (!data.items || data.items.length === 0) {
+                tbody.append('<tr><td colspan="6" class="text-center">Không có dữ liệu</td></tr>');
+                $('#tableInfo').text('Hiển thị 0 đến 0 của 0 dòng');
+                $('#pagination').empty();
+                return;
+            }
+
+            data.items.forEach((item, index) => {
+                const rowNumber = (assignCurrentPage - 1) * assignPageSize + index + 1;
+                const statusBadge = item.isActive ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-secondary">Không hoạt động</span>';
+                const row = `
+                    <tr>
+                        <td class="text-center">${rowNumber}</td>
+                        <td>${item.groupName || 'N/A'}</td>
+                        <td>${item.planName || 'N/A'}</td>
+                        <td class="text-center">${statusBadge}</td>
+                        <td class="text-center">${new Date(item.createdDate).toLocaleDateString('vi-VN')}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary" onclick="openAssignEditModal('${item.id}')" title="Chỉnh sửa"><i class="ri-edit-line"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteAssignConfig('${item.id}')" title="Xóa"><i class="ri-delete-bin-line"></i></button>
+                        </td>
+                    </tr>`;
+                tbody.append(row);
+            });
+
+            const start = (assignCurrentPage - 1) * assignPageSize + 1;
+            const end = Math.min(assignCurrentPage * assignPageSize, data.totalItems);
+            $('#tableInfo').text(`Hiển thị ${start} đến ${end} của ${data.totalItems} dòng`);
+            renderAssignPagination(data.totalPages);
+        }
+
+        function renderAssignPagination(totalPages) {
+            const pagination = $('#pagination');
+            pagination.empty();
+            if (totalPages <= 1) return;
+            let html = '<ul class="pagination mb-0">';
+            html += `<li class="page-item ${assignCurrentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changeAssignPage(${assignCurrentPage - 1}); return false;">Trước</a></li>`;
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= assignCurrentPage - 2 && i <= assignCurrentPage + 2)) {
+                    html += `<li class="page-item ${i === assignCurrentPage ? 'active' : ''}"><a class="page-link" href="#" onclick="changeAssignPage(${i}); return false;">${i}</a></li>`;
+                } else if (i === assignCurrentPage - 3 || i === assignCurrentPage + 3) {
+                    html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+                }
+            }
+            html += `<li class="page-item ${assignCurrentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" onclick="changeAssignPage(${assignCurrentPage + 1}); return false;">Sau</a></li>`;
+            html += '</ul>';
+            pagination.html(html);
+        }
+
+        function changeAssignPage(page) { assignCurrentPage = page; loadAssignData(); }
+        function resetAssignFilters() { $('#searchInput').val(''); assignCurrentPage = 1; loadAssignData(); }
+        function openAssignCreateModal() { resetAssignCreateForm(); $('#createModal').modal('show'); }
+
+        function resetAssignCreateForm() {
+            $('#createForm')[0].reset();
+            assignSelectedPlans = [];
+            updateAssignSelectedPlansDisplay('#selectedPlans', assignSelectedPlans);
+            updateAssignToggleText('#subscriptionPlanText', assignSelectedPlans);
+            $('#subscriptionPlanMenu input[type="checkbox"]').prop('checked', false);
+        }
+
+        function loadAssignGroups() {
+            return $.ajax({ url: '/Groups/GetAll', type: 'GET', success: function (response) {
+                if (response.success) {
+                    const createSelect = $('#groupId'); createSelect.find('option:not(:first)').remove();
+                    const editSelect = $('#editGroupId'); editSelect.find('option:not(:first)').remove();
+                    response.data.forEach(group => { createSelect.append(`<option value="${group.id}">${group.name}</option>`); editSelect.append(`<option value="${group.id}">${group.name}</option>`); });
+                }
+            }, error: function () { } });
+        }
+
+        function loadAssignSubscriptionPlans() {
+            $.ajax({ url: '/SubscriptionPlan/GetAll', type: 'GET', success: function (response) {
+                if (response.success) { populateAssignCustomDropdown('#subscriptionPlanMenu', response.data); populateAssignCustomDropdown('#editSubscriptionPlanMenu', response.data); }
+            }, error: function () { } });
+        }
+
+        function populateAssignCustomDropdown(menuSelector, plans) {
+            const menu = $(menuSelector); menu.empty();
+            plans.forEach(plan => { const item = $(`<div class="custom-dropdown-item" data-value="${plan.id}"><input type="checkbox" value="${plan.id}" id="plan_${plan.id}"><label for="plan_${plan.id}">${plan.planName}</label></div>`); menu.append(item); });
+        }
+
+        function initializeAssignCustomDropdowns() {
+            $('#subscriptionPlanToggle').click(function(e) { e.stopPropagation(); $('#subscriptionPlanMenu').toggleClass('show'); });
+            $('#editSubscriptionPlanToggle').click(function(e) { e.stopPropagation(); $('#editSubscriptionPlanMenu').toggleClass('show'); });
+            $(document).on('change', '#subscriptionPlanMenu input[type="checkbox"]', function() {
+                const planId = $(this).val(); const planName = $(this).next('label').text(); const isChecked = $(this).is(':checked');
+                if (isChecked) { if (!assignSelectedPlans.find(p => p.id === planId)) { assignSelectedPlans.push({ id: planId, name: planName }); } }
+                else { assignSelectedPlans = assignSelectedPlans.filter(p => p.id !== planId); }
+                updateAssignSelectedPlansDisplay('#selectedPlans', assignSelectedPlans); updateAssignToggleText('#subscriptionPlanText', assignSelectedPlans);
+            });
+            $(document).on('change', '#editSubscriptionPlanMenu input[type="checkbox"]', function() {
+                const planId = $(this).val(); const planName = $(this).next('label').text(); const isChecked = $(this).is(':checked');
+                if (isChecked) { if (!assignEditSelectedPlans.find(p => p.id === planId)) { assignEditSelectedPlans.push({ id: planId, name: planName }); } }
+                else { assignEditSelectedPlans = assignEditSelectedPlans.filter(p => p.id !== planId); }
+                updateAssignSelectedPlansDisplay('#editSelectedPlans', assignEditSelectedPlans); updateAssignToggleText('#editSubscriptionPlanText', assignEditSelectedPlans);
+            });
+            $(document).click(function(e) { if (!$(e.target).closest('.custom-dropdown').length) { $('.custom-dropdown-menu').removeClass('show'); } });
+        }
+
+        function updateAssignSelectedPlansDisplay(containerSelector, plans) {
+            const container = $(containerSelector); container.empty();
+            plans.forEach(plan => { const item = $(`<div class="selected-item">${plan.name}<span class="remove" data-id="${plan.id}">&times;</span></div>`); container.append(item); });
+        }
+        function updateAssignToggleText(textSelector, plans) { const textElement = $(textSelector); if (plans.length === 0) { textElement.text('-- Chọn gói cước --'); } else if (plans.length === 1) { textElement.text(plans[0].name); } else { textElement.text(`${plans.length} gói đã chọn`); } }
+
+        $(document).on('click', '.selected-item .remove', function() {
+            const planId = $(this).data('id');
+            if ($(this).closest('#selectedPlans').length) { assignSelectedPlans = assignSelectedPlans.filter(p => p.id !== planId); updateAssignSelectedPlansDisplay('#selectedPlans', assignSelectedPlans); updateAssignToggleText('#subscriptionPlanText', assignSelectedPlans); $(`#subscriptionPlanMenu input[value="${planId}"]`).prop('checked', false); }
+            if ($(this).closest('#editSelectedPlans').length) { assignEditSelectedPlans = assignEditSelectedPlans.filter(p => p.id !== planId); updateAssignSelectedPlansDisplay('#editSelectedPlans', assignEditSelectedPlans); updateAssignToggleText('#editSubscriptionPlanText', assignEditSelectedPlans); $(`#editSubscriptionPlanMenu input[value="${planId}"]`).prop('checked', false); }
+        });
+
+        function submitAssignCreate() {
+            const groupId = $('#groupId').val(); const isActive = $('#isActive').val() === 'true';
+            if (!groupId || assignSelectedPlans.length === 0) { showWarning('Cảnh báo', 'Vui lòng chọn đầy đủ thông tin'); return; }
+            let successCount = 0; let errorCount = 0;
+            assignSelectedPlans.forEach(plan => {
+                const data = { groupId: groupId, subscriptionPlanId: plan.id, isActive: isActive };
+                $.ajax({ url: '/GroupPackageConfig/Create', type: 'POST', contentType: 'application/json', data: JSON.stringify(data),
+                    success: function (response) {
+                        if (response.success) { successCount++; } else { errorCount++; }
+                        if (successCount + errorCount === assignSelectedPlans.length) {
+                            if (errorCount === 0) { showSuccess('Thành công', `Đã gán ${successCount} gói cước cho nhóm`); $('#createModal').modal('hide'); resetAssignCreateForm(); loadAssignData(); }
+                            else { showWarning('Cảnh báo', `Gán thành công ${successCount} gói, lỗi ${errorCount} gói`); loadAssignData(); }
+                        }
+                    }, error: function () { errorCount++; if (successCount + errorCount === assignSelectedPlans.length) { showError('Lỗi', `Gán thành công ${successCount} gói, lỗi ${errorCount} gói`); loadAssignData(); } }
+                });
+            });
+        }
+
+        function toggleAssignActive(id) {
+            $.ajax({ url: '/GroupPackageConfig/ToggleActive', type: 'PUT', data: { id: id },
+                success: function (response) { if (response.success) { showSuccess('Thành công', response.message); loadAssignData(); } else { showError('Lỗi', response.message); } },
+                error: function () { showError('Lỗi', 'Có lỗi xảy ra khi cập nhật trạng thái'); }
+            });
+        }
+
+        let assignDeleteId;
+        function deleteAssignConfig(id) {
+            assignDeleteId = id;
+            $('#assignDeleteModal').modal('show');
+        }
+
+        $('#confirmAssignDelete').click(function () {
+            if (assignDeleteId) {
+                $.ajax({ url: '/GroupPackageConfig/Delete', type: 'DELETE', data: { id: assignDeleteId },
+                    success: function (response) {
+                        if (response.success) {
+                            showSuccess('Thành công', response.message);
+                            loadAssignData();
+                        } else {
+                            showError('Lỗi', response.message);
+                        }
+                        $('#assignDeleteModal').modal('hide');
+                        assignDeleteId = null;
+                    },
+                    error: function () {
+                        showError('Lỗi', 'Có lỗi xảy ra khi xóa');
+                        $('#assignDeleteModal').modal('hide');
+                        assignDeleteId = null;
+                    }
+                });
+            }
+        });
+
+        function openAssignEditModal(id) { $('#editConfigId').val(id); loadAssignConfigById(id); $('#editModal').modal('show'); }
+        function loadAssignConfigById(id) {
+            $.ajax({ url: `/GroupPackageConfig/GetById?id=${id}`, type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        const config = response.data;
+                        if ($('#editGroupId option').length <= 1) { loadAssignGroups().then(() => { $('#editGroupId').val(config.groupId); }); } else { $('#editGroupId').val(config.groupId); }
+                        $('#editIsActive').val(config.isActive.toString());
+                        assignEditSelectedPlans = [{ id: config.subscriptionPlanId, name: config.planName }];
+                        updateAssignSelectedPlansDisplay('#editSelectedPlans', assignEditSelectedPlans); updateAssignToggleText('#editSubscriptionPlanText', assignEditSelectedPlans);
+                        $('#editSubscriptionPlanMenu input[type="checkbox"]').prop('checked', false);
+                        $(`#editSubscriptionPlanMenu input[value="${config.subscriptionPlanId}"]`).prop('checked', true);
+                    } else { showError('Lỗi', response.message); $('#editModal').modal('hide'); }
+                }, error: function () { showError('Lỗi', 'Có lỗi xảy ra khi tải dữ liệu'); $('#editModal').modal('hide'); }
+            });
+        }
+
+        function submitAssignEdit() {
+            const configId = $('#editConfigId').val(); const groupId = $('#editGroupId').val(); const isActive = $('#editIsActive').val() === 'true';
+            if (!groupId || assignEditSelectedPlans.length === 0) { showWarning('Cảnh báo', 'Vui lòng chọn đầy đủ thông tin'); return; }
+            const selectedPlan = assignEditSelectedPlans[0];
+            const data = { groupId: groupId, subscriptionPlanId: selectedPlan.id, isActive: isActive };
+            $.ajax({ url: `/GroupPackageConfig/Update?id=${configId}`, type: 'PUT', contentType: 'application/json', data: JSON.stringify(data),
+                success: function (response) { if (response.success) { showSuccess('Thành công', response.message); $('#editModal').modal('hide'); loadAssignData(); } else { showError('Lỗi', response.message); } },
+                error: function () { showError('Lỗi', 'Có lỗi xảy ra khi cập nhật'); }
+            });
+        }
+
+        // Functions cho thêm thành viên
+        function resetAddMemberForm() {
+            $('#addMemberForm').slideUp();
+            $('#btnShowAddMember').show();
+            $('#searchMemberName').val('');
+            $('#searchMemberPhone').val('');
+            $('#searchResultsList').empty();
+            $('#searchResultsContainer').hide();
+            $('#selectedMemberInfo').hide();
+            $('#searchResultsList').removeData('selectedMember');
+        }
+
+        function searchMembers() {
+            var name = $('#searchMemberName').val().trim();
+            var phone = $('#searchMemberPhone').val().trim();
+
+            if (!name && !phone) {
+                AlertResponse('Vui lòng nhập tên hoặc số điện thoại để tìm kiếm', 'warning');
+                return;
+            }
+
+            var searchTerm = name || phone;
+
+            $.ajax({
+                url: '/Groups/SearchMembers',
+                type: 'GET',
+                data: { searchTerm: searchTerm },
+                success: function(response) {
+                    if (response.success) {
+                        if (response.data.length === 0) {
+                            AlertResponse('Không tìm thấy thành viên phù hợp', 'info');
+                            $('#searchResultsContainer').hide();
+                        } else {
+                            displaySearchResults(response.data);
+                        }
+                    } else {
+                        AlertResponse(response.message, 'error');
+                    }
+                },
+                error: function() {
+                    AlertResponse('Có lỗi xảy ra khi tìm kiếm', 'error');
+                }
+            });
+        }
+
+        function displaySearchResults(members) {
+            var $container = $('#searchResultsList');
+            $container.empty();
+
+            if (members.length === 0) {
+                $container.html('<p class="text-muted text-center py-3">Không tìm thấy kết quả</p>');
+            } else {
+                members.forEach(function(member) {
+                    var statusBadgeClass = member.approvalStatus === 1 ? 'bg-success' : 'bg-warning';
+
+                    var avatarHtml = '';
+                    if (member.zaloAvatar && member.zaloAvatar.trim() !== '') {
+                        avatarHtml = `<img src="${member.zaloAvatar}" alt="${member.fullname}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                      <div class="rounded-circle me-3 bg-secondary d-none align-items-center justify-content-center" style="width: 50px; height: 50px; min-width: 50px;">
+                                          <i class="ri-user-line text-white" style="font-size: 24px;"></i>
+                                      </div>`;
+                    } else {
+                        avatarHtml = `<div class="rounded-circle me-3 bg-secondary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; min-width: 50px;">
+                                          <i class="ri-user-line text-white" style="font-size: 24px;"></i>
+                                      </div>`;
+                    }
+
+                    var $card = $(`
+                        <div class="member-search-item p-2 mb-2 border rounded" style="cursor: pointer; transition: all 0.2s;" data-user-zalo-id="${member.userZaloId}">
+                            <div class="d-flex align-items-center">
+                                ${avatarHtml}
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">${member.fullname}</h6>
+                                    <small class="text-muted">${member.phoneNumber}</small>
+                                    <span class="badge ${statusBadgeClass} ms-2">${member.approvalStatusText}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+
+                    $card.data('member', member);
+
+                    $card.hover(
+                        function() { $(this).css('background-color', '#f8f9fa'); },
+                        function() { $(this).css('background-color', ''); }
+                    );
+
+                    $card.click(function() {
+                        $('.member-search-item').removeClass('border-primary').css('background-color', '');
+                        $(this).addClass('border-primary').css('background-color', '#e7f3ff');
+                        var memberData = $(this).data('member');
+                        showMemberInfo(memberData);
+                        $('#searchResultsList').data('selectedMember', memberData);
+                    });
+
+                    $container.append($card);
+                });
+            }
+
+            $('#searchResultsContainer').slideDown();
+            $('#selectedMemberInfo').hide();
+        }
+
+        function showMemberInfo(member) {
+            var html = `
+                <div><strong>Họ tên:</strong> ${member.fullname}</div>
+                <div><strong>SĐT:</strong> ${member.phoneNumber}</div>
+                <div><strong>Email:</strong> ${member.email || 'N/A'}</div>
+                <div><strong>Công ty:</strong> ${member.company || 'N/A'}</div>
+                <div><strong>Chức vụ:</strong> ${member.position || 'N/A'}</div>
+                <div><strong>Trạng thái:</strong> <span class="badge ${member.approvalStatus === 1 ? 'bg-success' : 'bg-warning'}">${member.approvalStatusText}</span></div>
+            `;
+            $('#memberInfoDetails').html(html);
+            $('#selectedMemberInfo').slideDown();
+        }
+
+        function addMemberToGroup(userZaloId) {
+            if (!currentGroupId || !userZaloId) {
+                AlertResponse('Thông tin không hợp lệ', 'error');
+                return;
+            }
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/Groups/AddMemberToGroup',
+                type: 'POST',
+                data: {
+                    groupId: currentGroupId,
+                    userZaloId: userZaloId,
+                    __RequestVerificationToken: token
+                },
+                success: function(response) {
+                    if (response.success) {
+                        AlertResponse(response.message, 'success');
+                        resetAddMemberForm();
+                        loadGroupMembers(currentGroupId);
+                    } else {
+                        AlertResponse(response.message, 'error');
+                    }
+                },
+                error: function() {
+                    AlertResponse('Có lỗi xảy ra khi thêm thành viên', 'error');
+                }
+            });
+        }
+    </script>
+}

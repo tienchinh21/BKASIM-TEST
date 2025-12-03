@@ -1,0 +1,308 @@
+﻿/* ====== BUTTONS ====== */
+/* Button Search */
+.btn-search {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  background: transparent;
+  border: none;
+  color: #ccc;
+  padding: 0 12px;
+  border-left: 0.5px solid #ccc !important;
+  border-radius: 0 0 10px;
+}
+
+/* Button Remove Preview */
+.btn-preview-remove,
+.btn-banner-remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  font-size: 25px;
+  line-height: 13px;
+  border-radius: 50%;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid #ccc;
+}
+
+/* Button Loading Style */
+.btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ====== FORM ELEMENTS ====== */
+/* Search Input */
+#search {
+  padding-right: 55px;
+}
+
+.search-container {
+  position: relative;
+  width: 100%;
+}
+
+/* ====== SELECT2 STYLING ====== */
+.select2-container .select2-selection {
+  height: 45px !important;
+  border-radius: 10px;
+  border: 1px solid #dcdfe8;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.select2-container .select2-selection::-webkit-scrollbar {
+  display: none;
+}
+
+.select2-container .select2-selection__rendered {
+  line-height: normal !important;
+  padding-top: 2px;
+}
+
+.select2-container--default
+  .select2-selection--multiple
+  .select2-selection__choice {
+  background-color: #32bdea;
+  font-weight: bold;
+  color: white;
+  font-size: 13px;
+  border: none;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+.select2-container--default
+  .select2-selection--multiple
+  .select2-selection__choice__remove,
+.select2-container--default
+  .select2-selection--multiple
+  .select2-selection__choice_remove {
+  color: white;
+  margin-right: 4px;
+}
+
+.select2-container--default .select2-selection--multiple:before {
+  content: " ";
+  display: block;
+  position: absolute;
+  border-color: #888 transparent transparent transparent;
+  border-style: solid;
+  border-width: 5px 4px 0 4px;
+  height: 0;
+  right: 6px;
+  margin-left: -4px;
+  margin-top: -2px;
+  top: 50%;
+  width: 0;
+  cursor: pointer;
+}
+
+.select2-container--open .select2-selection--multiple:before {
+  content: " ";
+  display: block;
+  position: absolute;
+  border-color: transparent transparent #888 transparent;
+  border-width: 0 4px 5px 4px;
+  height: 0;
+  right: 6px;
+  margin-left: -4px;
+  margin-top: -2px;
+  top: 50%;
+  width: 0;
+  cursor: pointer;
+}
+
+/* ====== STATUS INDICATORS ====== */
+/* Active & Inactive Circle */
+.circle-active {
+  background-color: #9ef01a;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.circle-inactive {
+  background-color: #8f8f8f;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* ====== TABLE STYLING ====== */
+/* Cải thiện bảng voucher */
+#list-voucher {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#list-voucher thead th {
+  font-weight: 600;
+  color: #333;
+  background-color: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.table-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.table-actions .badge {
+  cursor: pointer;
+  padding: 6px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.badge-info {
+  color: white;
+  background-color: #00c9ff;
+}
+
+/* ====== LAYOUT & CONTAINERS ====== */
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Multi-line Truncate */
+.multi-line-truncate {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3; /* Giới hạn 3 dòng */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.5em;
+  max-height: 4.5em; /* 3 dòng × 1.5em mỗi dòng */
+  word-break: break-word;
+}
+
+/* Custom Box Shadow */
+.custom-shadow {
+  box-shadow: -8px 11px 40px 0 rgb(0 0 0 / 17%) !important;
+}
+
+.col-lg-12:has(.spinner) {
+  z-index: 1;
+}
+
+/* ====== SCROLLBAR STYLING ====== */
+.overflow-x-scroll {
+  overflow-x: scroll !important;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #bbb #f1f1f1;
+}
+
+/* Chrome, Edge, Safari */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+/* ====== ALERTS & NOTIFICATIONS ====== */
+/* SweetAlert Text */
+.swal-text {
+  text-align: center;
+}
+
+.circle-active {
+  background-color: #9ef01a;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.circle-inactive {
+  background-color: #8f8f8f;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+body.sidebar-main .iq-menu-bt-sidebar {
+  margin-left: 10px;
+}
+
+.select2-container .select2-dropdown {
+  position: absolute !important;
+}
+
+html[data-select2-id] {
+  /*	overflow-x: hidden;
+	overflow-y: scroll;*/
+  overflow: hidden scroll;
+}
+
+.ql-container {
+  min-height: 250px;
+  height: auto !important;
+  overflow-y: visible;
+}
+
+.ql-editor {
+  min-height: 250px;
+  height: auto;
+  overflow-y: visible;
+}
+
+.form-select {
+  height: 45px !important;
+  border-radius: 10px;
+}
+
+/* ====== CUSTOM DEFAULT COMPONENTS ====== */
+/* File(s) input */
+input[type="file"]::-webkit-file-upload-button {
+  min-width: 120px;
+  text-align: center;
+}
+
+input[type="file"]::file-selector-button {
+  min-width: 120px;
+  text-align: center;
+}
+
+.iq-sidebar-menu .iq-menu li a span {
+  white-space: normal !important;
+  word-break: break-word; /* nếu muốn cắt từ quá dài */
+  line-height: 1.3;
+}
+
+.swal-footer {
+  width: 100%;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  gap: 2px;
+}

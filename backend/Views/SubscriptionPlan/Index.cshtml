@@ -1,0 +1,578 @@
+@model MiniAppGIBA.Models.Common.PagedResult<MiniAppGIBA.Models.DTOs.Subscriptions.SubscriptionPlanDTO>
+
+@{
+    ViewData["Title"] = "Quản lý Gói Cước";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                <div>
+                    <h4 class="mb-3">Quản Lý Gói Cước</h4>
+                    <p class="mb-0 text-muted">Quản lý các gói cước trong hệ thống</p>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between">
+                    <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal"
+                        data-bs-target="#createModal">
+                        <i class="ri-add-line me-2"></i>
+                        Tạo Gói Cước
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bộ lọc -->
+        <div class="col-lg-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 d-flex align-items-center">
+                        <i class="ri-filter-3-line me-2"></i>
+                        Bộ lọc tìm kiếm
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Thanh tìm kiếm -->
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Tìm kiếm</label>
+                                <div class="input-group">
+                                    <input id="searchInput" type="text" class="form-control"
+                                        placeholder="Tìm theo tên, mô tả..." />
+                                    <button class="btn btn-primary" onclick="loadData()">
+                                        <i class="ri-search-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bộ lọc trạng thái -->
+                        <div class="col-md-3">
+                            <label class="form-label">Trạng thái</label>
+                            <select id="statusFilter" class="form-control" onchange="loadData()">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="true">Đang hoạt động</option>
+                                <option value="false">Không hoạt động</option>
+                            </select>
+                        </div>
+
+
+                        <!-- Nút lọc và xuất excel -->
+                        <div class="col-md-5">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-light border flex-fill" onclick="resetFilters()">
+                                    <i class="ri-refresh-line me-1"></i>
+                                    Đặt lại
+                                </button>
+                                <button class="btn btn-primary flex-fill" onclick="loadData()">
+                                    <i class="ri-filter-line me-1"></i>
+                                    Lọc dữ liệu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="row mt-2 justify-content-between dt-layout-table">
+            <div class="d-md-flex justify-content-between align-items-center col-12 dt-layout-full col-md">
+                <table class="data-table table mb-0 tbl-server-info dataTable" id="subscriptionPlansTable">
+                    <thead class="ligth ligth-data">
+                        <tr>
+                            <th width="5%" class="text-center">#</th>
+                            <th width="20%">Tên Gói</th>
+                            <th width="25%">Mô Tả</th>
+                            <th width="10%" class="text-center">Thời Hạn (Ngày)</th>
+                            <th width="10%" class="text-center">Giá</th>
+                            <th width="10%" class="text-center">Trạng Thái</th>
+                            <th width="10%" class="text-center">Ngày Tạo</th>
+                            <th width="10%" class="text-center">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        @if (Model.Items.Any())
+                        {
+                            @for (int i = 0; i < Model.Items.Count; i++)
+                            {
+                                var item = Model.Items[i];
+                                <tr>
+                                    <td class="text-center">@((Model.Page - 1) * Model.PageSize + i + 1)</td>
+                                    <td>@item.PlanName</td>
+                                    <td>@(item.Description ?? "N/A")</td>
+                                    <td class="text-center">@item.DurationDays</td>
+                                    <td class="text-center">@(item.Price?.ToString("C0", new
+                                                                        System.Globalization.CultureInfo("vi-VN")) ?? "Miễn phí")</td>
+                                <td class="text-center">
+                                    <span class="badge @(item.IsActive ? "bg-success" : "bg-secondary")">
+                                        @(item.IsActive ? "Hoạt động" : "Không hoạt động")
+                                    </span>
+                                </td>
+                                <td class="text-center">@item.CreatedDate.ToString("dd/MM/yyyy")</td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            onclick="editPlan('@item.Id')">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-@(item.IsActive ? "warning" : "success")"
+                                            onclick="toggleActive('@item.Id')">
+                                            <i class="ri-@(item.IsActive ? "pause" : "play")-line"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="deletePlan('@item.Id')">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                                                }
+                                                else
+                        {
+                            <tr>
+                                <td colspan="8" class="text-center">Không có dữ liệu</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="row mt-3">
+            <div class="col-sm-12 col-md-5">
+                <div class="dataTables_info" id="dataTable_info" role="status" aria-live="polite">
+                    Hiển thị <span id="startRecord">@(Model.PageSize * (Model.Page - 1) + 1)</span> đến
+                    <span id="endRecord">@(Math.Min(Model.PageSize * Model.Page, Model.TotalItems))</span>
+                    trong tổng số <span id="totalRecords">@Model.TotalItems</span> bản ghi
+                </div>
+            </div>
+            <div class="col-sm-12 col-md-7">
+                <div class="dataTables_paginate paging_simple_numbers" id="dataTable_paginate">
+                    <ul class="pagination justify-content-end" id="pagination">
+                        @{
+                            int totalPages = (int)Math.Ceiling((double)Model.TotalItems / Model.PageSize);
+                            int startPage = Math.Max(1, Model.Page - 2);
+                            int endPage = Math.Min(totalPages, Model.Page + 2);
+                        }
+
+                        @if (Model.Page > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(Model.Page - 1)">Trước</a>
+                            </li>
+                        }
+
+                        @for (int i = startPage; i <= endPage; i++)
+                        {
+                            <li class="page-item @(i == Model.Page ? "active" : "")">
+                                <a class="page-link" href="?page=@i">@i</a>
+                            </li>
+                        }
+
+                        @if (Model.Page < totalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(Model.Page + 1)">Sau</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Create/Edit Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createModalLabel">Thêm Gói Cước Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="subscriptionPlanForm">
+                <div class="modal-body">
+                    <input type="hidden" id="planId" name="Id">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="planName" class="form-label">Tên Gói <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="planName" name="PlanName" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="durationDays" class="form-label">Thời Hạn (Ngày) <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="durationDays" name="DurationDays" min="1"
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Giá (VNĐ)</label>
+                                <input type="number" class="form-control" id="price" name="Price" min="0" step="1000">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check form-switch mt-4">
+                                    <input class="form-check-input" type="checkbox" id="isActive" name="IsActive"
+                                        checked>
+                                    <label class="form-check-label" for="isActive">
+                                        Kích hoạt
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Mô Tả</label>
+                        <textarea class="form-control" id="description" name="Description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="features" class="form-label">Tính Năng</label>
+                        <textarea class="form-control" id="features" name="Features" rows="3"
+                            placeholder='Nhập tính năng của gói cước'></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <i class="ri-save-line me-1"></i> Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPage = 1;
+        let pageSize = 20;
+        let currentKeyword = '';
+        let currentStatus = '';
+
+        $(document).ready(function () {
+            loadData();
+
+            // Search functionality
+            $('#searchInput').on('input', search);
+
+            // Status filter
+            $('#statusFilter').change(function () {
+                currentStatus = $(this).val();
+                currentPage = 1;
+                loadData();
+            });
+
+            // Form submission
+            $('#subscriptionPlanForm').submit(function (e) {
+                e.preventDefault();
+                saveSubscriptionPlan();
+            });
+
+            // Reset form when modal is closed
+            $('#createModal').on('hidden.bs.modal', function () {
+                resetForm();
+            });
+        });
+
+        function search() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                currentKeyword = $('#searchInput').val();
+                currentPage = 1;
+                loadData();
+            }, 500);
+        }
+
+        function resetFilters() {
+            $('#searchInput').val('');
+            $('#statusFilter').val('');
+            currentKeyword = '';
+            currentStatus = '';
+            currentPage = 1;
+            loadData();
+        }
+
+        function loadData() {
+            const queryParams = {
+                page: currentPage,
+                pageSize: pageSize,
+                keyword: currentKeyword
+            };
+
+            if (currentStatus) {
+                queryParams.status = currentStatus;
+            }
+
+            $.ajax({
+                url: '/SubscriptionPlan/GetPaged',
+                type: 'GET',
+                data: queryParams,
+                success: function (response) {
+                    console.log('API Response:', response);
+                    if (response.success) {
+                        renderTable(response.data.items);
+                        renderPagination(response.data);
+                    } else {
+                        showError('Có lỗi xảy ra khi tải dữ liệu');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading data:', error);
+                    showError('Có lỗi xảy ra khi tải dữ liệu');
+                }
+            });
+        }
+
+        function renderTable(items) {
+            const tbody = $('#tableBody');
+            tbody.empty();
+
+            if (!items || items.length === 0) {
+                tbody.append(`
+                    <tr>
+                        <td colspan="8" class="text-center">Không có dữ liệu</td>
+                    </tr>
+                `);
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const rowNumber = (currentPage - 1) * pageSize + index + 1;
+                const price = item.price ? formatCurrency(item.price) : 'Miễn phí';
+                const statusBadge = item.isActive
+                    ? '<span class="badge bg-success">Hoạt động</span>'
+                    : '<span class="badge bg-secondary">Không hoạt động</span>';
+                const toggleIcon = item.isActive ? 'pause' : 'play';
+                const toggleColor = item.isActive ? 'warning' : 'success';
+
+                tbody.append(`
+                    <tr>
+                        <td class="text-center">${rowNumber}</td>
+                        <td>${item.planName}</td>
+                        <td>${item.description || 'N/A'}</td>
+                        <td class="text-center">${item.durationDays}</td>
+                        <td class="text-center">${price}</td>
+                        <td class="text-center">${statusBadge}</td>
+                        <td class="text-center">${formatDate(item.createdDate)}</td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="editPlan('${item.id}')">
+                                    <i class="ri-edit-line"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-${toggleColor}" onclick="toggleActive('${item.id}')">
+                                    <i class="ri-${toggleIcon}-line"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deletePlan('${item.id}')">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function renderPagination(data) {
+            const pagination = $('#pagination');
+            pagination.empty();
+
+            const totalPages = data.totalPages;
+            const currentPageNum = data.page;
+            const startPage = Math.max(1, currentPageNum - 2);
+            const endPage = Math.min(totalPages, currentPageNum + 2);
+
+            // Update info
+            const startRecord = (currentPageNum - 1) * pageSize + 1;
+            const endRecord = Math.min(currentPageNum * pageSize, data.totalItems);
+            $('#startRecord').text(startRecord);
+            $('#endRecord').text(endRecord);
+            $('#totalRecords').text(data.totalItems);
+
+            // Previous button
+            if (currentPageNum > 1) {
+                pagination.append(`
+                    <li class="page-item">
+                        <a class="page-link" href="javascript:void(0)" onclick="changePage(${currentPageNum - 1})">Trước</a>
+                    </li>
+                `);
+            }
+
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const activeClass = i === currentPageNum ? 'active' : '';
+                pagination.append(`
+                    <li class="page-item ${activeClass}">
+                        <a class="page-link" href="javascript:void(0)" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `);
+            }
+
+            // Next button
+            if (currentPageNum < totalPages) {
+                pagination.append(`
+                    <li class="page-item">
+                        <a class="page-link" href="javascript:void(0)" onclick="changePage(${currentPageNum + 1})">Sau</a>
+                    </li>
+                `);
+            }
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadData();
+        }
+
+        function editPlan(id) {
+            // Load plan data and show in modal
+            $.ajax({
+                url: '/SubscriptionPlan/GetPaged',
+                type: 'GET',
+                data: { page: 1, pageSize: 1000, keyword: '' },
+                success: function (response) {
+                    if (response.success) {
+                        const plan = response.data.items.find(p => p.id === id);
+                        if (plan) {
+                            $('#createModalLabel').text('Chỉnh Sửa Gói Cước');
+                            $('#planId').val(plan.id);
+                            $('#planName').val(plan.planName);
+                            $('#description').val(plan.description || '');
+                            $('#durationDays').val(plan.durationDays);
+                            $('#price').val(plan.price || '');
+                            $('#isActive').prop('checked', plan.isActive);
+                            $('#features').val(plan.features || '');
+
+                            $('#createModal').modal('show');
+                        }
+                    }
+                }
+            });
+        }
+
+        function toggleActive(id) {
+            if (confirm('Bạn có chắc chắn muốn thay đổi trạng thái gói cước này?')) {
+                $.ajax({
+                    url: '/SubscriptionPlan/ToggleActive',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function (response) {
+                        if (response.success) {
+                            showSuccess(response.message);
+                            loadData();
+                        } else {
+                            showError(response.message);
+                        }
+                    },
+                    error: function () {
+                        showError('Có lỗi xảy ra khi cập nhật trạng thái');
+                    }
+                });
+            }
+        }
+
+        function deletePlan(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa gói cước này?')) {
+                $.ajax({
+                    url: '/SubscriptionPlan/Delete',
+                    type: 'DELETE',
+                    data: { id: id },
+                    success: function (response) {
+                        if (response.success) {
+                            showSuccess(response.message);
+                            loadData();
+                        } else {
+                            showError(response.message);
+                        }
+                    },
+                    error: function () {
+                        showError('Có lỗi xảy ra khi xóa gói cước');
+                    }
+                });
+            }
+        }
+
+        function saveSubscriptionPlan() {
+            const formData = {
+                Id: $('#planId').val(),
+                PlanName: $('#planName').val(),
+                Description: $('#description').val(),
+                DurationDays: parseInt($('#durationDays').val()),
+                Price: $('#price').val() ? parseFloat($('#price').val()) : null,
+                IsActive: $('#isActive').is(':checked'),
+                Features: $('#features').val()
+            };
+
+            const url = formData.Id ? '/SubscriptionPlan/Update' : '/SubscriptionPlan/Create';
+            const method = formData.Id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: url,
+                type: method,
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess(response.message);
+                        $('#createModal').modal('hide');
+                        resetForm();
+                        loadData();
+                    } else {
+                        showError(response.message);
+                    }
+                },
+                error: function () {
+                    showError('Có lỗi xảy ra khi lưu gói cước');
+                }
+            });
+        }
+
+        function resetForm() {
+            $('#subscriptionPlanForm')[0].reset();
+            $('#createModalLabel').text('Thêm Gói Cước Mới');
+            $('#planId').val('');
+            $('#isActive').prop('checked', true);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function showSuccessMessage(message) {
+            showSuccess('Thành công', message);
+        }
+
+        function showErrorMessage(message) {
+            showError('Lỗi', message);
+        }
+    </script>
+}

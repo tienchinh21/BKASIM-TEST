@@ -1,0 +1,45 @@
+﻿@model (MiniAppGIBA.Entities.ETM.ZaloTemplateConfig template, List<MiniAppGIBA.Models.MappingParams> tableParams)
+
+<div>
+    <div class="">
+        <p class="form-label text-center fs-4 fw-bold">Chi tiết cấu hình</p>
+        <div class="form-group mb-3">
+            <label>Template</label>
+            <select id="templateCode" class="form-control" onchange="GetTableParams(this)">
+                @if (ViewBag.Templates != null)
+                {
+                    foreach (var template in ViewBag.Templates)
+                    {
+                        <option value="@template.Id" selected="@(template.Id == Model.template.TemplateId)">@template.Name</option>
+                    }
+                }
+                else
+                {
+                    <option>Không có dữ liệu</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="form-group mb-3">
+        <label class="form-label">Nguồn số điện thoại <span class="text-danger">*</span></label>
+        <input type="text" id="phoneNumberSource" name="PhoneNumberSource" class="form-control"
+               value="@Model.template.Recipients"
+               placeholder="Nhập nguồn số điện thoại hoặc số điện thoại trực tiếp"
+               required />
+        <div class="invalid-feedback">
+            Vui lòng nhập đúng định dạng: số điện thoại (10–11 số) hoặc chuỗi <code>trigger</code> hoặc <code>request</code>.
+        </div>
+        <small class="form-text text-muted">
+            Hướng dẫn:<br />
+            - <code>trigger</code>: Số điện thoại của người thực hiện hành động này<br />
+            - <code>receiver</code>: Số điện thoại của người nhận đơn hàng (áp dụng cho event Order)<br />
+            - Hoặc nhập số điện thoại trực tiếp (ví dụ: 0912345678). <br />
+            - Mỗi người nhận cách nhau bởi dấu  ","
+        </small>
+    </div>
+    <div class="mt-4">
+        <label class="form-label">Danh sách tham số</label>
+        <table class="table table-bordered table-sm text-center mb-0"></table>
+        @await Html.PartialAsync("Partials/_TemplateParams", Model.tableParams)
+    </div>
+</div>

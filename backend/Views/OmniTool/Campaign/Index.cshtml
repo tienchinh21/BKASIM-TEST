@@ -1,0 +1,333 @@
+﻿@{
+    ViewData["Title"] = "Campaign";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Danh sách campagin</h4>
+                <p class="mb-0">
+                    Trang này giúp bạn quản lý các nhóm khách hàng, phân loại họ theo nhu cầu và đặc điểm để tối ưu hóa
+                    chiến lược tiếp cận và dịch vụ. <br>
+                    Việc phân nhóm khách hàng giúp kiểm soát quyền truy cập vào thông tin quan trọng, cá nhân hóa trải
+                    nghiệm, và nâng cao hiệu quả marketing, <br>
+                    từ đó xây dựng mối quan hệ lâu dài và bền vững.
+                </p>
+            </div>
+            <button type="button" class="btn btn-primary mt-2" onclick="GetFormCampaign()">
+                <i class="ri-add-line mr-3"></i>Thêm mới
+            </button>
+        </div>
+    </div>
+
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo tên">
+                            <span class="search-icon position-absolute user-select-auto"
+                                style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer"
+                                onclick="table.ajax.reload()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div class="table-responsive rounded mb-3">
+            <table id="list-campagin" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-campagin" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade">
+    <div id="modal-content" class="modal-dialog modal-xl"></div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            GetListTemplates();
+
+            $('#filter-type').on('change', function () {
+                table.ajax.reload(null, false);
+            });
+
+            $('#search').on('input', search);
+        });
+
+        function GetListTemplates() {
+            table = new DataTable("#list-campagin", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '/api/OmniTools/Campaign',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pagesize: data.length,
+                            keyword: keyword,
+                        },
+                        success: function (response) {
+                            const statusMapping = {
+                                0: "Không xác định",
+                                1: "Chờ",
+                                2: "Đang chạy",
+                                3: "Hoàn thành",
+                                4: "Hủy"
+                            }
+
+                            const formattedData = response.data.map((item, index) => ({
+                                0: data.start + index + 1, // Số thứ tự
+                                1: item.campaignName, // Tên sự kiện
+                                2: item.templateCode, // Mã campagin
+                                3: statusMapping[item.status] || "-", // Mã campagin
+                                4: item.campaginCode, // Mã campagin
+                                5: item.isEnable ? `<div class="m-auto circle-active"><div>` : `<div class="m-auto circle-inactive"></div>`, // Trạng thái kích hoạt
+                                6: `<div class="d-flex align-items-center justify-content-center list-action">
+                                                            <a onclick="GetFormCampaign('${item.id}')" class="mx-1 badge badge-info" data-toggle="tooltip" data-placement="top" title="Xem chi tiết">
+                                                                <i class="ri-edit-line fs-6 mr-0"></i>
+                                                            </a>
+                                                            <a onclick="DeleteCampaign('${item.id}')" class="mx-1 badge bg-danger" data-toggle="tooltip" data-placement="top" title="Xóa">
+                                                                <i class="ri-delete-bin-line fs-6 mr-0"></i>
+                                                            </a>
+
+                                                            ${item.status != 2 ? "" : `
+                                                                <a onclick="PauseCampaign('${item.id}')" class="mx-1 badge bg-danger" data-toggle="tooltip" data-placement="top" title="Xóa">
+                                                                    <i class="ri-pause-line fs-6 mr-0"></i>
+                                                                </a>
+                                                            `}
+                                                        </div>`, // Các hành động,
+                                scheduleTime: FormatDateTime(item.scheduleTime)
+                            }));
+                            setTimeout(() => {
+                                var totalCount = response.totalCount || 0;
+                                callback({
+                                    draw: data.draw,
+                                    recordsTotal: totalCount,
+                                    recordsFiltered: totalCount,
+                                    data: formattedData
+                                });
+                            }, 400);
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: 0, className: 'text-center' },
+                    { title: "Tên campaign", data: 1, className: 'text-center' },
+                    { title: "Template code", data: 2, className: 'text-center' },
+                    { title: "Thời gian chạy", data: "scheduleTime", className: 'text-center' },
+                    { title: "Trạng thái hoạt động", data: 3, className: 'text-center' },
+                    { title: "Thao tác", data: 6, className: 'text-center' }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                     "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng dữ liệu",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": ""
+                }
+            });
+        }
+
+        function DeleteCampaign(id) {
+            const url = `/api/OmniTools/Campaign/${id}`
+            DeleteItem(url);
+        }
+
+        function GetFormCampaign(id) {
+            const url = id ? `/Campaign/Detail/${id}` : "@Url.Action("Create", "Campaign")";
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (data) {
+                    $("#modal-content").html(data);
+                    $("#modal-campagin").modal("toggle");
+
+                    HandleTemplateTable(id);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    let errorMsg = "Lỗi không xác định";
+                    try {
+                        if (jqXHR.responseText) {
+                            let res = JSON.parse(jqXHR.responseText);
+                            errorMsg = res.message || res.Message || errorThrown;
+                        } else {
+                            errorMsg = errorThrown;
+                        }
+                    } catch (e) {
+                        errorMsg = errorThrown;
+                    }
+                    console.log(errorMsg);
+                    AlertResponse(errorMsg, 'error');
+                }
+            });
+        }
+
+        function HandleSaveOrUpdate(id) {
+            const paramsConfig = ExtractDataParamsTemplate(); // Lấy danh sách params từ bảng
+            const routingRule = $("#routeRule").val() || []; // Lấy danh sách routing rule
+
+            const scheduleTime = $("#scheduleTime").val(); // Lấy thời gian chạy
+
+            // Kiểm tra nếu scheduleTime ở quá khứ
+            if (moment(scheduleTime).isBefore(moment())) {
+                AlertResponse("Không thể đặt lịch ở quá khứ!", "warning");
+                return;
+            }
+
+            const data = {
+                id: id,
+                tags: $("#tags").val(), // Tags
+                name: $("#campaignName").val(), // Tên campaign
+                templateCode: $("#campaginCode").val(), // templateCode
+                scheduleTime: scheduleTime, // Giả sử thời gian chạy là hiện tại
+                routingRule: Array.isArray(routingRule) ? routingRule.map(String) : [String(routingRule)], // Chuyển về List<string>
+                paramsConfig: paramsConfig // Danh sách tham số từ bảng params
+            };
+
+            // Kiểm tra dữ liệu trước khi gửi đi
+            console.log("Dữ liệu gửi đi:", JSON.stringify(data, null, 2));
+
+            if (!data.name || !data.templateCode) {
+                AlertResponse("Vui lòng nhập đầy đủ thông tin!", "warning");
+                return;
+            }
+
+            if ($("#tags").val().length === 0) {
+                AlertResponse("Vui lòng nhập đầy đủ thông tin!", "warning");
+                return;
+            }
+
+            const url = id ? `/api/OmniTools/Campaign/${id}` : '/api/OmniTools/Campaign';
+            const method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: url,
+                type: method,
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    if (response.code === 0) {
+                        AlertResponse(response.message, 'success');
+                        table.ajax.reload(null, false); // Làm mới bảng dữ liệu
+                    } else {
+                        AlertResponse(response.message, 'error');
+                    }
+                    $("#modal-campagin").modal("toggle"); // Đóng modal
+                },
+                error: function (error) {
+                    AlertResponse("Đã xảy ra lỗi! Vui lòng thử lại sau.", 'error');
+                }
+            });
+        }
+
+        function HandleTemplateTable(id) {
+            const code = $("#campaginCode").val();
+            const url = '@Url.Action("TableParams", "OmniTool")' + `?code=${code}`;
+            $.ajax({
+                url: url,
+                type: "GET",
+                data: { id },
+                success: function (response) {
+                    $("#table-params").html(response)
+                },
+                error: function (error) {
+                    AlertResponse("Đã xảy ra lỗi! Vui lòng thử lại sau.", 'error')
+                }
+            });
+        }
+
+        function HandleChangeTableMapping(that) {
+            const selectedCategory = $(that).val();
+            const row = $(that).closest('tr');
+
+            console.log(selectedCategory);
+
+            const orderOptions = row.find('.order-options');
+            const membershipOptions = row.find('.membership-options');
+            const spinhistoryOptions = row.find('.spinhistory-options');
+            const commissionOptions = row.find('.commission-options');
+            const membershipExtend = row.find('.membershipExtend-options');
+
+            orderOptions.toggle(selectedCategory === "Order");
+            membershipOptions.toggle(selectedCategory === "Membership");
+            spinhistoryOptions.toggle(selectedCategory === "SpinHistory");
+            membershipExtend.toggle(selectedCategory === "MembershipExtend");
+            commissionOptions.toggle(selectedCategory === "CommissionTransaction");
+        }
+
+        function ExtractDataParamsTemplate() {
+            const paramsData = [];
+
+            $('#table-params tbody tr').each(function () {
+                const $row = $(this); // Tham chiếu đến hàng hiện tại
+
+                const paramName = $row.find('td[data-param').data("param");
+                const tableMapping = $row.find('select[data-table]').val()?.trim() || '';
+                const fieldMapping = $row.find('select[data-field]').val()?.trim() || '';
+                const defaultData = $row.find('input[type="text"]').val()?.trim() || '';
+
+                // Kiểm tra và thêm vào danh sách nếu có giá trị hợp lệ
+                if (paramName) {
+                    paramsData.push({
+                        paramName: paramName,
+                        mappingTableName: tableMapping,
+                        mappingColumnName: fieldMapping,
+                        defaultValue: defaultData
+                    });
+                }
+            });
+
+            return paramsData;
+        }
+
+        function handlePhoneNumberChange() {
+            const selectedValue = $("#phoneNumber").val();
+            const customPhoneNumberContainer = $("#customPhoneNumberContainer");
+
+            if (selectedValue === "CUSTOM.PHONENUMBER") {
+                customPhoneNumberContainer.show();
+            } else {
+                customPhoneNumberContainer.hide();
+                $("#customPhoneNumber").val('');
+            }
+        }
+
+        function ClearForm() {
+            const url = "@Url.Action("Create", "Campaign")";
+
+            $.ajax({
+                url: url,
+                type: "GET",
+                success: function (data) {
+                    $("#modal-content").html(data);
+                    HandleTemplateTable(null);
+                },
+                error: function () {
+                    console.error("Lỗi khi reset form từ route: " + url);
+                }
+            });
+        }
+
+    </script>
+}

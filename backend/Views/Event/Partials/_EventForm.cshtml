@@ -1,0 +1,961 @@
+@model MiniAppGIBA.Models.Request.Events.CreateEventRequest
+
+<style>
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .image-preview {
+        position: relative;
+        display: inline-block;
+        margin: 5px;
+    }
+
+    .btn-preview-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .preview-container img {
+        max-width: 200px;
+        max-height: 150px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+</style>
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+    </div>
+    <div class="modal-body">
+        <form id="eventForm" onsubmit="handleEventSubmit(event)">
+            @if (ViewBag.IsEdit)
+            {
+                <input type="hidden" id="eventId" value="@ViewBag.EventId" />
+            }
+
+            <div class="row">
+                <!-- THÔNG TIN CƠ BẢN -->
+                <div class="col-12 mb-3">
+                    <h6 class="text-primary">THÔNG TIN SỰ KIỆN</h6>
+                    <hr>
+                </div>
+
+                <!-- Hội nhóm -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Hội nhóm <span class="text-danger">*</span></label>
+                        <select id="groupId" class="form-select" required>
+                            <option value="">Chọn hội nhóm</option>
+                            @if (ViewBag.Groups != null)
+                            {
+                                @foreach (var group in ViewBag.Groups)
+                                {
+                                    <option value="@group.Id" @(Model?.GroupId == group.Id ? "selected" : "")>@group.GroupName
+                                    </option>
+                                }
+                            }
+                        </select>
+                        <span class="error-message" id="error-groupId"></span>
+                    </div>
+                </div>
+
+                <!-- Loại sự kiện -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Loại sự kiện <span class="text-danger">*</span></label>
+                        <select id="type" class="form-select" required>
+                            <option value="1" @(Model?.Type == 1 ? "selected" : "")>Nội bộ (chỉ hiển thị trong Hội nhóm)
+                            </option>
+                            <option value="2" @(Model?.Type == 2 ? "selected" : "")>Công khai (hiển thị công khai)
+                            </option>
+                        </select>
+                        <span class="error-message" id="error-type"></span>
+                    </div>
+                </div>
+
+                <!-- Giới hạn số người tham gia -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Giới hạn số người tham gia</label>
+                        <input id="joinCount" type="number" class="form-control" min="-1"
+                            value="@(Model?.JoinCount ?? -1)" placeholder="-1">
+                        <small class="text-muted">-1 = Không giới hạn, > 0 = Giới hạn số người</small>
+                        <span class="error-message" id="error-joinCount"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Trạng thái hoạt động</label>
+                        <select id="isActive" class="form-select">
+                            <option value="true" @(Model?.IsActive != false ? "selected" : "")>Hoạt động</option>
+                            <option value="false" @(Model?.IsActive == false ? "selected" : "")>Không hoạt động</option>
+                        </select>
+                        <small class="text-muted">Chọn trạng thái hoạt động của sự kiện</small>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Cần duyệt</label>
+                        <select id="needApproval" class="form-select">
+                            <option value="false" @(Model?.NeedApproval == false ? "selected" : "")>Không cần duyệt</option>
+                            <option value="true" @(Model?.NeedApproval == true ? "selected" : "")>Cần duyệt</option>
+                        </select>
+                        <small class="text-muted">Chọn có cần duyệt đăng ký tham gia sự kiện hay không</small>
+                    </div>
+                </div>
+
+                <!-- Tiêu đề sự kiện -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Tiêu đề sự kiện <span class="text-danger">*</span></label>
+                        <input id="title" type="text" class="form-control" value="@Model?.Title"
+                            placeholder="Nhập tiêu đề sự kiện..." required>
+                        <span class="error-message" id="error-title"></span>
+                    </div>
+                </div>
+
+                <!-- Nội dung sự kiện -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nội dung sự kiện <span class="text-danger">*</span></label>
+                        <div id="content" class="rounded-bottom" style="height: 200px" data-type="content">
+                            @Html.Raw(Model?.Content)
+                        </div>
+                        <span class="error-message" id="error-content"></span>
+                    </div>
+                </div>
+
+                <!-- THỜI GIAN & ĐỊA ĐIỂM -->
+                <div class="col-12 mb-3 mt-3">
+                    <h6 class="text-primary">THỜI GIAN & ĐỊA ĐIỂM</h6>
+                    <hr>
+                </div>
+
+                <!-- Thời gian bắt đầu -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Thời gian bắt đầu <span class="text-danger">*</span></label>
+                        <input id="startTime" type="datetime-local" class="form-control"
+                            value="@(Model?.StartTime != null && Model.StartTime != default(DateTime) ? Model.StartTime.ToString("yyyy-MM-ddTHH:mm") : "")" required>
+                        <span class="error-message" id="error-startTime"></span>
+                    </div>
+                </div>
+
+                <!-- Thời gian kết thúc -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Thời gian kết thúc <span class="text-danger">*</span></label>
+                        <input id="endTime" type="datetime-local" class="form-control"
+                            value="@(Model?.EndTime != null && Model.EndTime != default(DateTime) ? Model.EndTime.ToString("yyyy-MM-ddTHH:mm") : "")" required>
+                        <span class="error-message" id="error-endTime"></span>
+                    </div>
+                </div>
+
+                <!-- Địa chỉ -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Địa chỉ</label>
+                        <input id="address" type="text" class="form-control" placeholder="Nhập địa chỉ cụ thể"
+                            value="@Model?.Address" />
+                        <span class="error-message" id="error-address"></span>
+                    </div>
+                </div>
+
+                <!-- Đường dẫn tham dự -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Đường dẫn tham dự (Meeting Link)</label>
+                        <input id="meetingLink" type="url" class="form-control"
+                            placeholder="https://meet.google.com/..." value="@Model?.MeetingLink" />
+                        <span class="error-message" id="error-meetingLink"></span>
+                    </div>
+                </div>
+
+                <!-- Đường dẫn Google Map -->
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Đường dẫn Google Map</label>
+                        <input id="googleMapURL" type="url" class="form-control"
+                            placeholder="https://maps.google.com/..." value="@Model?.GoogleMapURL" />
+                        <small class="text-muted">VD: https://maps.google.com/maps?q=10.7769,106.7009</small>
+                        <span class="error-message" id="error-googleMapURL"></span>
+                    </div>
+                </div>
+
+                <!-- HÌNH ẢNH SỰ KIỆN -->
+                <div class="col-12 mb-3 mt-3">
+                    <h6 class="text-primary">HÌNH ẢNH SỰ KIỆN</h6>
+                    <hr>
+                </div>
+
+                <!-- Banner -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Banner <small class="text-muted">(Tỉ lệ 16:9)</small></label>
+                        <input id="bannerFile" type="file" accept="image/*" class="form-control"
+                            onchange="previewBanner(this)" />
+                        <div id="banner-preview" class="mt-2 preview-container">
+                            @if (!string.IsNullOrEmpty(ViewBag.Banner))
+                            {
+                                <div class="image-preview">
+                                    <img src="@ViewBag.Banner" alt="Banner" />
+                                    <button type="button" class="btn-preview-remove"
+                                        onclick="removeBannerPreview()">×</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ảnh chi tiết -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Ảnh sự kiện <small class="text-muted">(Tỉ lệ 16:9)</small></label>
+                        <input id="imageFile" type="file" accept="image/*" class="form-control"
+                            onchange="previewSingleImage(this)" />
+                        <div id="image-preview" class="mt-2">
+                            @if (ViewBag.Images != null && ViewBag.Images.Count > 0)
+                            {
+                                <div class="image-preview">
+                                    <img src="@ViewBag.Images[0]" alt="Event Image"
+                                        style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 4px;" />
+                                    <button type="button" class="btn-preview-remove"
+                                        onclick="removeSingleImagePreview()">×</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUÀ TẶNG -->
+                <div class="col-12 mb-3 mt-4">
+                    <h6 class="text-primary">
+                        <i class="ri-gift-line me-2"></i>QUÀ TẶNG SỰ KIỆN
+                    </h6>
+                    <hr>
+                </div>
+
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Tên quà tặng</label>
+                                        <input type="text" id="giftName" class="form-control"
+                                            placeholder="Nhập tên quà tặng..."
+                                            value="@(ViewBag.EventGift?.GiftName ?? "")">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Số lượng</label>
+                                        <input type="number" id="giftQuantity" class="form-control" min="1"
+                                            placeholder="0" value="@(ViewBag.EventGift?.Quantity ?? 1)">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Ảnh quà tặng</label>
+                                        <input type="file" id="giftImageFile" class="form-control" accept="image/*"
+                                            onchange="previewGiftImages(this)">
+                                        <small class="text-muted">Chọn ảnh quà tặng</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div id="gift-images-preview" class="mt-2 preview-container d-flex flex-wrap">
+                                        <!-- Preview images will be added here -->
+                                    </div>
+                                    @{
+                                        var giftImages = ViewBag.EventGift?.Images as List<string>;
+                                        var giftImage = giftImages?.FirstOrDefault();
+                                    }
+                                    @if (!string.IsNullOrEmpty(giftImage))
+                                    {
+                                        <div class="existing-gift-image"
+                                            style="margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9;">
+                                            <p class="small text-muted mb-2">Ảnh quà tặng hiện tại:</p>
+                                            <img src="@giftImage" alt="Current Gift Image"
+                                                style="max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 4px;">
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NHÀ TÀI TRỢ -->
+                <div class="col-12 mb-3 mt-4">
+                    <h6 class="text-primary">
+                        <i class="ri-hand-heart-line me-2"></i>NHÀ TÀI TRỢ
+                    </h6>
+                    <hr>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nhà tài trợ</label>
+                        <select id="sponsorId" class="form-select">
+                            <option value="">Chọn nhà tài trợ...</option>
+                        </select>
+                        <small class="text-muted">Chọn nhà tài trợ cho sự kiện (không bắt buộc)</small>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Hạng tài trợ</label>
+                        <select id="sponsorshipTierId" class="form-select">
+                            <option value="">Chọn hạng tài trợ...</option>
+                        </select>
+                        <small class="text-muted">Chọn hạng tài trợ (không bắt buộc)</small>
+                    </div>
+                </div>
+
+                <!-- TRƯỜNG TÙY CHỈNH -->
+                <div class="col-12 mb-3 mt-4">
+                    <h6 class="text-primary">
+                        <i class="ri-settings-3-line me-2"></i>TRƯỜNG TÙY CHỈNH
+                    </h6>
+                    <hr>
+                </div>
+
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="mb-0 text-muted">Thêm các trường tùy chỉnh để thu thập thông tin từ người đăng ký</p>
+                                <button type="button" class="btn btn-sm btn-primary" onclick="addCustomField()">
+                                    <i class="ri-add-line me-1"></i>Thêm trường
+                                </button>
+                            </div>
+                            <div id="customFieldsContainer">
+                                <!-- Custom fields will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trạng thái hoạt động -->
+
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-arrow-left-line me-1"></i>
+            Đóng
+        </button>
+        <button type="submit" form="eventForm" class="btn btn-primary">
+            <i class="ri-save-line me-1"></i>
+            @ViewBag.Button
+        </button>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<style>
+    .preview-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .image-preview {
+        position: relative;
+        display: inline-block;
+        margin: 5px;
+    }
+
+    .btn-preview-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .preview-container img {
+        max-width: 150px;
+        max-height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 2px solid #28a745;
+    }
+</style>
+
+<script>
+    var quillEditor;
+
+    // Initialize when form is loaded (runs immediately when partial view is inserted)
+    $(function() {
+        // Use a small delay to ensure DOM elements are available
+        setTimeout(function () {
+            initQuillEditor();
+            setDefaultDateTime();
+            loadSponsorsAndTiers();
+
+            // Add event handler for gift image
+            $('#giftImageFile').off('change').on('change', function () {
+                console.log('jQuery event handler triggered (document ready)');
+                previewGiftImage(this);
+            });
+        }, 150);
+    });
+
+    // Re-initialize when modal is shown (in case form was loaded before modal was shown)
+    $(document).on('shown.bs.modal', '#eventModal', function () {
+        setTimeout(function () {
+            // Only initialize if elements exist and aren't already initialized
+            if ($('#startTime').length > 0 && !$('#startTime').val()) {
+                setDefaultDateTime();
+            }
+            if ($('#content').length > 0 && !window.quillEditor) {
+                initQuillEditor();
+            }
+            loadSponsorsAndTiers();
+
+            // Debug existing gift image
+            const existingImage = $('.existing-gift-image img');
+            if (existingImage.length > 0) {
+                console.log('Existing gift image found:', existingImage.attr('src'));
+                console.log('Image element:', existingImage[0]);
+            } else {
+                console.log('No existing gift image found');
+            }
+        }, 100);
+    });
+
+    // Reset Quill and custom fields when modal is hidden
+    $('#eventModal').on('hidden.bs.modal', function () {
+        if (window.quillEditor) {
+            try {
+                window.quillEditor = null;
+                console.log('Quill editor reset');
+            } catch (e) {
+                console.warn('Error resetting Quill editor:', e);
+            }
+        }
+        // Clear custom fields
+        $('#customFieldsContainer').empty();
+        customFieldIndex = 0;
+    });
+
+    function setDefaultDateTime() {
+        // Only set default times for new events (when fields are empty or have default values)
+        const isEdit = @(ViewBag.IsEdit ? "true" : "false");
+        const startTimeValue = $('#startTime').val() || '';
+        const endTimeValue = $('#endTime').val() || '';
+
+        if (!isEdit) {
+            // Check if fields are empty or have default/invalid values
+            const shouldSetDefaults = !startTimeValue || 
+                                     startTimeValue === '' || 
+                                     (startTimeValue.includes && startTimeValue.includes('0001-01-01')) ||
+                                     (endTimeValue.includes && endTimeValue.includes('0001-01-01'));
+
+            if (shouldSetDefaults) {
+                // Set start time to current time
+                const now = new Date();
+                const nowString = now.toISOString().slice(0, 16);
+                $('#startTime').val(nowString);
+
+                // Set end time to 1 hour from now
+                const oneHourLater = new Date(now);
+                oneHourLater.setHours(oneHourLater.getHours() + 1);
+                const oneHourLaterString = oneHourLater.toISOString().slice(0, 16);
+                $('#endTime').val(oneHourLaterString);
+                
+                console.log('Default date/time set - Start:', nowString, 'End:', oneHourLaterString);
+            }
+        }
+    }
+
+    function initQuillEditor() {
+        const contentElement = document.getElementById('content');
+        if (!contentElement) {
+            console.warn('Content element not found');
+            return;
+        }
+
+        // Check if Quill is already initialized
+        if (window.quillEditor) {
+            console.log('Quill already initialized, skipping...');
+            return;
+        }
+
+        // Check if element already has Quill classes
+        if ($(contentElement).hasClass('ql-editor') || $(contentElement).hasClass('ql-container')) {
+            console.log('Element already has Quill classes, skipping...');
+            return;
+        }
+
+        if (typeof Quill !== 'undefined') {
+            try {
+                quillEditor = new Quill('#content', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                        ]
+                    },
+                    placeholder: 'Nhập nội dung sự kiện...'
+                });
+
+                // Store reference globally for form submission
+                window.quillEditor = quillEditor;
+                console.log('Quill editor initialized successfully');
+            } catch (e) {
+                console.error('Error initializing Quill editor:', e);
+            }
+        } else {
+            console.warn('Quill is not loaded');
+        }
+    }
+
+    function handleEventSubmit(event) {
+        event.preventDefault();
+
+        // Check if eventId element exists and has a value to determine edit mode
+        const eventIdElement = $('#eventId');
+        const eventId = eventIdElement.length > 0 && eventIdElement.val() ? eventIdElement.val() : null;
+        const isEdit = eventId !== null && eventId !== '';
+
+        console.log('handleEventSubmit - isEdit:', isEdit, 'eventId:', eventId);
+        console.log('ViewBag.IsEdit from server:', @(ViewBag.IsEdit ? "true" : "false"));
+
+        // Validate form
+        if (!validateEventForm()) {
+            console.log('Form validation failed');
+            return;
+        }
+
+        console.log('Calling submitEventForm with isEdit:', isEdit, 'eventId:', eventId);
+        // Call global function from Index.cshtml
+        if (typeof submitEventForm === 'function') {
+            submitEventForm(isEdit, eventId);
+        } else {
+            console.error('submitEventForm function not found!');
+            alert('Lỗi: Không tìm thấy hàm submitEventForm');
+        }
+    }
+
+    // Image preview functions
+    function previewSingleImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            const previewContainer = $('#image-preview');
+
+            reader.onload = function (e) {
+                previewContainer.html(`
+                    <div class="image-preview">
+                        <img src="${e.target.result}" alt="Event Image" style="max-width: 200px; max-height: 150px; object-fit: cover; border-radius: 4px;" />
+                        <button type="button" class="btn-preview-remove" onclick="removeSingleImagePreview()">×</button>
+                    </div>
+                `);
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeSingleImagePreview() {
+        $('#imageFile').val('');
+        $('#image-preview').empty();
+    }
+
+    function previewGiftImages(input) {
+        console.log('previewGiftImages called');
+        const preview = $('#gift-images-preview');
+        preview.empty();
+
+        if (input.files) {
+            console.log('Files selected:', input.files.length);
+            Array.from(input.files).forEach((file, index) => {
+                console.log('Processing file:', file.name);
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    console.log('Image loaded, adding to preview');
+                    const imageHtml = `
+                        <div class="image-preview">
+                            <img src="${e.target.result}" alt="Gift Image Preview ${index + 1}" />
+                            <button type="button" class="btn-preview-remove" onclick="removeImagePreview(this)">×</button>
+                        </div>
+                    `;
+                    preview.append(imageHtml);
+                    $('.existing-gift-image').hide(); // Hide existing image when new one is selected
+                };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            console.log('No files selected');
+        }
+    }
+
+    function removeImagePreview(button) {
+        console.log('removeImagePreview called');
+        $(button).closest('.image-preview').remove();
+    }
+
+    function removeGiftImagePreview() {
+        $('#giftImageFile').val('');
+        $('#gift-images-preview').empty();
+        $('.existing-gift-image').show(); // Show existing image again
+    }
+
+    function validateEventForm() {
+        let isValid = true;
+
+        // Clear previous errors
+        $('.error-message').text('').hide();
+
+        // Validate required fields
+        const requiredFields = [
+            { id: 'groupId', name: 'Hội nhóm' },
+            { id: 'title', name: 'Tiêu đề sự kiện' },
+            { id: 'startTime', name: 'Thời gian bắt đầu' },
+            { id: 'endTime', name: 'Thời gian kết thúc' }
+        ];
+
+        requiredFields.forEach(field => {
+            const value = $(`#${field.id}`).val();
+            if (!value || value.trim() === '') {
+                $(`#error-${field.id}`).text(`${field.name} là bắt buộc`).show();
+                isValid = false;
+            }
+        });
+
+        // Validate Quill content
+        if (quillEditor) {
+            const content = quillEditor.root.innerHTML.trim();
+            if (!content || content === '<p><br></p>') {
+                $('#error-content').text('Nội dung sự kiện là bắt buộc').show();
+                isValid = false;
+            }
+        }
+
+        // Validate time range
+        const startTime = new Date($('#startTime').val());
+        const endTime = new Date($('#endTime').val());
+
+        if (startTime && endTime && startTime >= endTime) {
+            $('#error-endTime').text('Thời gian kết thúc phải sau thời gian bắt đầu').show();
+            isValid = false;
+        }
+
+        // Validate gift (optional)
+        const giftName = $('#giftName').val();
+        const giftQuantity = $('#giftQuantity').val();
+
+        if (giftName && (!giftQuantity || parseInt(giftQuantity) <= 0)) {
+            showWarning('Cảnh báo', 'Nếu có tên quà tặng thì phải nhập số lượng > 0!');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function previewBanner(input) {
+        const preview = $('#banner-preview');
+        preview.empty();
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const imageHtml = `
+                    <div class="image-preview">
+                        <img src="${e.target.result}" alt="Banner Preview" />
+                        <button type="button" class="btn-preview-remove" onclick="removeBannerPreview()">×</button>
+                    </div>
+                `;
+                preview.html(imageHtml);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewImages(input) {
+        const preview = $('#images-preview');
+        preview.empty();
+
+        if (input.files) {
+            Array.from(input.files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const imageHtml = `
+                        <div class="image-preview">
+                            <img src="${e.target.result}" alt="Image Preview ${index + 1}" />
+                            <button type="button" class="btn-preview-remove" onclick="removeImagePreview(this)">×</button>
+                        </div>
+                    `;
+                    preview.append(imageHtml);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    function removeBannerPreview() {
+        $('#banner-preview').empty();
+        $('#bannerFile').val('');
+    }
+
+    function removeImagePreview(button) {
+        $(button).closest('.image-preview').remove();
+    }
+
+    // Load sponsors and sponsorship tiers
+    function loadSponsorsAndTiers() {
+        console.log('Loading sponsors and tiers...');
+        const currentSponsorId = '@ViewBag.CurrentSponsorId';
+        const currentSponsorshipTierId = '@ViewBag.CurrentSponsorshipTierId';
+        console.log('Current sponsor ID:', currentSponsorId);
+        console.log('Current tier ID:', currentSponsorshipTierId);
+
+        // Load sponsors
+        $.get('/Event/GetActiveSponsors', function (response) {
+            console.log('Sponsors response:', response);
+            if (response.success) {
+                const sponsorSelect = $('#sponsorId');
+                sponsorSelect.empty().append('<option value="">Chọn nhà tài trợ...</option>');
+
+                response.data.forEach(function (sponsor) {
+                    const selected = sponsor.id === currentSponsorId ? 'selected' : '';
+                    sponsorSelect.append(`<option value="${sponsor.id}" ${selected}>${sponsor.sponsorName}</option>`);
+                });
+                console.log('Sponsors loaded successfully');
+            } else {
+                console.error('Failed to load sponsors:', response.message);
+            }
+        }).fail(function (xhr, status, error) {
+            console.error('Failed to load sponsors:', error);
+            console.error('Response:', xhr.responseText);
+        });
+
+        // Load sponsorship tiers
+        $.get('/Event/GetActiveSponsorshipTiers', function (response) {
+            console.log('Tiers response:', response);
+            if (response.success) {
+                const tierSelect = $('#sponsorshipTierId');
+                tierSelect.empty().append('<option value="">Chọn hạng tài trợ...</option>');
+
+                response.data.forEach(function (tier) {
+                    const selected = tier.id === currentSponsorshipTierId ? 'selected' : '';
+                    tierSelect.append(`<option value="${tier.id}" ${selected}>${tier.tierName}</option>`);
+                });
+                console.log('Tiers loaded successfully');
+            } else {
+                console.error('Failed to load tiers:', response.message);
+            }
+        }).fail(function (xhr, status, error) {
+            console.error('Failed to load tiers:', error);
+            console.error('Response:', xhr.responseText);
+        });
+    }
+
+    // Custom Fields Management
+    let customFieldIndex = 0;
+    let customFieldsData = [];
+
+    function addCustomField(fieldData = null) {
+        const index = customFieldIndex++;
+        const container = $('#customFieldsContainer');
+        
+        const field = fieldData || {
+            fieldName: '',
+            fieldType: '',
+            fieldValue: '',
+            isRequired: false
+        };
+
+        const fieldHtml = `
+            <div class="card mb-3 custom-field-item" data-index="${index}">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tên trường <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control custom-field-name" 
+                                placeholder="VD: Số điện thoại, Email..." 
+                                value="${field.fieldName || ''}" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Kiểu dữ liệu <span class="text-danger">*</span></label>
+                            <select class="form-select custom-field-type" required>
+                                <option value="">-- Chọn kiểu dữ liệu --</option>
+                                <option value="1" ${field.fieldType == 1 ? 'selected' : ''}>Văn bản</option>
+                                <option value="2" ${field.fieldType == 2 ? 'selected' : ''}>Số nguyên</option>
+                                <option value="3" ${field.fieldType == 3 ? 'selected' : ''}>Số thập phân</option>
+                                <option value="4" ${field.fieldType == 4 ? 'selected' : ''}>Năm sinh</option>
+                                <option value="5" ${field.fieldType == 5 ? 'selected' : ''}>Boolean (Đúng/Sai)</option>
+                                <option value="6" ${field.fieldType == 6 ? 'selected' : ''}>Ngày giờ</option>
+                                <option value="7" ${field.fieldType == 7 ? 'selected' : ''}>Ngày</option>
+                                <option value="8" ${field.fieldType == 8 ? 'selected' : ''}>Email</option>
+                                <option value="9" ${field.fieldType == 9 ? 'selected' : ''}>Số điện thoại</option>
+                                <option value="10" ${field.fieldType == 10 ? 'selected' : ''}>Đường dẫn URL</option>
+                                <option value="11" ${field.fieldType == 11 ? 'selected' : ''}>Văn bản dài</option>
+                                <option value="12" ${field.fieldType == 12 ? 'selected' : ''}>Danh sách lựa chọn</option>
+                                <option value="13" ${field.fieldType == 13 ? 'selected' : ''}>Đa lựa chọn</option>
+                            </select>
+                            <small class="form-text text-info custom-field-type-info mt-1" style="display: none;"></small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Giá trị mặc định</label>
+                            <input type="text" class="form-control custom-field-value" 
+                                placeholder="Giá trị mặc định (tùy chọn)" 
+                                value="${field.fieldValue || ''}">
+                            <small class="form-text text-muted">Với Dropdown/Đa lựa chọn: nhập các lựa chọn phân cách bằng dấu phẩy (VD: Nam, Nữ)</small>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Bắt buộc</label>
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input custom-field-required" type="checkbox" 
+                                    ${field.isRequired ? 'checked' : ''}>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeCustomField(${index})">
+                            <i class="ri-delete-bin-line me-1"></i>Xóa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.append(fieldHtml);
+        
+        // Attach event handler for data type change
+        const fieldElement = container.find(`.custom-field-item[data-index="${index}"]`);
+        fieldElement.find('.custom-field-type').on('change', function() {
+            const selectedType = $(this).val();
+            showDataTypeInfo($(this), selectedType);
+        });
+        
+        // Show info if field already has a type
+        if (field.fieldType) {
+            const typeSelect = fieldElement.find('.custom-field-type');
+            showDataTypeInfo(typeSelect, field.fieldType.toString());
+        }
+    }
+
+    function showDataTypeInfo(selectElement, dataType) {
+        const infoText = getDataTypeInfo(dataType);
+        const infoElement = selectElement.closest('.col-md-3').find('.custom-field-type-info');
+        
+        if (dataType && infoText) {
+            infoElement.text(infoText).show();
+        } else {
+            infoElement.hide();
+        }
+    }
+
+    function getDataTypeInfo(dataType) {
+        const dataTypeInfoMap = {
+            '1': 'Văn bản thông thường, tối đa 255 ký tự.',
+            '2': 'Số nguyên (ví dụ: 1, 2, 100).',
+            '3': 'Số thập phân (ví dụ: 1.5, 99.99).',
+            '4': 'Năm sinh hợp lệ (ví dụ: 1990, 2000).',
+            '5': 'Giá trị đúng/sai (true/false).',
+            '6': 'Ngày và giờ (ví dụ: 2025-12-25 10:30:00).',
+            '7': 'Chỉ ngày (ví dụ: 2025-12-25).',
+            '8': 'Địa chỉ email hợp lệ.',
+            '9': 'Số điện thoại.',
+            '10': 'Đường dẫn URL hợp lệ.',
+            '11': 'Văn bản dài, nhiều dòng.',
+            '12': 'Danh sách lựa chọn duy nhất. Nhập các lựa chọn trong "Giá trị mặc định", phân cách bằng dấu phẩy (VD: Nam, Nữ, Khác).',
+            '13': 'Cho phép chọn nhiều giá trị. Nhập các lựa chọn trong "Giá trị mặc định", phân cách bằng dấu phẩy (VD: Đọc sách, Xem phim, Du lịch).'
+        };
+
+        return dataTypeInfoMap[dataType] || '';
+    }
+
+    function removeCustomField(index) {
+        $(`.custom-field-item[data-index="${index}"]`).remove();
+    }
+
+    function getCustomFieldsData() {
+        const fields = [];
+        $('.custom-field-item').each(function() {
+            const fieldName = $(this).find('.custom-field-name').val()?.trim();
+            const fieldType = $(this).find('.custom-field-type').val();
+            const fieldValue = $(this).find('.custom-field-value').val()?.trim() || '';
+            const isRequired = $(this).find('.custom-field-required').is(':checked');
+
+            if (fieldName && fieldType) {
+                fields.push({
+                    FieldName: fieldName,
+                    FieldType: parseInt(fieldType),
+                    FieldValue: fieldValue,
+                    IsRequired: isRequired
+                });
+            }
+        });
+        return fields;
+    }
+
+    // Load custom fields when editing
+    function loadCustomFields(eventId) {
+        if (!eventId) return;
+        
+        $.get(`/Event/GetCustomFields/${eventId}`, function(response) {
+            // Response format: { success: true, data: [{ id, eventId, fieldName, fieldValue, fieldType, fieldTypeText, isRequired, ... }] }
+            if (response && response.success && response.data && response.data.length > 0) {
+                response.data.forEach(field => {
+                    addCustomField({
+                        fieldName: field.fieldName,
+                        fieldType: field.fieldType,
+                        fieldValue: field.fieldValue || '',
+                        isRequired: field.isRequired || false
+                    });
+                });
+            }
+        }).fail(function() {
+            console.log('No custom fields found or error loading');
+        });
+    }
+
+    // Initialize custom fields when modal is shown in edit mode
+    $(document).on('shown.bs.modal', '#eventModal', function () {
+        const eventId = $('#eventId').val();
+        if (eventId) {
+            setTimeout(() => {
+                loadCustomFields(eventId);
+            }, 200);
+        }
+    });
+</script>

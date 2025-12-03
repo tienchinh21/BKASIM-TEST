@@ -1,0 +1,66 @@
+﻿@model (MiniAppGIBA.Entities.Notifications.Templates.OmniTemplate template, List<MiniAppGIBA.Models.MappingParams> tableParams)
+
+<div>
+    <div class="">
+        <p class="form-label text-center fs-4 fw-bold">Chi tiết cấu hình</p>
+        <div class="form-group mb-3">
+            <label>Template Code</label>
+            <select id="templateCode" class="form-control" onchange="GetTableParams(this)">
+                <option disabled selected>Vui lòng chọn template</option>
+                @if (ViewBag.Templates != null)
+                {
+                    foreach (var template in ViewBag.Templates)
+                    {
+                        <option value="@template.TemplateCode" selected="@(template.TemplateCode == Model.template.TemplateCode)">@template.TemplateCode</option>
+                    }
+                }
+                else
+                {
+                    <option>Không có dữ liệu</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="form-label">Nguồn số điện thoại <span class="text-danger">*</span></label>
+            <input type="text" id="phoneNumberSource" name="PhoneNumberSource" class="form-control"
+                   value="@(Model.template.PhoneNumber)"
+                   placeholder="Nhập nguồn số điện thoại hoặc số điện thoại trực tiếp"
+                   required />
+            <div class="invalid-feedback">
+                Vui lòng nhập đúng định dạng: số điện thoại (10–11 số) hoặc chuỗi <code>trigger</code> hoặc <code>request</code>.
+            </div>
+            <small class="form-text text-muted">
+                Hướng dẫn:<br />
+                - <code>trigger</code>: Số điện thoại của người thực hiện hành động này<br />
+                - <code>receiver</code>: Số điện thoại của người nhận đơn hàng (áp dụng cho event Order)<br />
+                - Hoặc nhập số điện thoại trực tiếp (ví dụ: 0912345678). <br />
+                - Mỗi người nhận cách nhau bởi dấu  ","
+            </small>
+        </div>
+
+        <div class="form-group mb-3">
+            <label class="form-label">Router rule <span class="text-danger">*</span></label>
+            <select id="routeRule" class="form-select" multiple required>
+                <option selected="@Model.template.RoutingRule?.Contains("1")" value="1">ZNS</option>
+                <option selected="@Model.template.RoutingRule?.Contains("2")" value="2">SMS</option>
+                <option selected="@Model.template.RoutingRule?.Contains("3")" value="3">Auto call</option>
+            </select>
+            <div class="invalid-feedback">Vui lòng chọn ít nhất một router rule</div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <label class="form-label">Danh sách tham số</label>
+        <table class="table table-bordered table-sm text-center mb-0"></table>
+        @await Html.PartialAsync("Partials/_TemplateParams", Model.tableParams)
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $("#routeRule").select2({
+             dropdownParent: $("#eventTriggerModal")
+        });
+    })
+</script>

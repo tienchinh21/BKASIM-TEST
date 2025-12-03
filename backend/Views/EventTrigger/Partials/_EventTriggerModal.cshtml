@@ -1,0 +1,85 @@
+﻿@model MiniAppGIBA.Entities.Notifications.EventTriggerSetting;
+
+<div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow rounded-3">
+        <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title fw-bold">@ViewBag.Title</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body p-4">
+            <form id="eventTemplateForm" class="needs-validation" novalidate>
+                <div class="row gap-0">
+                    <!-- Thông tin cấu hình -->
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <h6 class="fw-semibold mb-3 text-primary">Cấu hình sự kiện</h6>
+                                <div class="mb-3">
+                                    <label for="eventName" class="form-label">Sự kiện</label>
+                                    <select id="eventName" class="form-select">
+                                        <option value="Membership.UpdateMiniAppStatus" selected="@(Model.EventName == "Membership.UpdateMiniAppStatus")">Duyệt thành viên vào Mini App</option>
+                                        <option value="Membership.UpdateGroupStatus" selected="@(Model.EventName == "Membership.UpdateGroupStatus")">Duyệt thành viên vào Hội nhóm</option>
+                                        <option value="Membership.UpdateEventStatus" selected="@(Model.EventName == "Membership.UpdateEventStatus")">Duyệt danh sách đăng ký sự kiện</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="isEnable" class="form-label">Trạng thái hoạt động</label>
+                                    <select id="isEnable" class="form-select">
+                                        <option value="true" selected="@Model.IsActive">Đang hoạt động</option>
+                                        <option value="false" selected="@(!Model.IsActive)">Ngưng hoạt động</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="typeTemplate" class="form-label">Loại tin</label>
+                                    <select id="typeTemplate" class="form-select" onchange="handleGetTemplateConfig(this, '@Model.ReferenceId')">
+                                        <option value="1" selected="@(Model.Type == 1)">Zalo UID</option>
+                                        <option value="2" selected="@(Model.Type == 2)">Incom Omni</option>
+                                        <option value="3" selected="@(Model.Type == 3)">Http Request</option>
+
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="conditions" class="form-label">Điều kiện thực thi</label>
+                                    <input id="conditions" type="text" class="form-control" value="@Model.Conditions" placeholder="Nhập điều kiện..." />
+                                    @* <small class="text-muted">
+                                        Ví dụ: Status = 1 or Status = 2 and Amount > 100000<br>
+                                        Hỗ trợ: =, !=, and, or (không phân biệt hoa thường)
+                                    </small> *@
+                                    @await Html.PartialAsync("Partials/_EventHintConditions")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @await Html.PartialAsync("Partials/_FunctionCallingPartial", Model.ProcessingStep)
+
+                    <input type="hidden" value="@Model.ReferenceId" id="ReferenceId" />
+
+                    <!-- Chi tiết cấu hình -->
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body">
+                                <div id="configContainer"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @await Html.PartialAsync("Partials/_EventPayloadsPartial", Model.Id)
+                </div>
+            </form>
+        </div>
+
+        <div class="modal-footer px-4 py-3">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button type="submit" class="btn btn-primary" onclick="HandleSaveOrUpdate('@Model.Id')">
+                <i class="ri-save-line me-2"></i> Lưu
+            </button>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("Scripts/_ModalScripts")

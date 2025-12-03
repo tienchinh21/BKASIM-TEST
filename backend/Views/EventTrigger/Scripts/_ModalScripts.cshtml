@@ -1,0 +1,286 @@
+﻿<script>
+
+    function HandleSaveOrUpdate(id) {
+        // Validate form trước khi submit
+        const form = document.getElementById('eventTemplateForm');
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            showError('Validation Error', 'Vui lòng kiểm tra lại thông tin đã nhập!');
+            return;
+        }
+
+        // Validate template parameters nếu có
+        if (typeof validateParamMappings === 'function' && !validateParamMappings()) {
+            showError('Validation Error', 'Vui lòng kiểm tra lại mapping tham số template!');
+            return;
+        }
+
+        // showLoading();
+
+        // Tạo FormData object
+        const formData = new FormData();
+
+        // Thêm các field cơ bản của EventTriggerSetting
+        formData.append('Id', id || '');
+        formData.append('EventName', $('#eventName').val() || '');
+        formData.append('Type', parseInt($('#typeTemplate').val()) || 0);
+        formData.append('Conditions', $('#conditions').val() || '');
+        formData.append('IsActive', $('#isEnable').val() === 'true');
+        formData.append('ReferrenceId', $('#ReferenceId').val());
+
+
+        if(typeof window.buildFunctionsCall === 'function'){
+            formData.append('ProcessingStep', window.buildFunctionsCall());
+        }
+
+
+        // Lấy danh sách recipients từ form hoặc set mặc định
+        const recipients = getRecipientsFromForm();
+        formData.append('Recipients', recipients);
+
+        // Tạo template data object dựa vào loại template
+        const templateData = buildTemplateData();
+        formData.append('templateData', JSON.stringify(templateData));
+
+        // Gửi request
+        $.ajax({
+            url: '@Url.Action("Save", "EventTrigger")',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                // hideLoading();
+                if (response.success) {
+                    $('#eventTriggerModal').modal('hide');
+                    $('#eventTriggerTable').DataTable().ajax.reload();
+                    showSuccess('success', response.message || 'Lưu thành công!');
+                } else {
+                    showError('Lỗi lưu dữ liệu', response.message || 'Không thể lưu dữ liệu!');
+                }
+            },
+            error: function (xhr, status, error) {
+                // hideLoading();
+                let errorMessage = 'Có lỗi xảy ra khi lưu dữ liệu!';
+
+                if (xhr.status === 400 && xhr.responseJSON) {
+                    errorMessage = xhr.responseJSON.message || errorMessage;
+                } else if (xhr.responseText) {
+                    try {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        errorMessage = errorResponse.message || errorMessage;
+                    } catch (e) {
+                        console.error('Error parsing response:', e);
+                    }
+                }
+
+                showError('Lỗi kết nối', errorMessage);
+            }
+        });
+    }
+
+    function getRecipientsFromForm() {
+        // Lấy recipients từ phoneNumberSource hoặc form khác
+        let recipients = '';
+
+        const phoneNumberSource = $('#phoneNumberSource').val();
+        if (phoneNumberSource) {
+            recipients = phoneNumberSource;
+        }
+
+        // Hoặc có thể lấy từ một field recipients riêng nếu có
+        const recipientsField = $('#recipients').val();
+        if (recipientsField) {
+            recipients = recipientsField;
+        }
+
+        return recipients || 'trigger'; // Default value
+    }
+
+    function buildTemplateData() {
+        const templateType = parseInt($('#typeTemplate').val());
+
+        if (templateType === 1) {
+            // Zalo UID Template
+            return buildZaloTemplateData();
+        } else if (templateType === 2) {
+            // Omni Template
+            return buildOmniTemplateData();
+        } else if (templateType === 3){
+            return buildHttpConfig();
+        }
+
+        return {};
+    }
+
+    function buildHttpConfig() {
+        const method = $('#methodSelect').val();
+        const endpoint = $('#endpointInput').val();
+        const bodyJson = $('#bodyTextarea').val();
+
+        // Thu thập headers thành object
+        const headers = {};
+        $('.header-row').each(function () {
+            const key = $(this).find('.header-key').val();
+            const value = $(this).find('.header-value').val();
+            if (key && value) {
+                headers[key] = value;
+            }
+        });
+
+        // Serialize headers thành JSON string
+        const headersJson = JSON.stringify(headers);
+
+        // Tạo object HttpConfig
+        const httpConfig = {
+            Method: method,
+            Endpoint: endpoint,
+            HeadersJson: headersJson,
+            BodyJson: bodyJson
+        };
+        console.log(httpConfig);
+        return httpConfig;
+    }
+
+    function buildZaloTemplateData() {
+        // Build Zalo template data
+        const templateData = {
+            ZaloTemplateUid: $('#templateCode').val() || '',
+            Recipients: $('#phoneNumberSource').val().split(","),
+            ParamsConfig: []
+        };
+
+       // Collect template mapping parameters
+       $('#table-params tbody tr').each(function() {
+            const row = $(this);
+            const paramName = row.find('[data-param]').first().data('param');
+            const dataSource = row.find('.data-source-select').val();
+            const fieldName = row.find('.field-input').val();
+            const defaultValue = row.find('input[data-param="' + paramName + '"]').last().val();
+
+            if (paramName) {
+                templateData.ParamsConfig.push({
+                    ParamName: paramName,
+                    MappingTableName: dataSource || '',
+                    MappingColumnName: fieldName || '',
+                    DefaultValue: defaultValue || ''
+                });
+            }
+        });
+
+        return templateData;
+    }
+
+    function buildOmniTemplateData() {
+        // Build Omni template data
+        const templateData = {
+            TemplateCode: $('#templateCode').val() || '',
+            PhoneNumber: $('#phoneNumberSource').val() || '',
+            RoutingRules: $('#routeRule').val() || [],
+            TemplateMapping: []
+        };
+
+        // Collect template mapping parameters
+        $('#table-params tbody tr').each(function() {
+            const row = $(this);
+            const paramName = row.find('[data-param]').first().data('param');
+            const dataSource = row.find('.data-source-select').val();
+            const fieldName = row.find('.field-input').val();
+            const defaultValue = row.find('input[data-param="' + paramName + '"]').last().val();
+
+            if (paramName) {
+                templateData.TemplateMapping.push({
+                    ParamName: paramName,
+                    MappingTableName: dataSource || '',
+                    MappingColumnName: fieldName || '',
+                    DefaultValue: defaultValue || ''
+                });
+            }
+        });
+
+        return templateData;
+    }
+
+    function handleGetTemplateConfig(selectElement, referenceId) {
+        const templateType = parseInt($(selectElement).val());
+
+        // showLoading();
+
+        $.ajax({
+            url: '@Url.Action("GetTemplateReferrence", "EventTrigger")',
+            type: 'GET',
+            data: {
+                type: templateType,
+                templateCode: '',
+                referrenceId: referenceId || ''
+            },
+            success: function (data) {
+                // hideLoading();
+                $('#configContainer').html(data);
+
+                // Reinitialize any plugins if needed
+                if (typeof initializeFormPlugins === 'function') {
+                    initializeFormPlugins();
+                }
+            },
+            error: function (xhr, status, error) {
+                // hideLoading();
+                showError('Lỗi tải cấu hình', 'Không thể tải cấu hình template!');
+                console.error('Error loading template config:', error);
+            }
+        });
+    }
+
+    function GetTableParams(selectElement) {
+        const templateType = parseInt($('#typeTemplate').val());
+        const templateId = $(selectElement).val();
+
+        if (!templateId) return;
+
+        // showLoading();
+
+        $.ajax({
+            url: '@Url.Action("GetTableParams", "EventTrigger")',
+            type: 'GET',
+            data: {
+                type: templateType,
+                id: templateId
+            },
+            success: function (data) {
+                // hideLoading();
+                $('#table-params').parent().html(data);
+            },
+            error: function (xhr, status, error) {
+                // hideLoading();
+                showError('Lỗi tải tham số', 'Không thể tải danh sách tham số template!');
+                console.error('Error loading table params:', error);
+            }
+        });
+    }
+
+    // Initialize form when modal is loaded
+    $(document).ready(function() {
+        // Trigger initial template config load
+        const initialType = $('#typeTemplate').val();
+        const initialReferenceId = '@Model.ReferenceId';
+
+        if (initialType) {
+            handleGetTemplateConfig($('#typeTemplate')[0], initialReferenceId);
+        }
+
+        // Add form validation classes
+        $('#eventTemplateForm').addClass('needs-validation');
+
+        // Handle form submit with Enter key
+        $('#eventTemplateForm').on('keypress', function(e) {
+            if (e.which === 13 && !$(e.target).is('textarea')) {
+                e.preventDefault();
+                HandleSaveOrUpdate('@Model.Id');
+            }
+        });
+
+        $('#eventName').select2();
+        $('#isEnable').select2();
+        $('#typeTemplate').select2();
+    });
+</script>

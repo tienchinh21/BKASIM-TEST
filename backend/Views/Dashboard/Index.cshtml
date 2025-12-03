@@ -1,0 +1,485 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <!-- ========== HEADER + DATE RANGE ========== -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2 class="font-weight-bold">Tổng Quan Hệ Thống</h2>
+            <p class="text-muted small mb-0">Trang tổng quan cung cấp các chỉ số quan trọng để xem xét hiệu suất chính hoặc quy trình hành động</p>
+        </div>
+        <div class="col-md-6 text-right">
+            <div class="d-flex justify-content-end align-items-center">
+                <label class="mb-0 mr-2 small">Từ ngày:</label>
+                <input type="date" id="dateFrom" class="form-control form-control-sm mr-2" style="width: 150px;" />
+                <label class="mb-0 mr-2 small">Đến ngày:</label>
+                <input type="date" id="dateTo" class="form-control form-control-sm mr-2" style="width: 150px;" />
+                <button class="btn btn-sm btn-primary" onclick="applyDateFilter()">
+                    <i class="ri-search-line"></i> Áp dụng
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ROW 1: METRICS CARDS ========== -->
+    <div class="row mb-4">
+        <!-- Card 1: Hội Nhóm -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-primary-light text-primary mr-3">
+                            <i class="ri-group-line" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Hội Nhóm</div>
+                            <h3 class="mb-0 font-weight-bold" id="totalGroups">-</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Sự Kiện -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-success-light text-success mr-3">
+                            <i class="ri-calendar-event-line" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Sự Kiện</div>
+                            <h3 class="mb-0 font-weight-bold" id="totalEvents">-</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Thành Viên -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-info-light text-info mr-3">
+                            <i class="ri-user-line" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Thành Viên</div>
+                            <h3 class="mb-0 font-weight-bold" id="totalMembers">-</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Refs -->
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-warning-light text-warning mr-3">
+                            <i class="ri-hand-coin-line" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Refs</div>
+                            <h3 class="mb-0 font-weight-bold" id="totalRefs">-</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ROW 2: LINE CHARTS ========== -->
+    <div class="row mb-4">
+        <!-- Sự Kiện & Đăng Ký Theo Thời Gian -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0 font-weight-bold">Sự Kiện & Thành Viên Theo Tháng</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="eventsTimelineChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Refs Theo Ngày -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0 font-weight-bold">Refs Theo Ngày (30 ngày gần nhất)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="refsTimelineChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ROW 3: BAR CHART + PIE CHART ========== -->
+    <div class="row mb-4">
+        <!-- Thống Kê Gói Cước (Bar Chart) -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0 font-weight-bold">Thống Kê Gói Cước</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="subscriptionsBarChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Đăng Ký Sự Kiện Theo Trạng Thái (Pie Chart) -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0 font-weight-bold">Đăng Ký Sự Kiện Theo Trạng Thái</h6>
+                </div>
+                <div class="card-body d-flex justify-content-center align-items-center">
+                    <canvas id="registrationsPieChart" style="height: 300px; max-width: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ROW 4: NEW MEMBERS CHART ========== -->
+    <div class="row mb-4">
+        <!-- Thành Viên Mới Theo Ngày -->
+        <div class="col-lg-12 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-0">
+                    <h6 class="mb-0 font-weight-bold">Thành Viên Mới Theo Ngày (7 ngày gần nhất)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="newMembersChart" style="height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ROW 5: PENDING APPROVALS (TABLES) - SẼ BỔ SUNG SAU ========== -->
+    @* <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="ri-information-line"></i>
+                <strong>Lưu ý:</strong> Để xem đơn chờ duyệt, vui lòng truy cập:
+                <a href="/Membership/PendingApproval" class="alert-link">Duyệt Vào Nhóm</a> |
+                <a href="/EventGuests" class="alert-link">Duyệt Khách Mời</a>
+            </div>
+        </div>
+    </div> *@
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    let charts = {};
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+        document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
+        document.getElementById('dateTo').valueAsDate = today;
+
+        loadAllData();
+    });
+
+    function applyDateFilter() {
+        loadAllData();
+    }
+
+    function loadAllData() {
+        loadStatistics();
+        loadMonthlyCharts();
+        loadRefsDailyStats();
+        loadRegistrationsByStatus();
+        loadSubscriptionPlansStats();
+        loadNewMembersDailyStats();
+    }
+
+    // === LOAD STATISTICS (CARDS) ===
+    function loadStatistics() {
+        $.ajax({
+            url: '/Dashboard/GetStatistics',
+            method: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    const data = response.data;
+                    $('#totalGroups').text(data.totalGroups);
+                    $('#totalEvents').text(data.totalEvents);
+                    $('#totalMembers').text(data.totalMembers);
+                    $('#totalRefs').text(data.totalRefs);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error loading statistics:', xhr);
+            }
+        });
+    }
+
+    // === CHART 1: Events & Members Timeline (Từ MonthlyStatistics) ===
+    function loadMonthlyCharts() {
+        $.ajax({
+            url: '/Dashboard/GetMonthlyStatistics',
+            method: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    const data = response.data;
+                    createEventsTimelineChart(data);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error loading monthly stats:', xhr);
+            }
+        });
+    }
+
+    function createEventsTimelineChart(data) {
+        const ctx = document.getElementById('eventsTimelineChart').getContext('2d');
+        if (charts.eventsTimeline) charts.eventsTimeline.destroy();
+
+        charts.eventsTimeline = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.eventsData.map(item => item.month),
+                datasets: [
+                    {
+                        label: 'Sự Kiện',
+                        data: data.eventsData.map(item => item.count),
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Thành Viên',
+                        data: data.membersData.map(item => item.count),
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // === CHART 2: Refs Daily Stats (API THẬT) ===
+    function loadRefsDailyStats() {
+        $.ajax({
+            url: '/Dashboard/GetRefsDailyStats?days=30',
+            method: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    createRefsTimelineChart(response.data);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error loading refs daily stats:', xhr);
+            }
+        });
+    }
+
+    function createRefsTimelineChart(data) {
+        const ctx = document.getElementById('refsTimelineChart').getContext('2d');
+        if (charts.refsTimeline) charts.refsTimeline.destroy();
+
+        charts.refsTimeline = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map(item => item.date),
+                datasets: [{
+                    label: 'Refs',
+                    data: data.map(item => item.count),
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // === CHART 3: Registrations By Status (API THẬT) ===
+    function loadRegistrationsByStatus() {
+        $.ajax({
+            url: '/Dashboard/GetRegistrationsByStatus',
+            method: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    createRegistrationsPieChart(response.data);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error loading registrations by status:', xhr);
+            }
+        });
+    }
+
+    function createRegistrationsPieChart(data) {
+        const ctx = document.getElementById('registrationsPieChart').getContext('2d');
+        if (charts.registrationsPie) charts.registrationsPie.destroy();
+
+        charts.registrationsPie = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Đã Xác Nhận', 'Đang Chờ', 'Đã Hủy'],
+                datasets: [{
+                    data: [data.confirmed, data.pending, data.cancelled],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(255, 205, 86, 0.7)',
+                        'rgba(255, 99, 132, 0.7)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // === CHART 4: Subscription Plans Stats (API THẬT) ===
+    function loadSubscriptionPlansStats() {
+        $.ajax({
+            url: '/Dashboard/GetSubscriptionPlansStats',
+            method: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    createSubscriptionsBarChart(response.data);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error loading subscription plans stats:', xhr);
+            }
+        });
+    }
+
+    function createSubscriptionsBarChart(data) {
+        const ctx = document.getElementById('subscriptionsBarChart').getContext('2d');
+        if (charts.subscriptionsBar) charts.subscriptionsBar.destroy();
+
+        charts.subscriptionsBar = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.map(item => item.planName),
+                datasets: [
+                    {
+                        label: 'Đang Active',
+                        data: data.map(item => item.activeCount),
+                        backgroundColor: 'rgba(75, 192, 192, 0.7)'
+                    },
+                    {
+                        label: 'Tổng Đã Gán',
+                        data: data.map(item => item.totalCount),
+                        backgroundColor: 'rgba(255, 205, 86, 0.7)'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    // === CHART 5: New Members Daily Stats (API THẬT) ===
+    function loadNewMembersDailyStats() {
+        $.ajax({
+            url: '/Dashboard/GetNewMembersDailyStats?days=7',
+            method: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    createNewMembersChart(response.data);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error loading new members stats:', xhr);
+            }
+        });
+    }
+
+    function createNewMembersChart(data) {
+        const ctx = document.getElementById('newMembersChart').getContext('2d');
+        if (charts.newMembers) charts.newMembers.destroy();
+
+        charts.newMembers = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.map(item => item.date),
+                datasets: [{
+                    label: 'Thành viên mới',
+                    data: data.map(item => item.count),
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+</script>
+
+<style>
+    .icon-box {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bg-primary-light { background-color: rgba(78, 115, 223, 0.1); }
+    .bg-success-light { background-color: rgba(28, 200, 138, 0.1); }
+    .bg-info-light { background-color: rgba(54, 185, 204, 0.1); }
+    .bg-warning-light { background-color: rgba(246, 194, 62, 0.1); }
+
+    .card {
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+
+    .card:hover { transform: translateY(-2px); }
+</style>

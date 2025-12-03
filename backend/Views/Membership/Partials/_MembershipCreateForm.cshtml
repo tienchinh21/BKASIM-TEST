@@ -1,0 +1,188 @@
+@model MiniAppGIBA.Models.Request.Memberships.CreateMembershipRequest
+
+<div class="modal-content border-0 shadow-lg">
+    <!-- Header -->
+    <div class="modal-header border-0 bg-primary text-white">
+        <h5 class="modal-title fw-bold">
+            <i class="ri-user-add-line me-2"></i>
+            Tạo tài khoản thành viên
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body p-4">
+        <form id="membershipCreateForm" onsubmit="return submitCreateMembershipForm(event)">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-3">
+                <!-- Số điện thoại (Required) -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Số điện thoại <span class="text-danger">*</span>
+                    </label>
+                    <input name="PhoneNumber" id="phoneNumberInput" class="form-control"
+                        placeholder="Nhập số điện thoại" required />
+                    <span id="phoneWarningMessage" class="text-warning small" style="display: none;">
+                        <i class="ri-alert-line me-1"></i>Số điện thoại này đã có tài khoản trong hệ thống!
+                    </span>
+                </div>
+
+                <!-- Họ tên -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Họ và tên
+                    </label>
+                    <input name="Fullname" class="form-control" placeholder="Nhập họ và tên" />
+                </div>
+
+                <!-- User Zalo ID -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        User Zalo ID
+                    </label>
+                    <input name="UserZaloId" class="form-control" placeholder="Nhập User Zalo ID" />
+                </div>
+
+                <!-- User Zalo Name -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Tên Zalo
+                    </label>
+                    <input name="UserZaloName" class="form-control" placeholder="Nhập tên Zalo" />
+                </div>
+
+                <!-- Zalo Avatar -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Avatar Zalo
+                    </label>
+                    <input name="ZaloAvatar" class="form-control" placeholder="Nhập URL avatar Zalo" />
+                </div>
+
+                <!-- Role ID -->
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">
+                        Role ID
+                    </label>
+                    <input name="RoleId" class="form-control" placeholder="Nhập Role ID" />
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer border-0 bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-close-line me-1"></i>
+            Hủy
+        </button>
+        <button type="submit" id="submitCreateBtn" form="membershipCreateForm" class="btn btn-primary">
+            <i class="ri-save-line me-1"></i>
+            Tạo tài khoản
+        </button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Reset form state when modal is shown
+        $('#membershipModal').on('show.bs.modal', function () {
+            $('#phoneWarningMessage').hide();
+            enableSubmitButton();
+            $('#phoneNumberInput').val('');
+        });
+
+        // Phone number check with debounce
+        let phoneCheckTimeout = null;
+        $('#phoneNumberInput').on('input', function () {
+            const phoneNumber = $(this).val().trim();
+
+            // Clear previous timeout
+            if (phoneCheckTimeout) {
+                clearTimeout(phoneCheckTimeout);
+            }
+
+            // Hide warning if phone is empty
+            if (!phoneNumber || phoneNumber.length < 10) {
+                $('#phoneWarningMessage').hide();
+                enableSubmitButton();
+                return;
+            }
+
+            // Wait for user to finish typing (debounce 800ms)
+            phoneCheckTimeout = setTimeout(function () {
+                checkPhoneNumber(phoneNumber);
+            }, 800);
+        });
+    });
+
+    // Function to enable/disable submit button
+    function enableSubmitButton() {
+        $('#submitCreateBtn').prop('disabled', false).removeClass('disabled');
+    }
+
+    function disableSubmitButton() {
+        $('#submitCreateBtn').prop('disabled', true).addClass('disabled');
+    }
+
+    // Function to check if phone number already exists
+    function checkPhoneNumber(phoneNumber) {
+        if (!phoneNumber || phoneNumber.length < 10) {
+            $('#phoneWarningMessage').hide();
+            enableSubmitButton();
+            return;
+        }
+
+        $.ajax({
+            url: '/api/Memberships/check-user',
+            type: 'GET',
+            data: {
+                phoneNumber: phoneNumber,
+                type: 'admin'
+            },
+            success: function (response) {
+                // API returns 200 with userInfo if account exists - show warning and disable button
+                if (response && response.success && response.data && response.data.userInfo) {
+                    $('#phoneWarningMessage').show();
+                    disableSubmitButton();
+                } else {
+                    $('#phoneWarningMessage').hide();
+                    enableSubmitButton();
+                }
+            },
+            error: function (xhr, status, error) {
+                // API returns 400 with "no data!" if account doesn't exist - hide warning and enable button
+                $('#phoneWarningMessage').hide();
+                enableSubmitButton();
+            }
+        });
+    }
+
+    function submitCreateMembershipForm(event) {
+        event.preventDefault();
+
+        const formData = new FormData(document.getElementById('membershipCreateForm'));
+
+        $.ajax({
+            url: '/Membership/Create',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                if (response.success) {
+                    showSuccess('Thành công', response.message || 'Tạo tài khoản thành công');
+                    $('#membershipModal').modal('hide');
+                    membershipsTable.ajax.reload(null, false);
+                } else {
+                    showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error:', error);
+                showError('Lỗi', 'Có lỗi xảy ra khi tạo tài khoản');
+            }
+        });
+    }
+</script>

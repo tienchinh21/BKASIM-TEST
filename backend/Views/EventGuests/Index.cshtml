@@ -1,0 +1,970 @@
+@{
+    ViewData["Title"] = "Quản lý đăng ký tham dự";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    /* Xử lý modal lồng nhau */
+    #approveModal.show {
+        z-index: 1060 !important;
+    }
+    
+    #guestDetailModal.show ~ .modal-backdrop {
+        z-index: 1040 !important;
+    }
+    
+    #approveModal.show ~ .modal-backdrop {
+        z-index: 1050 !important;
+    }
+    
+    /* Giới hạn độ dài tên sự kiện */
+    .event-title-cell {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+    }
+    
+    /* Đảm bảo bảng không tràn */
+    #list-guests {
+        width: 100% !important;
+        table-layout: fixed;
+    }
+    
+    #list-guests_wrapper {
+        overflow-x: auto;
+    }
+    
+    /* Giới hạn độ rộng cột ghi chú */
+    .note-cell {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Giới hạn độ rộng cột người đăng ký */
+    #list-guests td:nth-child(3) {
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    #list-guests td:nth-child(3) strong,
+    #list-guests td:nth-child(3) small {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Style cho dropdown sự kiện có thể scroll */
+    .select2-event + .select2-container {
+        width: 100% !important;
+    }
+    
+    .select2-container--default .select2-results__options {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px;
+        padding-left: 12px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản lý đăng ký tham dự</h4>
+                <p class="mb-0 text-muted">Danh sách các đơn đăng ký khách mời cho sự kiện</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Tìm kiếm</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="ri-search-line"></i></span>
+                            <input type="text" id="filter-keyword" class="form-control" placeholder="Họ tên, SĐT..." onkeyup="debounceSearch()">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">Sự kiện</label>
+                        <select id="filter-event" class="form-select select2-event">
+                            <option value="">-- Tất cả sự kiện --</option>
+                            <!-- Will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-select" onchange="guestTable.ajax.reload()">
+                            <option value="">Tất cả</option>
+                            <option value="0">Chờ xử lý</option>
+                            <option value="1">Đã duyệt</option>
+                            <option value="2">Từ chối</option>
+                            <option value="3">Đã hủy</option>
+                            <option value="5">Đã đăng ký</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="table-responsive rounded mb-3" style="overflow-x: auto; max-width: 100%;">
+            <table id="list-guests" class="data-table table mb-0 tbl-server-info" style="width: 100%;"></table>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="guestDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ri-group-line me-2"></i>
+                    Chi tiết đơn đăng ký khách mời
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="guestDetailContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve/Reject Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approveModalTitle">
+                    <i class="ri-check-line me-2"></i>
+                    Duyệt đơn
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info" id="approveAlertMessage">
+                    <!-- Message will be set by JavaScript -->
+                </div>
+
+                <div id="rejectReasonGroup" style="display: none;">
+                    <div class="mb-3">
+                        <label for="rejectReason" class="form-label">
+                            Lý do từ chối <span class="text-danger">*</span>
+                        </label>
+                        <textarea id="rejectReason" class="form-control" rows="4" placeholder="Nhập lý do từ chối..."
+                            maxlength="500"></textarea>
+                        <div class="form-text">Tối đa 500 ký tự</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="confirmApprove">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        // Hàm escape HTML để tránh lỗi XSS và syntax error
+        function escapeHtml(text) {
+            if (!text) return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+        
+        let guestTable;
+        let searchTimeout;
+        
+        // Debounce search để tránh gọi API quá nhiều
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            
+            // Chuyển đổi số điện thoại bắt đầu bằng 0 thành 84
+            const input = $('#filter-keyword');
+            let value = input.val();
+            if (value && /^0\d+$/.test(value)) {
+                value = '84' + value.substring(1);
+                input.val(value);
+            }
+            
+            searchTimeout = setTimeout(function() {
+                if (guestTable) {
+                    guestTable.ajax.reload();
+                }
+            }, 500);
+        }
+
+        $(document).ready(function () {
+            loadEvents();
+            GetListEventGuests();
+            
+            // Xử lý reset z-index và restore scroll khi modal approve đóng
+            $('#approveModal').on('hidden.bs.modal', function () {
+                const approveModal = $(this);
+                const detailModal = $('#guestDetailModal');
+                
+                // Reset z-index
+                approveModal.css('z-index', '');
+                
+                // Xóa backdrop thừa nếu có
+                $('.modal-backdrop').each(function(index) {
+                    if (index > 0) {
+                        $(this).remove();
+                    }
+                });
+                
+                // Đảm bảo modal chi tiết vẫn có thể scroll
+                if (detailModal.hasClass('show')) {
+                    const detailModalBody = detailModal.find('.modal-body');
+                    if (detailModalBody.length) {
+                        // Khôi phục scroll cho modal-body
+                        detailModalBody.css({
+                            'overflow-y': 'auto',
+                            'overflow-x': 'hidden',
+                            'max-height': 'calc(100vh - 200px)',
+                            'pointer-events': 'auto',
+                            'touch-action': 'pan-y'
+                        });
+                    }
+                    
+                    // Đảm bảo modal chi tiết có thể scroll
+                    detailModal.css('overflow', '');
+                }
+                
+                // Xử lý body scroll - chỉ remove nếu không còn modal nào mở
+                setTimeout(() => {
+                    const openModals = document.querySelectorAll('.modal.show');
+                    if (openModals.length === 0) {
+                        // Không còn modal nào mở, restore body
+                        document.body.classList.remove('modal-open');
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                    } else {
+                        // Vẫn còn modal mở (detail modal), đảm bảo body có overflow hidden
+                        document.body.style.overflow = 'hidden';
+                    }
+                }, 200);
+            });
+        });
+
+        function loadEvents() {
+            $.get('/Event/GetPage', {
+                page: 1,
+                pageSize: 100,
+                keyword: '',
+                groupId: '',
+                type: '',
+                status: '',
+                isUser: false
+            }, function (response) {
+                const select = $('#filter-event');
+                
+                if (response && response.data && response.data.length > 0) {
+                    response.data.forEach(event => {
+                        select.append(`<option value="${event.id}">${escapeHtml(event.title)}</option>`);
+                    });
+                }
+                
+                // Khởi tạo Select2 sau khi đã load xong data
+                if ($.fn.select2) {
+                    select.select2({
+                        width: '100%',
+                        dropdownAutoWidth: false,
+                        minimumResultsForSearch: 0,
+                        language: {
+                            noResults: function() {
+                                return 'Không tìm thấy sự kiện';
+                            },
+                            searching: function() {
+                                return 'Đang tìm kiếm...';
+                            }
+                        }
+                    }).on('change', function() {
+                        if (guestTable) {
+                            guestTable.ajax.reload();
+                        }
+                    });
+                }
+            }).fail(function(xhr, status, error) {
+                console.error('Error loading events:', error);
+            });
+        }
+
+        function GetListEventGuests() {
+            guestTable = new DataTable("#list-guests", {
+                searching: false,
+                sort: false,
+                responsive: false,
+                scrollX: true,
+                autoWidth: false,
+                pageLength: 10,
+                serverSide: false,
+                ajax: function (data, callback, settings) {
+                    const eventId = $("#filter-event").val();
+                    const status = $("#filter-status").val();
+                    const keyword = $("#filter-keyword").val();
+
+                    let url = '/EventGuests/GetAll/all';
+
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        data: {
+                            status: status,
+                            filterEventId: eventId,
+                            keyword: keyword
+                        },
+                        success: function (response) {
+                            const formattedData = response.data.map((item, index) => {
+                                const isIndividual = item.note === "Đăng ký đơn lẻ";
+                                const registrationType = isIndividual 
+                                    ? '<span class="badge bg-info">Cá nhân</span>' 
+                                    : '<span class="badge bg-secondary">Khách mời</span>';
+                                
+                                // Hiển thị thông tin người đăng ký
+                                let userInfoHtml = '<div class="d-flex flex-column">';
+                                userInfoHtml += `<strong>${escapeHtml(item.memberName || item.userZaloId)}</strong>`;
+                                if (item.memberPhone) {
+                                    userInfoHtml += `<small class="text-muted">${escapeHtml(item.memberPhone)}</small>`;
+                                } else {
+                                    userInfoHtml += `<small class="text-muted">${escapeHtml(item.userZaloId)}</small>`;
+                                }
+                                userInfoHtml += '</div>';
+                                
+                                return {
+                                    index: index + 1,
+                                    type: registrationType,
+                                    userInfo: userInfoHtml,
+                                    eventId: item.eventTitle 
+                                        ? `<div class="event-title-cell" title="${item.eventTitle.replace(/"/g, '&quot;')}">${item.eventTitle}</div>`
+                                        : `<div class="event-title-cell" title="${item.eventId}">${item.eventId.substring(0, 8)}...</div>`,
+                                    guestNumber: `<span class="badge bg-primary">${item.guestNumber} người</span>`,
+                                    note: item.note && item.note !== "Đăng ký đơn lẻ"
+                                        ? `<div class="note-cell" title="${(item.note || '').replace(/"/g, '&quot;')}">${item.note}</div>`
+                                        : '<span class="text-muted">-</span>',
+                                    status: getStatusBadge(item.status, item.statusText),
+                                    createdDate: new Date(item.createdDate).toLocaleDateString('vi-VN'),
+                                    actions: getActionButtons(item, isIndividual)
+                                };
+                            });
+
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: response.data.length,
+                                recordsFiltered: response.data.length,
+                                data: formattedData
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error loading data:', error);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: 0,
+                                recordsFiltered: 0,
+                                data: []
+                            });
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: "index", className: 'text-center', width: "50px" },
+                    { title: "Loại", data: "type", className: 'text-center', width: "90px" },
+                    { title: "Người đăng ký", data: "userInfo", width: "180px" },
+                    { title: "Sự kiện", data: "eventId", width: "250px" },
+                    { title: "Số khách", data: "guestNumber", className: 'text-center', width: "90px" },
+                    { title: "Ghi chú", data: "note", width: "150px" },
+                    { title: "Trạng thái", data: "status", className: 'text-center', width: "120px" },
+                    { title: "Ngày tạo", data: "createdDate", className: 'text-center', width: "110px" },
+                    { title: "Thao tác", data: "actions", className: 'text-center', width: "140px" }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Không có dữ liệu"
+                }
+            });
+
+            $(guestTable.table().header()).addClass('ligth ligth-data');
+        }
+
+        function getStatusBadge(status, statusText) {
+            const statusColors = {
+                0: 'warning',    // Chờ xử lý
+                1: 'success',    // Đã duyệt
+                2: 'danger',     // Từ chối
+                3: 'secondary',  // Đã hủy
+                5: 'info'        // Đã đăng ký
+            };
+            return `<span class="badge bg-${statusColors[status] || 'secondary'}">${statusText}</span>`;
+        }
+
+        function getActionButtons(item, isIndividual) {
+            let buttons = `<div class="d-flex align-items-center justify-content-center gap-1">
+                                                <button onclick="viewGuestDetail('${item.id}', ${isIndividual})" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                                                    <i class="ri-eye-line"></i>
+                                                </button>`;
+
+            if (item.status === 0) { // Chờ xử lý
+                buttons += `
+                                                    <button onclick="approveGuest('${item.id}', true, ${isIndividual})" class="btn btn-sm btn-outline-success" title="Duyệt">
+                                                        <i class="ri-check-line"></i>
+                                                    </button>
+                                                    <button onclick="approveGuest('${item.id}', false, ${isIndividual})" class="btn btn-sm btn-outline-danger" title="Từ chối">
+                                                        <i class="ri-close-line"></i>
+                                                    </button>`;
+            }
+
+            buttons += `</div>`;
+            return buttons;
+        }
+
+        function viewGuestDetail(eventGuestId, isIndividual) {
+            $.get('/EventGuests/Detail/' + eventGuestId, function (data) {
+                const isIndividualRegistration = isIndividual || data.note === "Đăng ký đơn lẻ";
+                const registrationTypeBadge = isIndividualRegistration 
+                    ? '<span class="badge bg-info">Đăng ký đơn lẻ</span>' 
+                    : '<span class="badge bg-secondary">Đăng ký theo nhóm</span>';
+                
+                let html = '<div class="row mb-3">' +
+                    '<div class="col-12">' +
+                    '<div class="alert alert-info mb-0">' +
+                    '<strong>Loại đăng ký:</strong> ' + registrationTypeBadge +
+                    '</div></div></div>' +
+                    '<div class="row">' +
+                    '<div class="col-md-6">' +
+                    '<h6 class="fw-bold mb-3">Thông tin đơn</h6>' +
+                    '<table class="table table-borderless">' +
+                    '<tr><td width="150"><strong>ID:</strong></td><td>' + data.id + '</td></tr>' +
+                    '<tr><td><strong>User Zalo ID:</strong></td><td>' + data.userZaloId + '</td></tr>' +
+                    '<tr><td><strong>Số khách mời:</strong></td><td><span class="badge bg-primary">' + data.guestNumber + ' người</span></td></tr>' +
+                    '<tr><td><strong>Trạng thái:</strong></td><td>' + getStatusBadge(data.status, data.statusText) + '</td></tr>' +
+                    (!isIndividualRegistration ? '<tr><td><strong>Ghi chú:</strong></td><td>' + (data.note || '<span class="text-muted">Không có</span>') + '</td></tr>' : '') +
+                    '<tr><td><strong>Ngày tạo:</strong></td><td>' + new Date(data.createdDate).toLocaleString('vi-VN') + '</td></tr>' +
+                    '</table></div>' +
+                    '<div class="col-md-6">' +
+                    '<h6 class="fw-bold mb-3">Thông tin người tạo đơn</h6>' +
+                    '<table class="table table-borderless">' +
+                    '<tr><td width="150"><strong>Họ tên:</strong></td><td>' + (data.memberName || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                    '<tr><td><strong>Số điện thoại:</strong></td><td>' + (data.memberPhone || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                    '<tr><td><strong>Email:</strong></td><td>' + (data.memberEmail || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                    '<tr><td><strong>Công ty:</strong></td><td>' + (data.memberCompany || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                    '<tr><td><strong>Chức vụ:</strong></td><td>' + (data.memberPosition || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                    '</table></div>' +
+                    '</div>' +
+                    (isIndividualRegistration ? 
+                        '<div id="customFieldsSection" class="mt-3">' +
+                        '<h6 class="fw-bold mb-3"><i class="ri-file-edit-line me-2"></i>Thông tin bổ sung</h6>' +
+                        '<div id="customFieldsContent" class="table-responsive"><p class="text-muted">Đang tải...</p></div>' +
+                        '</div>'
+                    : '') +
+                    (data.rejectReason ? 
+                        '<div class="alert alert-danger mt-3">' +
+                        '<strong><i class="ri-close-circle-line me-1"></i>Lý do từ chối:</strong>' +
+                        '<p class="mb-0 mt-2">' + data.rejectReason + '</p></div>'
+                    : '') +
+                    (data.cancelReason ? 
+                        '<div class="alert alert-secondary mt-3">' +
+                        '<strong><i class="ri-information-line me-1"></i>Lý do hủy:</strong>' +
+                        '<p class="mb-0 mt-2">' + data.cancelReason + '</p></div>'
+                    : '') +
+                    (!isIndividualRegistration ? 
+                        '<hr class="my-4">' +
+                        '<h6 class="fw-bold mb-3"><i class="ri-contacts-line me-2"></i>Danh sách khách mời (' + data.guestLists.length + ' người)</h6>' +
+                        '<div class="table-responsive">' +
+                        '<table class="table table-striped table-hover">' +
+                        '<thead class="table-light">' +
+                        '<tr><th width="50">STT</th><th>Tên khách</th><th>Số điện thoại</th><th>Email</th><th width="120">Trạng thái</th><th width="150">Thao tác</th></tr>' +
+                        '</thead><tbody>'
+                    : '')
+
+                if (data.guestLists && data.guestLists.length > 0 && !isIndividualRegistration) {
+                    data.guestLists.forEach((guest, index) => {
+                        let actionButtons = '';
+                        if (!isIndividualRegistration) {
+                            const guestId = (guest.id || '').replace(/'/g, "\\'");
+                            const eventId = (data.id || '').replace(/'/g, "\\'");
+                            // Hiển thị nút duyệt/từ chối khi status = 0 (Chờ xử lý) hoặc status = 5 (Đã đăng ký)
+                            // Các status khác chỉ hiển thị nút xem thông tin
+                            if (guest.status === 0 || guest.status === 5) {
+                                actionButtons = '<td>' +
+                                    '<div class="d-flex gap-1">' +
+                                    '<button onclick="approveGuestItem(\'' + guestId + '\', true, \'' + eventId + '\')" class="btn btn-sm btn-outline-success" title="Duyệt">' +
+                                    '<i class="ri-check-line"></i>' +
+                                    '</button>' +
+                                    '<button onclick="approveGuestItem(\'' + guestId + '\', false, \'' + eventId + '\')" class="btn btn-sm btn-outline-danger" title="Từ chối">' +
+                                    '<i class="ri-close-line"></i>' +
+                                    '</button>' +
+                                    '<button onclick="viewGuestCustomFields(\'' + guestId + '\')" class="btn btn-sm btn-outline-info" title="Xem thông tin bổ sung">' +
+                                    '<i class="ri-eye-line"></i>' +
+                                    '</button>' +
+                                    '</div>' +
+                                    '</td>';
+                            } else {
+                                actionButtons = '<td>' +
+                                    '<button onclick="viewGuestCustomFields(\'' + guestId + '\')" class="btn btn-sm btn-outline-info" title="Xem thông tin bổ sung">' +
+                                    '<i class="ri-eye-line"></i>' +
+                                    '</button>' +
+                                    '</td>';
+                            }
+                        }
+                        
+                        const guestName = escapeHtml(guest.guestName || '');
+                        const guestPhone = guest.guestPhone ? escapeHtml(guest.guestPhone) : '<span class="text-muted">-</span>';
+                        const guestEmail = guest.guestEmail ? escapeHtml(guest.guestEmail) : '<span class="text-muted">-</span>';
+                        
+                        html += '<tr>' +
+                            '<td>' + (index + 1) + '</td>' +
+                            '<td><strong>' + guestName + '</strong></td>' +
+                            '<td>' + guestPhone + '</td>' +
+                            '<td>' + guestEmail + '</td>' +
+                            '<td>' + getStatusBadge(guest.status, guest.statusText) + '</td>' +
+                            actionButtons +
+                            '</tr>';
+                    });
+                } else if (!isIndividualRegistration) {
+                    html += '<tr><td colspan="6" class="text-center text-muted">Không có khách mời nào</td></tr>';
+                }
+
+                if (!isIndividualRegistration) {
+                    html += '</tbody></table></div>';
+                }
+
+                $('#guestDetailContent').html(html);
+                $('#guestDetailModal').modal('show');
+                
+                // Nếu là đơn lẻ, load custom fields
+                if (isIndividualRegistration) {
+                    loadCustomFieldsForRegistration(data.id);
+                }
+            }).fail(function () {
+                showError('Lỗi', 'Không thể tải thông tin chi tiết');
+            });
+        }
+
+        function approveGuest(eventGuestId, isApproved, isIndividual) {
+            const modal = $('#approveModal');
+            const registrationType = isIndividual ? 'đăng ký đơn lẻ' : 'đơn đăng ký khách mời';
+
+            if (isApproved) {
+                $('#approveModalTitle').html('<i class="ri-check-line me-2 text-success"></i>Duyệt đơn');
+                $('#approveAlertMessage').removeClass('alert-danger').addClass('alert-success');
+                $('#approveAlertMessage').html('<i class="ri-information-line me-2"></i>Bạn có chắc chắn muốn <strong>duyệt</strong> ' + registrationType + ' này?');
+                $('#rejectReasonGroup').hide();
+                $('#confirmApprove').removeClass('btn-danger').addClass('btn-success').text('Duyệt');
+            } else {
+                $('#approveModalTitle').html('<i class="ri-close-line me-2 text-danger"></i>Từ chối đơn');
+                $('#approveAlertMessage').removeClass('alert-success').addClass('alert-danger');
+                $('#approveAlertMessage').html('<i class="ri-alert-line me-2"></i>Bạn có chắc chắn muốn <strong>từ chối</strong> ' + registrationType + ' này?');
+                $('#rejectReasonGroup').show();
+                $('#rejectReason').val('');
+                $('#confirmApprove').removeClass('btn-success').addClass('btn-danger').text('Từ chối');
+            }
+
+            modal.data('eventGuestId', eventGuestId);
+            modal.data('isApproved', isApproved);
+            modal.data('isIndividual', isIndividual);
+            modal.data('isGuestItem', false); // Đánh dấu đây là duyệt đơn, không phải duyệt thành viên
+            modal.modal('show');
+        }
+
+        // Handler này đã được di chuyển xuống dưới để xử lý cả duyệt đơn và duyệt thành viên
+
+        function approveGuestItem(guestListId, isApproved, eventGuestId) {
+            const modal = $('#approveModal');
+            const detailModal = $('#guestDetailModal');
+            const action = isApproved ? 'duyệt' : 'từ chối';
+
+            // Kiểm tra nếu modal chi tiết đang mở, điều chỉnh z-index và đảm bảo scroll
+            if (detailModal.hasClass('show')) {
+                // Tăng z-index của modal approve để hiển thị trên modal chi tiết
+                modal.css('z-index', '1060');
+                // Điều chỉnh backdrop của modal chi tiết
+                $('.modal-backdrop').not(':last').css('z-index', '1040');
+                
+                // Đảm bảo modal chi tiết vẫn có thể scroll khi modal approve mở
+                const detailModalBody = detailModal.find('.modal-body');
+                if (detailModalBody.length) {
+                    detailModalBody.css({
+                        'overflow-y': 'auto',
+                        'overflow-x': 'hidden',
+                        'pointer-events': 'auto'
+                    });
+                }
+            }
+
+            if (isApproved) {
+                $('#approveModalTitle').html('<i class="ri-check-line me-2 text-success"></i>Duyệt thành viên');
+                $('#approveAlertMessage').removeClass('alert-danger').addClass('alert-success');
+                $('#approveAlertMessage').html('<i class="ri-information-line me-2"></i>Bạn có chắc chắn muốn <strong>duyệt</strong> thành viên này?');
+                $('#rejectReasonGroup').hide();
+                $('#confirmApprove').removeClass('btn-danger').addClass('btn-success').text('Duyệt');
+            } else {
+                $('#approveModalTitle').html('<i class="ri-close-line me-2 text-danger"></i>Từ chối thành viên');
+                $('#approveAlertMessage').removeClass('alert-success').addClass('alert-danger');
+                $('#approveAlertMessage').html('<i class="ri-alert-line me-2"></i>Bạn có chắc chắn muốn <strong>từ chối</strong> thành viên này?');
+                $('#rejectReasonGroup').show();
+                $('#rejectReason').val('');
+                $('#confirmApprove').removeClass('btn-success').addClass('btn-danger').text('Từ chối');
+            }
+
+            modal.data('guestListId', guestListId);
+            modal.data('isApproved', isApproved);
+            modal.data('eventGuestId', eventGuestId);
+            modal.data('isGuestItem', true);
+            
+            // Sử dụng Bootstrap 5 modal API
+            const bsModal = new bootstrap.Modal(modal[0], {
+                backdrop: true,
+                keyboard: false
+            });
+            bsModal.show();
+        }
+
+        // Cập nhật handler cho confirmApprove để xử lý cả duyệt đơn và duyệt thành viên
+        $('#confirmApprove').off('click').on('click', function () {
+            const modal = $('#approveModal');
+            const isGuestItem = modal.data('isGuestItem');
+            
+            if (isGuestItem) {
+                // Xử lý duyệt/từ chối thành viên
+                const guestListId = modal.data('guestListId');
+                const isApproved = modal.data('isApproved');
+                const eventGuestId = modal.data('eventGuestId');
+
+                let requestData = { isApproved: isApproved };
+
+                if (!isApproved) {
+                    const rejectReason = $('#rejectReason').val().trim();
+                    if (!rejectReason) {
+                        showWarning('Cảnh báo', 'Vui lòng nhập lý do từ chối!');
+                        return;
+                    }
+                    requestData.rejectReason = rejectReason;
+                }
+
+                $.ajax({
+                    url: '/EventGuests/ApproveGuestItem/' + guestListId,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function (response) {
+                        showSuccess('Thành công', response.message || (isApproved ? 'Duyệt thành viên thành công' : 'Từ chối thành viên thành công'));
+                        
+                        // Đóng modal approve
+                        const bsModal = bootstrap.Modal.getInstance(modal[0]);
+                        if (bsModal) {
+                            bsModal.hide();
+                        } else {
+                            modal.modal('hide');
+                        }
+                        
+                        // Reload lại bảng danh sách
+                        guestTable.ajax.reload();
+                        // Reload lại chi tiết đơn ngay lập tức (không cần đợi modal approve đóng)
+                        // Lưu trạng thái modal chi tiết
+                        const detailModalWasOpen = $('#guestDetailModal').hasClass('show');
+                        if (detailModalWasOpen) {
+                            // Reload lại nội dung modal chi tiết
+                            $.get('/EventGuests/Detail/' + eventGuestId, function (data) {
+                                const isIndividualRegistration = data.note === "Đăng ký đơn lẻ";
+                                const registrationTypeBadge = isIndividualRegistration 
+                                    ? '<span class="badge bg-info">Đăng ký đơn lẻ</span>' 
+                                    : '<span class="badge bg-secondary">Đăng ký theo nhóm</span>';
+                                
+                                let html = '<div class="row mb-3">' +
+                                    '<div class="col-12">' +
+                                    '<div class="alert alert-info mb-0">' +
+                                    '<strong>Loại đăng ký:</strong> ' + registrationTypeBadge +
+                                    '</div></div></div>' +
+                                    '<div class="row">' +
+                                    '<div class="col-md-6">' +
+                                    '<h6 class="fw-bold mb-3">Thông tin đơn</h6>' +
+                                    '<table class="table table-borderless">' +
+                                    '<tr><td width="150"><strong>ID:</strong></td><td>' + data.id + '</td></tr>' +
+                                    '<tr><td><strong>User Zalo ID:</strong></td><td>' + data.userZaloId + '</td></tr>' +
+                                    '<tr><td><strong>Số khách mời:</strong></td><td><span class="badge bg-primary">' + data.guestNumber + ' người</span></td></tr>' +
+                                    '<tr><td><strong>Trạng thái:</strong></td><td>' + getStatusBadge(data.status, data.statusText) + '</td></tr>' +
+                                    (!isIndividualRegistration ? '<tr><td><strong>Ghi chú:</strong></td><td>' + (data.note || '<span class="text-muted">Không có</span>') + '</td></tr>' : '') +
+                                    '<tr><td><strong>Ngày tạo:</strong></td><td>' + new Date(data.createdDate).toLocaleString('vi-VN') + '</td></tr>' +
+                                    '</table></div>' +
+                                    '<div class="col-md-6">' +
+                                    '<h6 class="fw-bold mb-3">Thông tin người tạo đơn</h6>' +
+                                    '<table class="table table-borderless">' +
+                                    '<tr><td width="150"><strong>Họ tên:</strong></td><td>' + (data.memberName || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                                    '<tr><td><strong>Số điện thoại:</strong></td><td>' + (data.memberPhone || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                                    '<tr><td><strong>Email:</strong></td><td>' + (data.memberEmail || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                                    '<tr><td><strong>Công ty:</strong></td><td>' + (data.memberCompany || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                                    '<tr><td><strong>Chức vụ:</strong></td><td>' + (data.memberPosition || '<span class="text-muted">Chưa cập nhật</span>') + '</td></tr>' +
+                                    '</table></div>' +
+                                    '</div>' +
+                                    (isIndividualRegistration ? 
+                                        '<div id="customFieldsSection" class="mt-3">' +
+                                        '<h6 class="fw-bold mb-3"><i class="ri-file-edit-line me-2"></i>Thông tin bổ sung</h6>' +
+                                        '<div id="customFieldsContent" class="table-responsive"><p class="text-muted">Đang tải...</p></div>' +
+                                        '</div>'
+                                    : '') +
+                                    (data.rejectReason ? 
+                                        '<div class="alert alert-danger mt-3">' +
+                                        '<strong><i class="ri-close-circle-line me-1"></i>Lý do từ chối:</strong>' +
+                                        '<p class="mb-0 mt-2">' + data.rejectReason + '</p></div>'
+                                    : '') +
+                                    (data.cancelReason ? 
+                                        '<div class="alert alert-secondary mt-3">' +
+                                        '<strong><i class="ri-information-line me-1"></i>Lý do hủy:</strong>' +
+                                        '<p class="mb-0 mt-2">' + data.cancelReason + '</p></div>'
+                                    : '') +
+                                    (!isIndividualRegistration ? 
+                                        '<hr class="my-4">' +
+                                        '<h6 class="fw-bold mb-3"><i class="ri-contacts-line me-2"></i>Danh sách khách mời (' + data.guestLists.length + ' người)</h6>' +
+                                        '<div class="table-responsive">' +
+                                        '<table class="table table-striped table-hover">' +
+                                        '<thead class="table-light">' +
+                                        '<tr><th width="50">STT</th><th>Tên khách</th><th>Số điện thoại</th><th>Email</th><th width="120">Trạng thái</th><th width="150">Thao tác</th></tr>' +
+                                        '</thead><tbody>'
+                                    : '')
+
+                                if (data.guestLists && data.guestLists.length > 0 && !isIndividualRegistration) {
+                                    data.guestLists.forEach((guest, index) => {
+                                        let actionButtons = '';
+                                        if (!isIndividualRegistration) {
+                                            const guestId = (guest.id || '').replace(/'/g, "\\'");
+                                            const eventId = (data.id || '').replace(/'/g, "\\'");
+                                            // Hiển thị nút duyệt/từ chối khi status = 0 (Chờ xử lý) hoặc status = 5 (Đã đăng ký)
+                                            // Các status khác chỉ hiển thị nút xem thông tin
+                                            if (guest.status === 0 || guest.status === 5) {
+                                                actionButtons = '<td>' +
+                                                    '<div class="d-flex gap-1">' +
+                                                    '<button onclick="approveGuestItem(\'' + guestId + '\', true, \'' + eventId + '\')" class="btn btn-sm btn-outline-success" title="Duyệt">' +
+                                                    '<i class="ri-check-line"></i>' +
+                                                    '</button>' +
+                                                    '<button onclick="approveGuestItem(\'' + guestId + '\', false, \'' + eventId + '\')" class="btn btn-sm btn-outline-danger" title="Từ chối">' +
+                                                    '<i class="ri-close-line"></i>' +
+                                                    '</button>' +
+                                                    '<button onclick="viewGuestCustomFields(\'' + guestId + '\')" class="btn btn-sm btn-outline-info" title="Xem thông tin bổ sung">' +
+                                                    '<i class="ri-eye-line"></i>' +
+                                                    '</button>' +
+                                                    '</div>' +
+                                                    '</td>';
+                                            } else {
+                                                actionButtons = '<td>' +
+                                                    '<button onclick="viewGuestCustomFields(\'' + guestId + '\')" class="btn btn-sm btn-outline-info" title="Xem thông tin bổ sung">' +
+                                                    '<i class="ri-eye-line"></i>' +
+                                                    '</button>' +
+                                                    '</td>';
+                                            }
+                                        }
+                                        
+                                        const guestName = escapeHtml(guest.guestName || '');
+                                        const guestPhone = guest.guestPhone ? escapeHtml(guest.guestPhone) : '<span class="text-muted">-</span>';
+                                        const guestEmail = guest.guestEmail ? escapeHtml(guest.guestEmail) : '<span class="text-muted">-</span>';
+                                        
+                                        html += '<tr>' +
+                                            '<td>' + (index + 1) + '</td>' +
+                                            '<td><strong>' + guestName + '</strong></td>' +
+                                            '<td>' + guestPhone + '</td>' +
+                                            '<td>' + guestEmail + '</td>' +
+                                            '<td>' + getStatusBadge(guest.status, guest.statusText) + '</td>' +
+                                            actionButtons +
+                                            '</tr>';
+                                    });
+                                } else if (!isIndividualRegistration) {
+                                    html += '<tr><td colspan="6" class="text-center text-muted">Không có khách mời nào</td></tr>';
+                                }
+
+                                if (!isIndividualRegistration) {
+                                    html += '</tbody></table></div>';
+                                }
+
+                                $('#guestDetailContent').html(html);
+                                
+                                // Nếu là đơn lẻ, load custom fields
+                                if (isIndividualRegistration) {
+                                    loadCustomFieldsForRegistration(data.id);
+                                }
+                            }).fail(function () {
+                                showError('Lỗi', 'Không thể tải lại thông tin chi tiết');
+                            });
+                        }
+                    },
+                    error: function (xhr) {
+                        const error = xhr.responseJSON?.message || 'Có lỗi xảy ra';
+                        showError('Lỗi', error);
+                    }
+                });
+            } else {
+                // Xử lý duyệt/từ chối đơn (logic cũ)
+                const eventGuestId = modal.data('eventGuestId');
+                const isApproved = modal.data('isApproved');
+                const isIndividual = modal.data('isIndividual');
+
+                let requestData = { isApproved: isApproved };
+
+                if (!isApproved) {
+                    const rejectReason = $('#rejectReason').val().trim();
+                    if (!rejectReason) {
+                        showWarning('Cảnh báo', 'Vui lòng nhập lý do từ chối!');
+                        return;
+                    }
+                    requestData.rejectReason = rejectReason;
+                }
+
+                $.ajax({
+                    url: '/EventGuests/Approve/' + eventGuestId,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    success: function (response) {
+                        showSuccess('Thành công', response.message || (isApproved ? 'Duyệt thành công' : 'Từ chối thành công'));
+                        modal.modal('hide');
+                        guestTable.ajax.reload();
+                    },
+                    error: function (xhr) {
+                        const error = xhr.responseJSON?.message || 'Có lỗi xảy ra';
+                        showError('Lỗi', error);
+                    }
+                });
+            }
+        });
+        
+        // Hàm load custom fields cho đơn đăng ký đơn lẻ
+        function loadCustomFieldsForRegistration(eventRegistrationId) {
+            $.get('/api/EventCustomField/ListValue?EventRegistrationId=' + eventRegistrationId, function(response) {
+                if (response && response.success && response.data && response.data.length > 0) {
+                    let customFieldsHtml = '<table class="table table-striped table-hover"><thead class="table-light"><tr><th width="200">Tên trường</th><th>Giá trị</th></tr></thead><tbody>';
+                    
+                    response.data.forEach(function(field) {
+                        const fieldName = escapeHtml(field.fieldName || 'N/A');
+                        const fieldValue = field.fieldValue ? escapeHtml(field.fieldValue) : '<span class="text-muted">-</span>';
+                        customFieldsHtml += '<tr><td><strong>' + fieldName + '</strong></td><td>' + fieldValue + '</td></tr>';
+                    });
+                    
+                    customFieldsHtml += '</tbody></table>';
+                    
+                    $('#customFieldsContent').html(customFieldsHtml);
+                } else {
+                    $('#customFieldsContent').html('<p class="text-muted">Không có thông tin bổ sung</p>');
+                }
+            }).fail(function() {
+                $('#customFieldsContent').html('<p class="text-muted">Không thể tải thông tin bổ sung</p>');
+            });
+        }
+        
+        // Hàm xem custom fields cho từng khách trong đơn nhóm
+        function viewGuestCustomFields(guestListId) {
+            $.get('/api/EventCustomField/ListValue?GuestListId=' + guestListId, function(response) {
+                let customFieldsHtml = '';
+                
+                if (response && response.success && response.data && response.data.length > 0) {
+                    customFieldsHtml = '<div class="table-responsive"><table class="table table-striped table-hover"><thead class="table-light"><tr><th width="200">Tên trường</th><th>Giá trị</th></tr></thead><tbody>';
+                    
+                    response.data.forEach(function(field) {
+                        const fieldName = escapeHtml(field.fieldName || 'N/A');
+                        const fieldValue = field.fieldValue ? escapeHtml(field.fieldValue) : '<span class="text-muted">-</span>';
+                        customFieldsHtml += '<tr><td><strong>' + fieldName + '</strong></td><td>' + fieldValue + '</td></tr>';
+                    });
+                    
+                    customFieldsHtml += '</tbody></table></div>';
+                } else {
+                    customFieldsHtml = '<p class="text-muted text-center py-4">Không có thông tin bổ sung</p>';
+                }
+                
+                // Hiển thị trong modal
+                const modalHtml = '<div class="modal fade" id="customFieldsModal" tabindex="-1" aria-hidden="true">' +
+                    '<div class="modal-dialog modal-lg">' +
+                    '<div class="modal-content">' +
+                    '<div class="modal-header">' +
+                    '<h5 class="modal-title"><i class="ri-file-edit-line me-2"></i>Thông tin bổ sung</h5>' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
+                    '</div>' +
+                    '<div class="modal-body">' + customFieldsHtml + '</div>' +
+                    '<div class="modal-footer">' +
+                    '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+                
+                // Xóa modal cũ nếu có
+                $('#customFieldsModal').remove();
+                // Thêm modal mới
+                $('body').append(modalHtml);
+                // Hiển thị modal
+                $('#customFieldsModal').modal('show');
+            }).fail(function() {
+                // Hiển thị modal với thông báo lỗi
+                const modalHtml = '<div class="modal fade" id="customFieldsModal" tabindex="-1" aria-hidden="true">' +
+                    '<div class="modal-dialog modal-lg">' +
+                    '<div class="modal-content">' +
+                    '<div class="modal-header">' +
+                    '<h5 class="modal-title"><i class="ri-file-edit-line me-2"></i>Thông tin bổ sung</h5>' +
+                    '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
+                    '</div>' +
+                    '<div class="modal-body">' +
+                    '<p class="text-muted text-center py-4">Không thể tải thông tin bổ sung</p>' +
+                    '</div>' +
+                    '<div class="modal-footer">' +
+                    '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>';
+                
+                $('#customFieldsModal').remove();
+                $('body').append(modalHtml);
+                $('#customFieldsModal').modal('show');
+            });
+        }
+    </script>
+}

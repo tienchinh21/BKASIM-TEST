@@ -1,0 +1,399 @@
+@using Microsoft.AspNetCore.Http
+@using System.Security.Claims
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    // Get view permissions from user claims
+    var viewPermissions = new List<string>();
+    var brandName = "MiniApp GIBA"; // Default brand name
+    var brandLogo = "/images/logo.png"; // Default logo path
+    var brandFavicon = "/images/faviconn.ico";
+
+    if (User?.Identity?.IsAuthenticated == true)
+    {
+        viewPermissions = User.Claims
+        .Where(c => c.Type == "ViewPermission")
+        .Select(c => c.Value)
+        .ToList();
+
+        brandName = User.Claims.FirstOrDefault(c => c.Type == "BrandName")?.Value ?? brandName;
+        brandLogo = User.Claims.FirstOrDefault(c => c.Type == "BrandLogo")?.Value ?? brandLogo;
+        brandFavicon = User.Claims.FirstOrDefault(c => c.Type == "BrandFavicon")?.Value ?? brandFavicon;
+    }
+
+    // Hàm kiểm tra quyền truy cập vào một MainView và SubView
+    bool HasViewPermission(string mainViewId, string subViewId = null)
+    {
+        // Nếu không có quyền nào, trả về false
+        if (!viewPermissions.Any()) return false;
+
+        // Kiểm tra từng quyền trong danh sách viewPermissions
+        foreach (var permission in viewPermissions)
+        {
+            var permissionParts = permission.Split(':'); // Tách thành MainView và SubView
+            if (permissionParts.Length == 2) // Kiểm tra quyền có 2 phần
+            {
+                var mainView = permissionParts[0];
+                var subView = permissionParts[1];
+
+                // Kiểm tra nếu quyền phù hợp với mainView và subView
+                if (mainView == mainViewId && (subViewId == null || subView == subViewId))
+                {
+                    return true; // Nếu khớp, trả về true
+                }
+            }
+            else
+            {
+                // Trường hợp không có SubView, chỉ có MainView
+                var mainView = permissionParts[0];
+                // Kiểm tra nếu quyền phù hợp với MainView mà không có SubView
+                if (mainView == mainViewId && subViewId == null)
+                {
+                    return true; // Nếu khớp, trả về true
+                }
+            }
+        }
+
+        return false; // Nếu không khớp, trả về false
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@brandName</title>
+    <link rel="shortcut icon" href="@brandFavicon" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="~/lib/datatables/datatables.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/backend-plugin.min.css" />
+    <link rel="stylesheet" href="~/css/backend.css?v=1.0.0" />
+    <link rel="stylesheet" href="~/vendor/remixicon/fonts/remixicon.css" />
+    <link rel="stylesheet" href="~/lib/select2/select2.css" />
+    <link rel="stylesheet" href="~/css/style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tinymce@7.7.2/skins/ui/oxide/content.min.css">
+    <!-- Quill Editor CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+</head>
+
+<body class="">
+    <div class="wrapper">
+        <div class="iq-sidebar sidebar-default">
+            <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
+                <a href="/" class="header-logo">
+                    <div class="logo-title light-logo ml-3" style="min-width:35px"></div>
+                    <img src="@brandLogo" class="img-fluid light-logo" style="height: 50px;" alt="logo" />
+                </a>
+                <div class="iq-menu-bt-sidebar">
+                    <i class="ri-menu-line wrapper-menu"></i>
+                </div>
+            </div>
+
+            @await Html.PartialAsync("Components/_AdminSidebar")
+        </div>
+        <div class="iq-top-navbar">
+            <div class="iq-navbar-custom">
+                <nav class="navbar navbar-expand-lg navbar-light p-0">
+                    <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
+                        <i class="ri-menu-line wrapper-menu"></i>
+                        <a href="/" class="header-logo">
+                            <img src="@brandLogo" class="img-fluid" alt="LOGO_IMAGE" />
+                            <h5 class="logo-title ml-3">@brandName</h5>
+                        </a>
+                    </div>
+                    <div class="iq-search-bar device-search">
+                        <form action="#" class="searchbox" hidden>
+                            <a class="search-link" href="#"><i class="ri-search-line"></i></a>
+                            <input type="text" class="text search-input" placeholder="Tìm kiếm..." />
+                        </form>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                            data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                            aria-label="Toggle navigation" hidden>
+                            <i class="ri-menu-3-line"></i>
+                        </button>
+                        <div class="" id="navbarSupportedContent">
+                            <ul class="navbar-nav ml-auto navbar-list align-items-center">
+                                <li class="nav-item nav-icon search-content" hidden>
+                                    <a href="#" class="search-toggle rounded" onclick="NoSupportFeature()"
+                                        id="dropdownSearch" data-toggle="dropdown" aria-haspopup="true"
+                                        aria-expanded="false">
+                                        <i class="ri-search-line"></i>
+                                    </a>
+                                    <div class="iq-search-bar iq-sub-dropdown dropdown-menu"
+                                        aria-labelledby="dropdownSearch">
+                                        <form action="#" class="searchbox p-2">
+                                            <div class="form-group mb-0 position-relative">
+                                                <input type="text" class="text search-input font-size-12"
+                                                    placeholder="type here to search..." />
+                                                <a href="#" class="search-link"><i class="ri-search-line"></i></a>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </li>
+                                <li class="nav-item nav-icon dropdown caption-content">
+                                    <a href="#" class="search-toggle dropdown-toggle" id="dropdownMenuButton4"
+                                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <img src="~/images/user.png" class="img-fluid rounded" alt="user" />
+                                    </a>
+                                    <div class="iq-sub-dropdown dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                        <div class="card shadow-none m-0">
+                                            <div class="card-body p-0 text-center">
+                                                <div class="media-body profile-detail text-center">
+                                                    <img src="~/images/profile-bg.jpg" alt="profile-bg"
+                                                        class="rounded-top img-fluid mb-4" />
+                                                    <img src="~/images/user.png" alt="profile-img"
+                                                        class="rounded profile-img img-fluid avatar-70" />
+                                                </div>
+                                                <div class="p-3">
+                                                    <h5 class="mb-1">@(User != null ? User.Claims.FirstOrDefault(x =>
+                                                                                                                x.Type == ClaimTypes.Email)?.Value : "admin@miniappgiba.com")
+                                                    </h5>
+                                                    <p class="mb-0"></p>
+                                                    <div class="d-flex align-items-center justify-content-center mt-3">
+                                                        <button type="button" class="btn border mr-2"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#changePasswordModal">
+                                                            Đổi mật khẩu
+                                                        </button>
+                                                        <a href="/Logout" class="btn border">Đăng xuất</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <div class="content-page">
+            <div class="container-fluid">
+                <main role="main" class="pb-3" style="min-height: calc(100vh - 195px); overflow: hidden;">@RenderBody()
+                </main>
+                <footer>
+                    <div class="container-fluid">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                    </div>
+                                    <div class="col-lg-6 text-right">
+                                        <span class="mr-1">
+                                            <script>document.write(new Date().getFullYear())</script>©
+                                        </span><a href="#" class="">Powered by Incom SaiGon</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Đổi mật khẩu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="oldPassword" class="form-label">Mật khẩu cũ</label>
+                            <input type="password" class="form-control" id="oldPassword" name="currentPassword"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">Mật khẩu mới</label>
+                            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+                        </div>
+                        <div id="alertResponse" class="alert d-none" role="alert"></div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary">Đổi mật khẩu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/lib/select2/select2.full.min.js"></script>
+    <!-- <script src="~/js/table-treeview.js"></script> -->
+
+    <!-- JQuery UI -->
+    <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.min.js"
+        integrity="sha256-AlTido85uXPlSyyaZNsjJXeCs07eSv3r43kyCVc8ChI=" crossorigin="anonymous"></script>
+
+    <!-- Sweet alert (v1 - for backward compatibility) -->
+    <script src="~/lib/sweetalert/sweetalert.min.js"></script>
+    
+    <!-- SweetAlert2 (v2 - for Swal.fire syntax) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Quill Editor JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Moment -->
+    <script src="~/lib/moment/moment.js"></script>
+    <script src="~/lib/moment/moment-locale.js"></script>
+
+    <!-- Spin loading -->
+    <script src="~/lib/loading/loading.js"></script>
+
+    <!-- DataTables -->
+    <script src="~/lib/datatables/datatables.js"></script>
+
+    <!-- Select2 -->
+    <script src="~/lib/select2/select2.full.min.js"></script>
+
+    <!--Quill JS-->
+    <script src="~/lib/quill/quill.js"></script>
+    <script src="~/lib/quill/image-resize.min.js"></script>
+
+    @if (TempData["access_token"] != null)
+    {
+        <script>
+            $(document).ready(function () {
+                localStorage.setItem("_tk", "@TempData["access_token"]")
+            })
+        </script>
+    }
+
+    <!-- Custom -->
+    <script src="~/js/app.js"></script>
+    <script src="~/js/customEditor.js"></script>
+    <script src="~/js/input-validator.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Spinner logic commented out to avoid conflicts -->
+    <!--
+    <script>
+        $(document).ready(function () {
+            const target = document.querySelector("#spinner");
+            if (target && typeof Spinner !== 'undefined') {
+                const spinner = new Spinner({ color: '#292929', lines: 12 }).spin(target);
+            }
+
+            if (typeof table !== 'undefined' && table) {
+                table.on('processing.dt', function (e, settings, processing) {
+                    if (processing) {
+                        $('#spinner').css("display", "block");
+                    } else {
+                        $('#spinner').css("display", "none");
+                    }
+                });
+            }
+        });
+    </script>
+    -->
+
+    <style>
+        /* Fix hamburger menu icon position */
+        .iq-menu-bt-sidebar {
+            position: relative;
+            z-index: 1000;
+        }
+
+        .wrapper-menu {
+            position: relative !important;
+            z-index: 1001 !important;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .wrapper-menu:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Ensure sidebar toggle works properly */
+        .iq-sidebar.sidebar-default {
+            transition: all 0.3s ease;
+        }
+    </style>
+
+    <script>
+        // Global SweetAlert helper functions - Using SweetAlert2 (Swal.fire)
+        window.showSuccess = function(title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Thành công',
+                    text: message || '',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+            } else {
+                alert((title || 'Thành công') + ': ' + (message || ''));
+            }
+        };
+
+        window.showError = function(title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Lỗi',
+                    text: message || '',
+                    icon: 'error',
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#d33'
+                });
+            } else {
+                alert((title || 'Lỗi') + ': ' + (message || ''));
+            }
+        };
+
+        window.showWarning = function(title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Cảnh báo',
+                    text: message || '',
+                    icon: 'warning',
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#f0ad4e'
+                });
+            } else {
+                alert((title || 'Cảnh báo') + ': ' + (message || ''));
+            }
+        };
+
+        window.showInfo = function(title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Thông tin',
+                    text: message || '',
+                    icon: 'info',
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#3085d6'
+                });
+            } else {
+                alert((title || 'Thông tin') + ': ' + (message || ''));
+            }
+        };
+
+    </script>
+
+</body>
+
+</html>

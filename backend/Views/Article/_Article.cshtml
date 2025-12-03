@@ -1,0 +1,233 @@
+﻿@using MiniAppGIBA.Entities.Articles
+@using MiniAppGIBA.Models.Response.Articles
+@model ArticleResponse
+@using MiniAppGIBA.Base.Dependencies.Extensions
+@using MiniAppGIBA.Constants
+@{
+    var canEdit = User.IsEditable();
+    var isGIBA = User.IsInRole(CTRole.GIBA);
+    
+    // Chỉ có GIBA role
+    string? currentUserRole = null;
+    if (User.IsInRole(CTRole.GIBA))
+    {
+        currentUserRole = CTRole.GIBA;
+    }
+}
+<style>
+    #preview-content p {
+        margin-bottom: 0 !important;
+    }
+</style>
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bs-dismiss="modal">
+            <span aria-hidden="true">×</span>
+        </button>
+    </div>
+    <div class="modal-body" style="@(canEdit ? "" : "pointer-events: none;")">
+        <div class="modal-wrapper d-flex">
+            <div class="row col-8">
+
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label>Tiêu đề <span style="color:red">*</span></label>
+                        <div class="input-group">
+                            <input id="title"
+                                   value="@Model.Title"
+                                   class="form-control"
+                                   data-type="title"
+                                   maxlength="150" />
+                            <span class="input-group-text bg-white" id="title-counter" style="font-size: 0.9em; color: #666;">0/150</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Tác giả</label>
+                        <div class="input-group">
+                            <input id="author" value="@Model.Author" class="form-control" data-type="title" maxlength="50"/>
+                            <span class="input-group-text bg-white" id="author-counter" style="font-size: 0.9em; color: #666;">0/50</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Trạng thái <span style="color:red">*</span> </label>
+                        <select id="status" class="form-control" data-type="status" onchange="ChangeInput(this,'#preview-status');">
+                            <option value="0" selected="@(Model.Status == 0)">Riêng tư</option>
+                            <option value="1" selected="@(Model.Status == 1)">Công khai</option>
+                        </select>
+                    </div>
+                </div>
+
+                @* Hidden field để lưu role của user hiện tại *@
+                <input type="hidden" id="currentUserRole" value="@currentUserRole" />
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Danh mục <span style="color:red">*</span> </label>
+                        <select id="categoryId" class="form-control" data-type="status">
+                            @if (ViewBag.ArticleCategories != null)
+                            {
+                                foreach (ArticleCategory item in ViewBag.ArticleCategories)
+                                {
+                                    <option value="@item.Id" selected="@(Model.CategoryId == item.Id)">@item.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Thứ tự hiển thị</label>
+                        <input id="orderPriority"
+                               type="text"
+                               min="0"
+                               class="form-control"
+                               value="@(Model.OrderPriority.ToString("0.##"))"
+                               placeholder="Thứ tự hiển thị."
+                               oninput="InputValidator.number(this)"
+                               data-error-message="Vui lòng nhập giá bán." required>
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="mb-0">Nội dung <span style="color:red">*</span></label>
+                            <div id="editor-counter">0/5000</div>
+                        </div>
+                        <div id="editor" class="rounded-bottom" style="height: auto; min-height: 250px;" data-type="content">@Html.Raw(Model.Content)</div>
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label>Ảnh tin tức <span style="color:red">*</span></label>
+
+                        <input id="images" type="file" class="form-control" multiple accept="image/*" onchange="handleImagePreview(this, { width: 16, height: 9 }, '#carosuel-preview', '#preview-upload-images')" />
+                        <small>Tải lên ít nhất một ảnh. Tối đa 5 ảnh. Kích thước khuyến nghị: 16:9 (VD: 1920x1080, 1280x720)</small>
+                    </div>
+
+                    <div id="preview-upload-images" class="row">
+                        @if (Model.Images != null && Model.Images.Count() > 0)
+                        {
+                            foreach (var item in Model.Images)
+                            {
+                                <div class="image-preview mx-2 card position-relative" style="max-width: 250px; height:170px">
+                                    <img src="@item" class="card-img-top h-100" alt="Alternate Text" style="object-fit:contain" />
+                                    <span class="btn-preview-remove" data-url="@item">x</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label>Ảnh Banner</label>
+                        <input id="bannerImage" type="file" accept="image/*" class="form-control"
+                               onchange="handleImagePreview(this, { width: 16, height: 9 }, null, '#preview-banner', {isSingleImage: true, defaultImagePath: '/images/no-image-2.jpg'})" />
+                        <small class="form-text text-muted">Kích thước khuyến nghị: 16:9 (VD: 1920x1080, 1280x720)</small>
+                    </div>
+                    <div id="preview-banner" class="row">
+                        <div class="mx-2 card position-relative" style="max-width: 250px; height:170px">
+                            <img class="card-img-top h-100" style="object-fit:contain;" src="@(!string.IsNullOrEmpty(Model.BannerImage) ? Model.BannerImage : "/images/no-image-2.jpg")" id="banner-preview-img" />
+                            @if (!string.IsNullOrEmpty(Model.BannerImage) && !Model.BannerImage.Contains("/images/no-image-2.jpg"))
+                            {
+                                <span class="btn-banner-remove" data-url="@Model.BannerImage">x</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-4">
+                <div class="modal-wrapper">
+                    <main id="preview" class="px-3" style="overflow-y: scroll; max-height: 780px;">
+                        <div id="preivew-header" class="mt-4 d-flex align-items-center">
+                            <div>
+                                <p class="m-0" style="font-size:12px;">
+                                    Ngày đăng: @Model.CreatedDate.ToString("HH:mm - dd/MM/yyyy") <br />
+                                    <span id="preview-status" class="m-0" style="font-size: 10px">
+                                        Trạng thái: @(Model.Status switch
+                                        {
+                                            0 => "Riêng tư",
+                                            1 => "Công khai",
+                                            _ => ""
+                                        })
+                                    </span> <br />
+                                    Tác giả: <span id="preview-author" class="m-0" style="font-size: 10px">@Model.Author</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div id="preview-title" class="row py-2">
+                            <h4 class="text-center">@(!string.IsNullOrEmpty(Model.Title) ? Model.Title : "Tiêu đề tin tức")</h4>
+                        </div>
+
+                        <div>
+                            <div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-inner" id="carosuel-preview">
+                                    @if (Model.Images != null && Model.Images.Count > 0)
+                                    {
+                                        int index = 0; // Khởi tạo biến chỉ số
+                                        foreach (var item in Model.Images)
+                                        {
+                                            <div class="carousel-item @(index == 0 ? "active" : "")" style="height:180px; object-fit:cover;">
+                                                <img class="d-block w-100" src="@item">
+                                            </div>
+                                            index++;
+                                        }
+                                    }
+                                    else if (string.IsNullOrEmpty(Model.Id))
+                                    {
+                                        <div class="carousel-item active">
+                                            <img class="d-block w-100" src="/images/no-image-2.jpg" alt="First slide">
+                                        </div>
+                                        <div class="carousel-item">
+                                            <img class="d-block w-100" src="/images/no-image-2.jpg" alt="Second slide">
+                                        </div>
+                                        <div class="carousel-item">
+                                            <img class="d-block w-100" src="/images/no-image-2.jpg" alt="Third slide">
+                                        </div>
+                                    }
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row py-3">
+                            <div class="col-12" id="preview-content" style="font-size: 13px;">
+                                @(!string.IsNullOrEmpty(Model.Content) ? Html.Raw(Model.Content) : "Nội dung tin tức")
+                            </div>
+                        </div>
+                        @* <div id="preview-footer" class="row px-2 mb-3">
+                        <button onclick="DeleteArticle('@Model.Id')" class="btn btn-danger">Xóa bài</button>
+                        </div> *@
+                    </main>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        @if (canEdit)
+        {
+            <button type="submit" class="btn btn-primary" onclick="HandleSaveOrUpdate('@Model.Id')">@ViewBag.Button</button>
+        }
+    </div>
+</div>
+
+@* JS đã được gom về Views/Article/Index.cshtml *@

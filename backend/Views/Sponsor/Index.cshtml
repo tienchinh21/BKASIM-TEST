@@ -1,0 +1,716 @@
+@{
+
+    ViewData["Title"] = "Quản Lý Nhà Tài Trợ";
+
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@using MiniAppGIBA.Constants;
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+
+    var canEdit = User?.IsInRole(CTRole.GIBA) == true;
+}
+
+<style>
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        padding-right: 2.5rem;
+    }
+
+    /* Delete Modal Styles */
+    #deleteConfirmModal .modal-dialog {
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @@keyframes modalSlideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    #deleteConfirmModal .alert-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #fef9e7 100%);
+        border-left: 4px solid #ffc107;
+    }
+
+    #deleteConfirmModal .btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        transition: all 0.2s ease;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản Lý Nhà Tài Trợ</h4>
+                <p class="mb-0 text-muted">Quản lý danh sách nhà tài trợ trong hệ thống</p>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between">
+                @if (canEdit)
+
+                {
+                    <a class="btn btn-primary shadow-sm" href="#" onclick="openCreateModal(); return false;">
+                        <i class="ri-add-line me-2"></i>
+                        Tạo Nhà Tài Trợ
+                    </a>
+
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Thanh tìm kiếm -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input id="search" type="text" class="form-control"
+                                    placeholder="Tìm theo tên nhà tài trợ..." />
+                                <button class="btn btn-primary" onclick="sponsorsTable.ajax.reload()">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bộ lọc trạng thái -->
+                    <div class="col-md-3">
+                        <label class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-select" onchange="sponsorsTable.ajax.reload()">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true">Đang hoạt động</option>
+                            <option value="false">Ngưng hoạt động</option>
+                        </select>
+                    </div>
+
+                    <!-- Nút đặt lại -->
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light border flex-fill" onclick="resetFilters()">
+                                <i class="ri-refresh-line me-1"></i>
+                                Đặt lại
+                            </button>
+                            <button class="btn btn-primary flex-fill" onclick="sponsorsTable.ajax.reload()">
+                                <i class="ri-filter-line me-1"></i>
+                                Lọc
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="table-responsive rounded mb-3">
+            <table id="list-sponsors" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <!-- Header -->
+            <div class="modal-header border-0 bg-danger text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="ri-delete-bin-line me-2"></i>
+                    Xác nhận xóa nhà tài trợ
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body p-4 text-center">
+                <div class="mb-4">
+                    <div class="text-danger mb-3">
+                        <i class="ri-alert-line display-4"></i>
+                    </div>
+                    <h6 class="mb-3">Bạn có chắc chắn muốn xóa nhà tài trợ này?</h6>
+                    <div class="alert alert-warning border-0">
+                        <div class="d-flex align-items-start">
+                            <i class="ri-information-line text-warning me-2 mt-1"></i>
+                            <div class="text-start">
+                                <div class="fw-bold mb-1">Nhà tài trợ sẽ bị xóa:</div>
+                                <div id="deleteItemName" class="text-primary fw-medium mb-2"></div>
+                                <small class="text-muted">
+                                    <i class="ri-error-warning-line me-1"></i>
+                                    <strong>Lưu ý:</strong> Hành động này không thể hoàn tác và sẽ xóa vĩnh viễn tất cả
+                                    dữ liệu liên quan.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                    <i class="ri-close-line me-1"></i>
+                    Hủy bỏ
+                </button>
+                <button type="button" class="btn btn-danger px-4" id="confirmDeleteBtn">
+                    <i class="ri-delete-bin-line me-1"></i>
+                    Xóa nhà tài trợ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sponsor Modal -->
+<div class="modal fade" id="sponsorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="ri-building-line me-2"></i>
+                    Quản Lý Nhà Tài Trợ
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    // Override showSuccess and showError to use SweetAlert 2.x (Swal.fire) instead of SweetAlert 1.x (swal)
+    // This prevents the "Class constructor Un cannot be invoked without 'new'" error
+    (function () {
+        'use strict';
+
+        window.showSuccess = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Thành công',
+                    text: message || '',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            } else {
+                alert((title || 'Thành công') + ': ' + (message || ''));
+            }
+        };
+
+        window.showError = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Lỗi',
+                    text: message || '',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#d33'
+                });
+            } else {
+                alert((title || 'Lỗi') + ': ' + (message || ''));
+            }
+        };
+
+        window.showWarning = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Cảnh báo',
+                    text: message || '',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#f0ad4e'
+                });
+            } else {
+                alert((title || 'Cảnh báo') + ': ' + (message || ''));
+            }
+        };
+    })();
+
+    var sponsorsTable;
+    let searchTimeout; // Declare timeout variable outside function
+
+    // Re-override after document ready to ensure it's not overridden by other scripts
+    $(document).ready(function () {
+        // Override again to ensure it's not overridden by _Layout.cshtml or other scripts
+        window.showSuccess = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Thành công',
+                    text: message || '',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            } else {
+                alert((title || 'Thành công') + ': ' + (message || ''));
+            }
+        };
+
+        window.showError = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Lỗi',
+                    text: message || '',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#d33'
+                });
+            } else {
+                alert((title || 'Lỗi') + ': ' + (message || ''));
+            }
+        };
+
+        window.showWarning = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Cảnh báo',
+                    text: message || '',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#f0ad4e'
+                });
+            } else {
+                alert((title || 'Cảnh báo') + ': ' + (message || ''));
+            }
+        };
+
+        GetListSponsors();
+        $('#search').on('input', handleSearchInput);
+    });
+
+    function GetListSponsors() {
+        sponsorsTable = new DataTable("#list-sponsors", {
+            searching: false,
+            sort: false,
+            responsive: true,
+            pageLength: 10,
+            serverSide: true,
+            ajax: function (data, callback, settings) {
+                const page = (data.start / data.length) + 1;
+                let keyword = $("#search").val();
+                const isActive = $("#filter-status").val();
+
+                $.ajax({
+                    url: '/Sponsor/GetPage',
+                    type: 'GET',
+                    data: {
+                        page: page,
+                        pageSize: data.length,
+                        keyword: keyword,
+                        isActive: isActive
+                    },
+                    success: function (response) {
+                        console.log('API Response:', response);
+                        const formattedData = response.data.map((item, index) => ({
+                            index: data.start + index + 1,
+                            sponsorInfo: `<div class="d-flex align-items-center">
+                                                        ${item.image ?
+                                    `<img src="${item.image}" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;" />` :
+                                    `<div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;"><i class="ri-building-line text-white"></i></div>`
+                                }
+                                                        <div>
+                                                            <h6 class="mb-1">${item.sponsorName}</h6>
+                                                            ${item.websiteURL ? `<small class="text-muted">${item.websiteURL}</small>` : ''}
+                                                        </div>
+                                                    </div>`,
+                            introduction: item.introduction ?
+                                `<div class="text-truncate" style="max-width: 200px;" title="${item.introduction}">${item.introduction}</div>` :
+                                '<span class="text-muted">Không có</span>',
+                            isActive: item.isActive
+                                ? '<span class="badge bg-success">Hoạt động</span>'
+                                : '<span class="badge bg-secondary">Không hoạt động</span>',
+                            createdDate: new Date(item.createdDate).toLocaleDateString('vi-VN'),
+                            actions: `<div class="d-flex align-items-center justify-content-center gap-1">
+                                                    <button onclick="openEditModal('${item.id}')"
+                                                            class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                                        <i class="ri-edit-line"></i>
+                                                    </button>
+                                                    <button onclick="confirmDelete('${item.id}', '${item.sponsorName}')"
+                                                            class="btn btn-sm btn-outline-danger" title="Xóa">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </button>
+                                                </div>`
+                        }));
+
+                        console.log('Formatted Data:', formattedData);
+                        callback({
+                            draw: data.draw,
+                            recordsTotal: response.recordsTotal,
+                            recordsFiltered: response.recordsFiltered,
+                            data: formattedData
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading data:', error);
+                        console.error('Response:', xhr.responseText);
+                        callback({
+                            draw: data.draw,
+                            recordsTotal: 0,
+                            recordsFiltered: 0,
+                            data: []
+                        });
+                    }
+                });
+            },
+            columns: [
+                { title: "STT", data: "index", className: 'text-center', width: "60px" },
+                { title: "Thông Tin", data: "sponsorInfo", className: 'col-4' },
+                { title: "Giới Thiệu", data: "introduction", className: 'col-3' },
+                { title: "Trạng Thái", data: "isActive", className: 'text-center', width: "120px" },
+                { title: "Ngày Tạo", data: "createdDate", className: 'text-center', width: "120px" },
+                { title: "Thao Tác", data: "actions", className: 'text-center', width: "120px" }
+            ],
+            language: {
+                "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                "zeroRecords": "Không tìm thấy kết quả",
+                "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                "infoEmpty": "Không có dữ liệu",
+                "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+            }
+        });
+
+        $(sponsorsTable.table().header()).addClass('ligth ligth-data');
+    }
+
+    function handleSearchInput() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            sponsorsTable.ajax.reload();
+        }, 500);
+    }
+
+    function resetFilters() {
+        $('#search').val('');
+        $('#filter-status').val('');
+        sponsorsTable.ajax.reload();
+    }
+
+    let deleteItemData = null; // Store delete item data temporarily
+
+    function confirmDelete(id, name) {
+        // Store delete data for later use
+        deleteItemData = { id: id, name: name };
+
+        // Set the item name in modal
+        $('#deleteItemName').text(`"${name}"`);
+
+        // Show the modal
+        $('#deleteConfirmModal').modal('show');
+    }
+
+    // Handle delete confirmation
+    $(document).on('click', '#confirmDeleteBtn', function () {
+        if (!deleteItemData) return;
+
+        const { id, name } = deleteItemData;
+
+        // Disable button and show loading
+        const $btn = $(this);
+        const originalText = $btn.html();
+        $btn.prop('disabled', true).html('<i class="spinner-border spinner-border-sm me-1"></i>Đang xóa...');
+
+        $.ajax({
+            url: '/Sponsor/Delete',
+            type: 'POST',
+            data: {
+                id: id,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            },
+            success: function (response) {
+                $('#deleteConfirmModal').modal('hide');
+
+                if (response.success) {
+                    // Reload table first, then show success message
+                    if (sponsorsTable) {
+                        sponsorsTable.ajax.reload(function (json) {
+                            showSuccess('Thành công', response.message || 'Xóa nhà tài trợ thành công');
+                        }, false);
+                    } else {
+                        showSuccess('Thành công', response.message || 'Xóa nhà tài trợ thành công');
+                        // Fallback: reload page if table not available
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1500);
+                    }
+                } else {
+                    showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function (xhr) {
+                $('#deleteConfirmModal').modal('hide');
+                const errorMessage = xhr.responseJSON?.message || 'Có lỗi xảy ra khi xóa nhà tài trợ';
+                showError('Lỗi', errorMessage);
+            },
+            complete: function () {
+                // Reset button state
+                $btn.prop('disabled', false).html(originalText);
+                deleteItemData = null;
+            }
+        });
+    });
+
+    // Clean up delete modal data when closed
+    $(document).on('hidden.bs.modal', '#deleteConfirmModal', function () {
+        deleteItemData = null;
+        $('#deleteItemName').text('');
+        // Reset button state in case it was left in loading state
+        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Xóa nhà tài trợ');
+    });
+
+    // Helper function to override alert functions
+    function overrideAlertFunctions() {
+        window.showSuccess = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Thành công',
+                    text: message || '',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            } else {
+                alert((title || 'Thành công') + ': ' + (message || ''));
+            }
+        };
+
+        window.showError = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Lỗi',
+                    text: message || '',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#d33'
+                });
+            } else {
+                alert((title || 'Lỗi') + ': ' + (message || ''));
+            }
+        };
+
+        window.showWarning = function (title, message) {
+            if (typeof Swal !== 'undefined' && typeof Swal.fire === 'function') {
+                Swal.fire({
+                    title: title || 'Cảnh báo',
+                    text: message || '',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#f0ad4e'
+                });
+            } else {
+                alert((title || 'Cảnh báo') + ': ' + (message || ''));
+            }
+        };
+    }
+
+    function openCreateModal() {
+        try {
+            // Clear any existing Quill editor reference
+            if (window.quillEditor) {
+                delete window.quillEditor;
+            }
+            window.quillInitialized = false; // Reset initialization flag
+
+            $.get('/Sponsor/Create', function (data) {
+                $('#sponsorModal .modal-body').html(data);
+
+                // Re-override showSuccess/showError after modal content is loaded
+                overrideAlertFunctions();
+
+                $('#sponsorModal').modal('show');
+
+                // Initialize Quill editor only once after modal is shown
+                $('#sponsorModal').off('shown.bs.modal.sponsor').on('shown.bs.modal.sponsor', function () {
+                    setTimeout(function () {
+                        console.log('Modal shown, initializing Quill for create...');
+                        if (document.getElementById('introduction') && typeof window.initQuillEditor === 'function') {
+                            window.initQuillEditor();
+                        }
+                    }, 200);
+                });
+            }).fail(function (xhr, status, error) {
+                console.error('Error loading create form:', error);
+                console.error('Response:', xhr.responseText);
+                showError('Lỗi', 'Không thể tải form tạo nhà tài trợ');
+            });
+        } catch (e) {
+            console.error('Error in openCreateModal:', e);
+            showError('Lỗi', 'Có lỗi xảy ra');
+        }
+    }
+
+    function openEditModal(sponsorId) {
+        try {
+            console.log('openEditModal called with sponsorId:', sponsorId);
+
+            // Clear any existing Quill editor reference
+            if (window.quillEditor) {
+                delete window.quillEditor;
+            }
+            window.quillInitialized = false; // Reset initialization flag
+
+            $.get(`/Sponsor/Edit/${sponsorId}`, function (data) {
+                console.log('Edit form loaded successfully');
+
+                $('#sponsorModal .modal-body').html(data);
+
+                // Re-override showSuccess/showError after modal content is loaded
+                overrideAlertFunctions();
+
+                $('#sponsorModal').modal('show');
+
+                // Initialize Quill editor only once after modal is shown
+                $('#sponsorModal').off('shown.bs.modal.sponsor').on('shown.bs.modal.sponsor', function () {
+                    setTimeout(function () {
+                        console.log('Modal shown, initializing Quill for edit...');
+                        if (document.getElementById('introduction') && typeof window.initQuillEditor === 'function') {
+                            window.initQuillEditor();
+                        }
+                    }, 200);
+                });
+
+                console.log('Modal shown with edit form');
+            }).fail(function (xhr, status, error) {
+                console.error('Error loading edit form:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+                showError('Lỗi', 'Không thể tải form chỉnh sửa nhà tài trợ');
+            });
+        } catch (e) {
+            console.error('Error in openEditModal:', e);
+            showError('Lỗi', 'Có lỗi xảy ra');
+        }
+    }
+
+    // Global function for form submission
+    function submitSponsorForm(isEdit, sponsorId) {
+        // Show loading state
+        const $submitBtn = $('#sponsorModal .btn-primary');
+        const originalText = $submitBtn.html();
+        $submitBtn.prop('disabled', true).html('<i class="spinner-border spinner-border-sm me-1"></i>Đang lưu...');
+
+        const formData = new FormData();
+
+        // Get content from Quill editor
+        let introduction = '';
+        if (window.quillEditor) {
+            introduction = window.quillEditor.root.innerHTML;
+        }
+
+        // Basic fields - Ensure proper data types
+        formData.append('SponsorName', $('#sponsorName').val() || '');
+        formData.append('Introduction', introduction);
+        formData.append('WebsiteURL', $('#websiteURL').val() || '');
+        formData.append('IsActive', $('#isActive').val() === 'true');
+
+        // CRITICAL FIX: Always append Id for edit mode
+        if (isEdit && sponsorId) {
+            formData.append('Id', sponsorId);
+            console.log('🔄 EDIT MODE - SponsorId:', sponsorId);
+            console.log('🔄 FormData Id value:', formData.get('Id'));
+        } else {
+            console.log('🆕 CREATE MODE - No ID needed');
+        }
+
+        // Handle image removal flag
+        const shouldRemoveImage = $('#shouldRemoveImage').val() === 'true';
+        if (shouldRemoveImage) {
+            formData.append('ShouldRemoveImage', 'true');
+            console.log('Should remove existing image'); // Debug log
+        }
+
+        // Files
+        const imageFile = $('#image')[0].files[0];
+        if (imageFile) {
+            formData.append('Image', imageFile);
+            console.log('New image file:', imageFile.name); // Debug log
+        }
+
+        // Add CSRF token
+        formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+        const url = isEdit ? '/Sponsor/Edit' : '/Sponsor/Create';
+        console.log('Submitting to:', url, 'IsEdit:', isEdit); // Debug log
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (response) {
+                console.log('Response:', response); // Debug log
+
+                if (response.success) {
+                    // Hide modal first
+                    $('#sponsorModal').modal('hide');
+
+                    // Reload table, then show success message
+                    if (sponsorsTable) {
+                        sponsorsTable.ajax.reload(function (json) {
+                            showSuccess('Thành công', response.message);
+                        }, false);
+                    } else {
+                        showSuccess('Thành công', response.message);
+                        // Fallback: reload page if table not available
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1500);
+                    }
+                } else {
+                    showError('Lỗi', response.message || 'Có lỗi xảy ra khi lưu');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Ajax error:', xhr.responseText); // Debug log
+                const errorMessage = xhr.responseJSON?.message || 'Có lỗi xảy ra khi lưu nhà tài trợ';
+                showError('Lỗi', errorMessage);
+            },
+            complete: function () {
+                // Reset button state
+                $submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    }
+</script>
+}

@@ -1,0 +1,228 @@
+﻿<script>
+    $(document).ready(function () {
+        // Custom AJAX function với delay sau khi xử lý data
+        function customTableAjax(data, callback, settings) {
+            const startTime = moment().format();
+
+            // Lấy giá trị từ các bộ lọc
+            const searchValue = $('#searchInput').val() || '';
+            const typeValue = $('#typeFilter').val() || '';
+            const statusValue = $('#statusFilter').val() || '';
+
+            $.ajax({
+                url: '@Url.Action("GetEventTriggers", "EventTrigger")',
+                type: 'GET',
+                data: {
+                    page: Math.floor(data.start / data.length) + 1,
+                    pageSize: data.length,
+                    keyword: searchValue,
+                    type: typeValue === '' ? null : parseInt(typeValue),
+                    isActive: statusValue === '' ? null : statusValue === 'true'
+                },
+                success: function (json) {
+                    // Xử lý data trước
+                    const processedData = {
+                        draw: data.draw,
+                        recordsTotal: json.recordsTotal,
+                        recordsFiltered: json.recordsFiltered,
+                        data: json.data
+                    };
+
+                    // Delay 300ms rồi mới render
+                    setTimeout(function () {
+                        console.log(123)
+                        callback(processedData);
+                    }, 300);
+                },
+                error: function (xhr, error, thrown) {
+                    // hideLoading();
+                    showError('Lỗi tải dữ liệu', 'Không thể tải danh sách cài đặt template. Vui lòng thử lại!');
+                }
+            });
+        }
+
+        // Initialize the DataTable
+        table = $('#eventTriggerTable').DataTable({
+            processing: false,
+            serverSide: true,
+            searching: false,
+            ordering: false,
+            ajax: customTableAjax,
+            columns: [
+                {
+                    data: null,
+                    title: 'STT',
+                    render: function (data, type, row, meta) {
+                        return meta.settings._iDisplayStart + meta.row + 1;
+                    },
+                    width: '60px',
+                    className: 'text-center'
+                },
+                {
+                    data: 'id',
+                    title: 'ID',
+                    visible: false
+                },
+                {
+                    data: 'eventName',
+                    title: 'Tên sự kiện',
+                    render: function (data, type, row) {
+                        return data || '<span class="text-muted">Chưa có tên</span>';
+                    }
+                },
+                {
+                    data: 'type',
+                    title: 'Loại template',
+                    render: function (data, type, row) {
+                        return `<span class="badge bg-info">${data}</span>`;
+                    }
+                },
+                {
+                    data: 'referenceId',
+                    title: 'Mã tham chiếu',
+                    render: function (data, type, row) {
+                        return data || '<span class="text-muted">N/A</span>';
+                    }
+                },
+                {
+                    data: 'recipients',
+                    title: 'Danh sách nhận',
+                    render: function (data, type, row) {
+                        if (!data) return '<span class="text-muted">N/A</span>';
+                        var recipients = data.split(',');
+                        if (recipients.length > 2) {
+                            return recipients.slice(0, 2).join(', ') + '... (+' + (recipients.length - 2) + ')';
+                        }
+                        return data;
+                    }
+                },
+                {
+                    data: 'isActive',
+                    title: 'Trạng thái',
+                    render: function (data, type, row) {
+                        return data ? '<span class="badge bg-success">Hoạt động</span>' : '<span class="badge bg-danger">Không hoạt động</span>';
+                    }
+                },
+                {
+                    data: 'createdDate',
+                    title: 'Ngày tạo',
+                    render: function (data, type, row) {
+                        if (data) {
+                            return moment(data).format('DD/MM/YYYY HH:mm');
+                        }
+                        return '<span class="text-muted">N/A</span>';
+                    }
+                },
+                {
+                    data: 'actions',
+                    title: 'Hành động',
+                    render: function (data, type, row) {
+                        return `<button class='btn btn-primary mx-1' onclick='loadForm("${row.id}")' title='Sửa'>
+                                            <i class='ri-edit-line'></i>Sửa
+                                        </button>
+                                        <button class='btn btn-danger mx-1' onclick='deleteEventTrigger("${row.id}")' title='Xóa'>
+                                            <i class='ri-delete-line'></i>Xóa
+                                        </button>`;
+                    }
+                }
+            ],
+            language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+                },
+            pageLength: 10,
+            responsive: true
+        });
+
+        // Chỉ tìm kiếm khi nhấn Enter
+        $('#searchInput').on('keyup', function (e) {
+            if (e.keyCode === 13) { // Enter key
+                applyFilters();
+            }
+        });
+
+        // Bỏ auto search, chỉ tìm kiếm khi nhấn nút Lọc
+        $('#typeFilter').select2();
+        $('#statusFilter').select2();
+    });
+
+    function loadForm(id) {
+        $.ajax({
+            url: '@Url.Action("LoadForm", "EventTrigger")',
+            type: 'GET',
+            data: { id: id },
+            success: function (data) {
+                $('#eventTriggerModal').html(data);
+                $('#eventTriggerModal').modal('toggle');
+            },
+            error: function (xhr, status, error) {
+                showError('Lỗi tải form', 'Có lỗi xảy ra khi tải form! Vui lòng thử lại.');
+            }
+        });
+    }
+
+    function deleteEventTrigger(id) {
+      showDeleteConfirm(
+        'Xác nhận xóa',
+        'Bạn có chắc chắn muốn xóa cài đặt template này?',
+        function () {
+          $.ajax({
+            url: '@Url.Action("Delete", "EventTrigger")',
+            type: 'POST',
+            data: { id: id },
+            success: function (response) {
+              if (response.success) {
+                $('#eventTriggerTable').DataTable().ajax.reload();
+                showSuccess('Thành công', response.message || 'Xóa thành công!');
+              } else {
+                showError('Lỗi xóa', response.message || 'Không thể xóa cài đặt này!');
+              }
+            },
+            error: function (xhr) {
+              let errorMessage = 'Có lỗi xảy ra khi xóa! Vui lòng thử lại.';
+              if (xhr.status === 400 && xhr.responseJSON) {
+                errorMessage = xhr.responseJSON.message || errorMessage;
+              }
+              showError('Lỗi kết nối', errorMessage);
+            }
+          });
+        }
+      );
+    }
+
+    function GetTableParams()
+    {
+        const templateCode = $("#templateCode").val();
+        $.ajax({
+            url: '@Url.Action("GetTableParams", "EventTrigger")',
+            type: 'GET',
+            data: { templateCode: templateCode },
+            success: function (data) {
+                // Xử lý dữ liệu trả về
+                // Cập nhật giao diện hoặc làm gì đó với dữ liệu
+            },
+            error: function (xhr, status, error) {
+                console.error("Lỗi khi lấy tham số Omni:", error);
+            }
+        });
+    }
+
+    function applyFilters() {
+        // showLoading();
+        $('#eventTriggerTable').DataTable().ajax.reload(function () {
+            // hideLoading();
+            showSuccess('Thành công', 'Đã áp dụng bộ lọc');
+        });
+    }
+
+    function clearFilters() {
+        $('#searchInput').val('');
+        $('#typeFilter').val('');
+        $('#statusFilter').val('');
+        // showInfo('Thông tin', 'Đã đặt lại tất cả bộ lọc');
+        applyFilters(); // Tự động load lại sau khi clear
+    }
+</script>

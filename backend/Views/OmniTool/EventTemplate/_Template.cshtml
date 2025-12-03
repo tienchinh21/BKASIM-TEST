@@ -1,0 +1,317 @@
+﻿@using MiniAppGIBA.Entities.ETM
+@model MiniAppGIBA.Entities.ETM.EventTemplate;
+@{
+    var routeRule = new Dictionary<int, string>()
+{
+{1, "ZNS"},
+{2, "Auto Call"},
+{3, "SMS"}
+};
+
+    var eventList = new Dictionary<string, string>()
+{
+{"Order.Create", "Tạo đơn hàng"},
+{"Order.Update", "Cập nhật đơn hàng"},
+{"Membership.Register", "Đăng kí thành viên"},
+};
+}
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bs-dismiss="modal">
+            <span aria-hidden="true">×</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <form id="eventTemplateForm" class="needs-validation" novalidate>
+            <div class="row">
+                <div class="col-4">
+                    <div class="form-group mb-3">
+                        <label>Sự kiện</label>
+                        <select id="eventName" class="form-control">
+                            @foreach (var ev in eventList)
+                            {
+                                <option selected="@(Model.EventName == @ev.Key)" value="@ev.Key">@ev.Value</option>
+                            }
+                        </select>
+                        <div class="help-block with-errors"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Trạng thái hoạt động</label>
+                        <select id="isEnable" class="form-control">
+                            <option value="true" selected="@Model.IsEnable">Đang hoạt động</option>
+                            <option value="false" selected="@(!Model.IsEnable)">Ngưng hoạt động</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label>Loại tin</label>
+                        <select id="typeTemplate" class="form-control">
+                            <option value="uid" selected="@(Model.Type == "uid")">Zalo UID</option>
+                            <option value="omni" selected="@(Model.Type == "omni")">Incom Omni</option>
+                        </select>
+                        <div class="help-block with-errors"></div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label">Điều kiện thực thi</label>
+                        <input id="conditions" type="text" class="form-control" value="@Model.Conditions" placeholder="Nhập điều kiện..." />
+                        <small class="form-text text-muted">Ví dụ: Status = 1 or Status = 2</small>
+                    </div>
+
+                    <!-- Incom -->
+                    <div id="incomConfigContainer">
+                        <div class="form-group mb-3">
+                            <label>Template Code</label>
+                            <select id="templateCode" class="form-control" onchange="GetTableParamsOmni()">
+                                @if (ViewBag.Templates != null)
+                                {
+                                    foreach (var template in ViewBag.Templates)
+                                    {
+                                        <option value="@template.TemplateCode" selected="@(template.TemplateCode == Model.TemplateCode)">@template.TemplateCode</option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option>Không có dữ liệu</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                            <select id="phoneNumber" class="form-select" required>
+                                <option value="" disabled selected>-- Chọn nguồn số điện thoại --</option>
+                                <option selected="@(Model.PhoneNumber == "MEMBERSHIP.PHONENUMBER")" value="MEMBERSHIP.PHONENUMBER">Người kích hoạt sự kiện</option>
+                                <option selected="@(Model.PhoneNumber != "MEMBERSHIP.PHONENUMBER" && !string.IsNullOrEmpty(Model.PhoneNumber))" value="CUSTOM.PHONENUMBER">Nhập thủ công</option>
+                            </select>
+                            <div class="invalid-feedback">Vui lòng chọn nguồn số điện thoại</div>
+                        </div>
+
+                        <div class="form-group mb-3" style="display: none;" id="customPhoneNumberContainer">
+                            <label class="form-label">Nhập số điện thoại <span class="text-danger">*</span></label>
+                            <input type="text" id="customPhoneNumber" name="CustomPhoneNumber" class="form-control" value="@(Model.PhoneNumber)" placeholder="Nhập số điện thoại"
+                            pattern="[0-9]{10,11}" />
+                            <div class="invalid-feedback">Vui lòng nhập số điện thoại hợp lệ (10-11 số)</div>
+                            <small class="form-text text-muted">Định dạng: 0xxxxxxxxx hoặc +84xxxxxxxxx</small>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Router rule <span class="text-danger">*</span></label>
+                            <select id="routeRule" class="form-select" multiple required>
+                                @foreach (var key in routeRule.Keys)
+                                {
+                                    <option selected="@Model.RoutingRule.Contains(key.ToString())" value="@key">@routeRule[key]</option>
+                                }
+                            </select>
+                            <div class="invalid-feedback">Vui lòng chọn ít nhất một router rule</div>
+                        </div>
+                    </div>
+
+                    <!-- Zalo -->
+                    <div id="zaloConfigContainer">
+                        <div class="form-group mb-3">
+                            <label>Template Id</label>
+                            <select id="templateId" class="form-control" onchange="GetTableParamsUid()">
+                                @{
+                                    ZaloTemplateUid selectedTemplate = ViewBag.SelectedTemplateUid;
+                                    @if (selectedTemplate != null)
+                                    {
+                                        <option selected value="@selectedTemplate.Id">@selectedTemplate.Name</option>
+                                    }
+                                 }
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Người nhận <span class="text-danger">*</span></label>
+                            <select id="recipients" class="form-select" multiple required>
+                                <option value="trigger" selected>Người kích hoạt sự kiện</option>
+                            </select>
+                            <div class="invalid-feedback">Vui lòng chọn ít nhất một người nhận</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-8">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Danh sách tham số</label>
+                            <div class="help-block with-errors">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <table id="table-params" class="data-table table mb-0 tbl-server-info text-center"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        @if (string.IsNullOrEmpty(Model.Id))
+        {
+            <button type="button" class="btn btn-secondary" onclick="ClearForm()">Làm mới</button>
+        }
+        <button type="submit" class="btn btn-primary" onclick="HandleSaveOrUpdate('@Model.Id')">@ViewBag.Button</button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Initialize select2
+        $("#routeRule").select2({
+            placeholder: "Chọn phương thức gửi",
+            allowClear: false,
+            dropdownParent: $("#modal-template")
+        });
+
+        $("#templateCode").select2({
+            placeholder: "Chọn template code",
+            dropdownParent: $("#modal-template")
+        });
+
+        $("#typeTemplate").select2({
+            placeholder: "Chọn sự loại tin",
+            dropdownParent: $("#modal-template")
+        });
+        $("#typeTemplate").on("change", handleTypeChange);
+
+        $("#eventName").select2({
+            placeholder: "Chọn sự kiện",
+            dropdownParent: $("#modal-template")
+        });
+
+        $("#phoneNumber").select2({
+            dropdownParent: $("#modal-template")
+        }).on('change', handlePhoneNumberChange);
+
+        // Initialize form state
+        handleTypeChange();
+        handlePhoneNumberChange();
+        updateParamsCount();
+
+        // Add toggle status text functionality
+        $("#isEnable").change(function () {
+            $("#statusText").text(this.checked ? "Đang hoạt động" : "Ngưng hoạt động");
+        });
+
+        $('#recipients').select2({
+            dropdownParent: $("#modal-template"),
+            placeholder: "Chọn người nhận",
+            ajax: {
+                url: '@Url.Action("GetPage", "Memberships")',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        page: 1,
+                        pageSize: 30,
+                        keyword: params.term // từ khóa tìm kiếm
+                    };
+                },
+                processResults: function (response) {
+                    const results = response.data
+                    .filter(function (user) {
+                        return user.userZaloId && user.userZaloId.trim() !== "";
+                    })
+                    .map(function (user) {
+                        return {
+                            id: user.userZaloId,
+                            text: user.userZaloName
+                        };
+                    });
+                    return {
+                        results: results
+                    };
+                },
+                cache: true
+            }
+        });
+
+        $('#templateId').select2({
+            dropdownParent: $("#modal-template"),
+            placeholder: "Chọn mẫu template",
+            ajax: {
+                url: '@Url.Action("GetPageTemplateUid", "OmniTools")',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        page: 1,
+                        pageSize: 30,
+                        keyword: params.term // từ khóa tìm kiếm
+                    };
+                },
+                processResults: function (response) {
+                    const results = response.data.map(function (user) {
+                        return {
+                            id: user.id,
+                            text: user.name
+                        };
+                    });
+                    return {
+                        results: results
+                    };
+                },
+                cache: true
+            }
+        });
+        HandleTemplateTable('@(Model.Type == "uid" ? Model.ReferenceId : Model.TemplateCode)');
+    })
+
+    function HandleTemplateTable(referrenceId){
+        const type = $("#typeTemplate").val();
+        // Hiển thị container tương ứng với loại đã chọn
+        if (type === "omni") {
+            GetTableParamsOmni(referrenceId);
+        }
+        else if (type === "uid") {
+            GetTableParamsUid(referrenceId);
+        }
+    }
+
+    function handleTypeChange() {
+        const type = $("#typeTemplate").val();
+        // Hiển thị container tương ứng với loại đã chọn
+        if (type === "omni") {
+            $("#zaloConfigContainer").hide();
+            $("#incomConfigContainer").show();
+        } else if (type === "uid") {
+            $("#incomConfigContainer").hide();
+            $("#zaloConfigContainer").show();
+        }
+    }
+
+    function handlePhoneNumberChange() {
+        const value = $("#phoneNumber").val();
+        if (value === "CUSTOM.PHONENUMBER") {
+            $("#customPhoneNumberContainer").slideDown();
+            $("#customPhoneNumber").prop("required", true);
+        } else {
+            $("#customPhoneNumberContainer").slideUp();
+            $("#customPhoneNumber").prop("required", false);
+        }
+    }
+
+    function updateParamsCount() {
+        const count = $('#table-params tbody tr').length;
+        $('#paramsCount').text(count);
+
+        if (count > 0) {
+            $('#noParamsAlert').hide();
+        } else {
+            $('#noParamsAlert').show();
+        }
+    }
+
+    // Clear form function
+    function ClearForm() {
+        $('#eventTemplateForm').trigger("reset");
+        $("#eventName, #templateCode, #phoneNumber, #routeRule").val('').trigger('change');
+        $('#table-params').html('');
+        updateParamsCount();
+    }
+</script>

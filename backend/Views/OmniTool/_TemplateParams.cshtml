@@ -1,0 +1,214 @@
+﻿@using MiniAppGIBA.Models.Requests.OmniTools.Templates
+@model IEnumerable<MappingParams>
+@{
+    var membershipOptions = new Dictionary<string, string>() {
+        {"Email", "Email khách hàng"},
+        {"Dob", "Ngày sinh nhật"},
+        {"UserZaloId", "Mã khách hàng"},
+        {"PhoneNumber", "Số điện thoại"},
+        {"CreditAmount", "Điểm tín dụng"},
+        {"LoyaltyPoints", "Điểm tích luỹ"},
+        {"UserZaloName", "Tên zalo khách hàng"},
+        {"FullName", "Họ tên khách hàng"},
+        {"Address", "Địa chỉ khách hàng"}
+    };
+
+    var orderOptions = new Dictionary<string, string>() {
+        {"Id", "Mã đơn hàng"},
+        {"OrderCode", "Mã đơn hàng hiển thị"},
+        {"Status", "Trạng thái đơn hàng"},
+        {"StatusName", "Tên trạng thái đơn hàng"},
+        {"Total", "Tổng tiền đơn hàng"},
+        {"ShippingFee", "Phí vận chuyển"},
+        {"PaymentStatus", "Trạng thái thanh toán"},
+        {"PaymentMethod", "Phương thức thanh toán"},
+        {"ShippingMethod", "Phương thức vận chuyển"},
+        {"CreatedDate", "Ngày tạo đơn hàng"},
+        {"CustomerNote", "Ghi chú của khách hàng"},
+        {"ShippingAddress", "Địa chỉ giao hàng"},
+    };
+
+    var orderDetailOptions = new Dictionary<string, string>() {
+        {"ProductName", "Tên sản phẩm"},
+        {"ProductCode", "Mã sản phẩm"},
+        {"Quantity", "Số lượng"},
+        {"UnitPrice", "Đơn giá"},
+        {"SubTotal", "Thành tiền"},
+        {"Discount", "Giảm giá"}
+    };
+
+    var campaignItemOptions = new Dictionary<string, string>() {
+        {"VoucherCode", "Mã giảm giá"},
+    };
+
+    var attributesExtend = (List<string>)ViewBag.AttributesExtend ?? new List<string>();
+}
+
+<div class="table-responsive">
+    <table class="table table-hover table-striped">
+        <thead class="bg-light">
+            <tr>
+                <th scope="col" style="width: 15%">Tham số</th>
+                <th scope="col" style="width: 25%">Nguồn dữ liệu</th>
+                <th scope="col" style="width: 30%">Trường dữ liệu</th>
+                <th scope="col" style="width: 30%">Giá trị mặc định</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count() > 0)
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td data-param="@(item.ParamName)">
+                            <span class="badge bg-primary">@item.ParamName</span>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm data-source-select" data-table="@(item.ParamName)" onchange="updateFieldOptions(this, '@item.ParamName')" aria-label="Chọn nguồn dữ liệu">
+                                <option value="" disabled selected>-- Chọn nguồn dữ liệu --</option>
+                                <option selected="@(item.MappingTableName == "Membership")" value="Membership">Khách hàng</option>
+                                <option selected="@(item.MappingTableName == "MembershipExtend")" value="MembershipExtend">Thông tin mở rộng</option>
+                                <option selected="@(item.MappingTableName == "Order")" value="Order">Thông tin đơn hàng</option>
+                                <option selected="@(item.MappingTableName == "OrderDetail")" value="OrderDetail">Chi tiết đơn hàng</option>
+
+                                <option selected="@(item.MappingTableName == "CampaignItem")" value="CampaignItem">Mã giảm giá</option>
+                            
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm field-select" data-field="@(item.ParamName)" aria-label="Chọn trường dữ liệu">
+                                <option value="" disabled selected>-- Chọn trường dữ liệu --</option>
+                                <optgroup label="Khách hàng" class="membership-options" style='display: @(item.MappingTableName == "Membership" ? "block" : "none");'>
+                                    @foreach (var key in membershipOptions.Keys)
+                                    {
+                                        <option selected="@(item.MappingColumnName == key)" value="@key">@membershipOptions[key]</option>
+                                    }
+                                </optgroup>
+
+                                <optgroup label="Thông tin mở rộng" class="membershipextend-options" style='display: @(item.MappingTableName == "MembershipExtend" ? "block" : "none");'>
+                                    @foreach (var key in attributesExtend)
+                                    {
+                                        <option selected="@(item.MappingColumnName == key)" value="@key">@key</option>
+                                    }
+                                </optgroup>
+
+                                <optgroup label="Thông tin đơn hàng" class="order-options" style='display: @(item.MappingTableName == "Order" ? "block" : "none");'>
+                                    @foreach (var key in orderOptions.Keys)
+                                    {
+                                        <option selected="@(item.MappingColumnName == key)" value="@key">@orderOptions[key]</option>
+                                    }
+                                </optgroup>
+
+                                <optgroup label="Chi tiết đơn hàng" class="orderdetail-options" style='display: @(item.MappingTableName == "OrderDetail" ? "block" : "none");'>
+                                    @foreach (var key in orderDetailOptions.Keys)
+                                    {
+                                        <option selected="@(item.MappingColumnName == key)" value="@key">@orderDetailOptions[key]</option>
+                                    }
+                                </optgroup>
+
+                                <optgroup label="Mã giảm giá" class="campaignitem-options" style='display: @(item.MappingTableName == "CampaignItem" ? "block" : "none");'>
+                                    @foreach (var key in campaignItemOptions.Keys)
+                                    {
+                                        <option selected="@(item.MappingColumnName == key)" value="@key">@campaignItemOptions[key]</option>
+                                    }
+                                </optgroup>
+
+                            </select>
+                        </td>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" placeholder="Giá trị mặc định (tùy chọn)" value="@item.DefaultValue" data-param="@(item.ParamName)" />
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" class="text-center py-4">
+                        <div class="alert alert-info mb-0">
+                            <i class="ri-information-line me-2"></i> Không có tham số nào được tìm thấy cho template này
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Set initial state for each row
+        $('.data-source').each(function () {
+            const selectedValue = $(this).val();
+            const paramName = $(this).data('table');
+
+            if (selectedValue) {
+                updateFieldVisibility(this, paramName);
+            }
+        });
+
+        $('.data-source-select').select2();
+        $('.field-select').select2();
+    });
+
+    // Update field options based on selected data source
+    function updateFieldOptions(element, paramName) {
+        // Hide all option groups first
+        $(element).closest('tr').find('.field-select optgroup').hide();
+
+        // Get selected data source
+        const selectedSource = $(element).val();
+
+        // Show relevant option group
+        if (selectedSource) {
+            const optionGroup = $(element).closest('tr').find(`.field-select optgroup.${selectedSource.toLowerCase()}-options`);
+            optionGroup.show();
+
+            // Reset field selection
+            $(element).closest('tr').find('.field-select').val('');
+        }
+    }
+
+    // Helper function to update field visibility based on data source
+    function updateFieldVisibility(element, paramName) {
+        const selectedValue = $(element).val();
+        const row = $(element).closest('tr');
+
+        // Hide all option groups first
+        row.find('.field-select optgroup').hide();
+
+        // Show relevant option group
+        if (selectedValue) {
+            row.find(`.${selectedValue.toLowerCase()}-options`).show();
+        }
+    }
+
+    // Clear default value
+    function clearDefaultValue(button) {
+        $(button).closest('td').find('input').val('');
+    }
+
+    // Global function to validate mapping configuration
+    function validateParamMappings() {
+        let isValid = true;
+
+        $('.data-source').each(function () {
+            const dataSource = $(this).val();
+            const row = $(this).closest('tr');
+            const fieldSelect = row.find('.field-select');
+            const fieldValue = fieldSelect.val();
+
+            // If a data source is selected but no field is selected
+            if (dataSource && !fieldValue) {
+                isValid = false;
+                fieldSelect.addClass('is-invalid');
+            } else {
+                fieldSelect.removeClass('is-invalid');
+            }
+        });
+
+        return isValid;
+    }
+</script>

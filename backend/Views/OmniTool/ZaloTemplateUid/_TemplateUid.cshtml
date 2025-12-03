@@ -1,0 +1,48 @@
+﻿@model MiniAppGIBA.Entities.ETM.ZaloTemplateUid;
+
+<div class="modal-content">
+    <div class="modal-header text-white">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group mb-3">
+                    <label for="name" class="form-label">Tên <span class="text-danger">*</span></label>
+                    <input id="name" value="@Model.Name" class="form-control" data-type="title" placeholder="Nhập tên..." />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="content" class="form-label">Nội dung <span class="text-danger">*</span></label>
+                    <textarea id="content" class="form-control" style="min-height: 200px; max-height: 500px; height: 400px" placeholder="Nhập nội dung...">@Html.Raw(Model.Message)</textarea>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="listParams" class="form-label">Danh sách biến <span class="text-danger">*</span></label>
+                    <input id="listParams" class="form-control" placeholder="Nhập danh sách biến, phân tách bằng dấu phẩy..." value="@Model.ListParams" />
+                    <small class="text-muted">Danh sách các biến có trong nội dung, phân tách bằng dấu phẩy.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-primary" onclick="HandleSaveOrUpdate('@Model.Id')">@ViewBag.Button</button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Khởi tạo các thành phần giao diện
+        $('.carousel').carousel({
+            interval: 2000
+        });
+
+        // Khởi tạo trình soạn thảo
+        // InitialEditor();
+
+        // Tooltip cho các trường
+        $('[data-bs-toggle="tooltip"]').tooltip();
+    });
+</script>

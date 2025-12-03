@@ -1,0 +1,670 @@
+@{
+    ViewData["Title"] = "Chi tiết Hội Nhóm";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using MiniAppGIBA.Models.DTOs.Groups
+@using MiniAppGIBA.Models.DTOs.Dashboard
+
+@{
+    var group = ViewBag.Group as GroupDTO;
+    var groupSummary = ViewBag.GroupSummary as GroupDashboardSummaryDTO;
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Header -->
+        <div class="mb-4">
+            <!-- Breadcrumb centered -->
+            <div class="d-flex justify-end-center mb-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="/Groups" class="text-decoration-none">Hội Nhóm</a></li>
+                        <li class="breadcrumb-item active">@(group?.GroupName ?? "Chi tiết")</li>
+                    </ol>
+                </nav>
+            </div>
+
+            <!-- Title and actions -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <div class="text-center text-md-start">
+                    <h4 class="mb-1">@(group?.GroupName ?? "Hội Nhóm")</h4>
+                    @* <p class="text-muted mb-0">@(group?.Description ?? "Mô tả hội nhóm")</p> *@
+                </div>
+                <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                    <a href="/Groups" class="btn btn-outline-secondary">
+                        <i class="ri-arrow-left-line me-1"></i>Quay lại
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center border-primary">
+                    <div class="card-body">
+                        <i class="ri-team-line text-primary fs-2"></i>
+                        <h4 class="text-primary">@(groupSummary?.TotalMembers ?? 0)</h4>
+                        <p class="text-muted mb-0">Thành viên</p>
+                        <small class="text-primary">@(groupSummary?.ActiveMembers ?? 0) hoạt động</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-success">
+                    <div class="card-body">
+                        <i class="ri-send-plane-line text-success fs-2"></i>
+                        <h4 class="text-success">@(groupSummary?.TotalRefsGiven ?? 0)</h4>
+                        <p class="text-muted mb-0">Ref đã trao</p>
+                        <small class="text-success">@(groupSummary?.CompletedRefsGiven ?? 0) hoàn thành</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <i class="ri-percent-line text-warning fs-2"></i>
+                        <h4 class="text-warning">@(groupSummary?.SuccessRate.ToString("F1") ?? "0")%</h4>
+                        <p class="text-muted mb-0">Tỷ lệ thành công</p>
+                        <small class="text-warning">Khi trao ref</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-info">
+                    <div class="card-body">
+                        <i class="ri-money-dollar-circle-line text-info fs-2"></i>
+                        <h4 class="text-info">@(groupSummary?.TotalValueGiven.ToString("N0") ?? "0")</h4>
+                        <p class="text-muted mb-0">Tổng giá trị</p>
+                        <small class="text-info">VNĐ</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="groupTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="leaderboard-tab" data-bs-toggle="tab"
+                        data-bs-target="#leaderboard" type="button" role="tab">
+                    <i class="ri-trophy-line me-1"></i>Leaderboard
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="chart-tab" data-bs-toggle="tab"
+                        data-bs-target="#chart" type="button" role="tab">
+                    <i class="ri-line-chart-line me-1"></i>Biểu đồ
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="members-tab" data-bs-toggle="tab"
+                        data-bs-target="#members" type="button" role="tab">
+                    <i class="ri-team-line me-1"></i>Thành viên
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="groupTabsContent">
+            <!-- Leaderboard Tab -->
+            <div class="tab-pane fade show active" id="leaderboard" role="tabpanel">
+                <div class="mt-3">
+                    <!-- Filters -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Kỳ thời gian:</label>
+                            <select id="periodFilter" class="form-select">
+                                <option value="week">Tuần</option>
+                                <option value="month" selected>Tháng</option>
+                                <option value="year">Năm</option>
+                                <option value="all">Tất cả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Số lượng:</label>
+                            <select id="limitFilter" class="form-select">
+                                <option value="10">Top 10</option>
+                                <option value="20" selected>Top 20</option>
+                                <option value="50">Top 50</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Sắp xếp:</label>
+                            <select id="sortFilter" class="form-select">
+                                <option value="TotalRefs" selected>Số lượng Ref</option>
+                                <option value="TotalValue">Giá trị Ref</option>
+                                <option value="SuccessRate">Tỷ lệ thành công</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Hành động:</label>
+                            <button type="button" class="btn btn-primary w-100" onclick="loadLeaderboard()">
+                                <i class="ri-refresh-line me-1"></i>Cập nhật
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Top 3 Highlight -->
+                    <div class="row mb-4" id="top3Container">
+                        <div class="col-12">
+                            <h5 class="mb-3">🏆 Top 3 Thành Viên</h5>
+                            <div class="row" id="top3Cards">
+                                <!-- Top 3 cards will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Bảng Xếp Hạng</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="text-center">Hạng</th>
+                                            <th class="text-center">Thành viên</th>
+                                            <th class="text-center">Số Ref</th>
+                                            <th class="text-center">Giá trị</th>
+                                            <th class="text-center">Tỷ lệ thành công</th>
+                                            <th class="text-center">Lần cuối</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboardTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted py-4">
+                                                <i class="ri-loader-4-line ri-spin fs-1"></i>
+                                                <p class="mb-0">Đang tải dữ liệu...</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Tab -->
+            <div class="tab-pane fade" id="chart" role="tabpanel">
+                <div class="mt-3">
+                    <!-- Chart Controls -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Loại dữ liệu:</label>
+                            <select id="chartDataType" class="form-select">
+                                <option value="refs">Số lượng Ref</option>
+                                <option value="value">Giá trị Ref</option>
+                                <option value="success">Tỷ lệ thành công</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Khoảng thời gian:</label>
+                            <select id="chartTimeRange" class="form-select">
+                                <option value="6">6 tháng gần nhất</option>
+                                <option value="12" selected>12 tháng gần nhất</option>
+                                <option value="24">24 tháng gần nhất</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Hành động:</label>
+                            <button type="button" class="btn btn-primary w-100" onclick="loadChart()">
+                                <i class="ri-refresh-line me-1"></i>Cập nhật
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chart Container -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="chart-container" style="position: relative; height: 400px;">
+                                <canvas id="groupChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members Tab -->
+            <div class="tab-pane fade" id="members" role="tabpanel">
+                <div class="mt-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Danh sách Thành viên</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Tính năng này sẽ được phát triển trong phiên bản tiếp theo.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let groupId = '@(group?.Id ?? "")';
+        let groupChartInstance = null;
+
+        $(document).ready(function() {
+            // Load initial data
+            loadLeaderboard();
+            loadTop3();
+
+            // Event listeners for leaderboard filters
+            $('#periodFilter, #limitFilter, #sortFilter').on('change', function() {
+                console.log('Filter changed:', {
+                    period: $('#periodFilter').val(),
+                    limit: $('#limitFilter').val(),
+                    sort: $('#sortFilter').val()
+                });
+                loadLeaderboard();
+                loadTop3(); // Also reload top 3 when period changes
+            });
+
+            // Event listeners for chart filters
+            $('#chartDataType, #chartTimeRange').on('change', function() {
+                console.log('Chart filter changed:', {
+                    dataType: $('#chartDataType').val(),
+                    timeRange: $('#chartTimeRange').val()
+                });
+                loadChart();
+            });
+
+            // Load chart when tab is clicked
+            $('#chart-tab').on('click', function() {
+                setTimeout(() => {
+                    loadChart();
+                }, 100);
+            });
+        });
+
+        function loadLeaderboard() {
+            const period = $('#periodFilter').val();
+            const limit = $('#limitFilter').val();
+            const sort = $('#sortFilter').val();
+
+            console.log('Loading leaderboard with params:', { groupId, period, limit, sort });
+
+            // Show loading state
+            $('#leaderboardTable').html(`
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="ri-loader-4-line ri-spin fs-1"></i>
+                        <p class="mb-0">Đang tải dữ liệu...</p>
+                    </td>
+                </tr>
+            `);
+
+            $.get(`/Groups/GetGroupLeaderboard?id=${groupId}&period=${period}&limit=${limit}&sortBy=${sort}`)
+                .done(function(response) {
+                    console.log('Leaderboard response:', response);
+                    if (response.success) {
+                        renderLeaderboardTable(response.data);
+                    } else {
+                        showError('Không thể tải leaderboard: ' + response.message);
+                        $('#leaderboardTable').html(`
+                            <tr>
+                                <td colspan="6" class="text-center text-danger py-4">
+                                    <i class="ri-error-warning-line fs-1"></i>
+                                    <p class="mb-0">Lỗi: ${response.message}</p>
+                                </td>
+                            </tr>
+                        `);
+                    }
+                })
+                .fail(function(xhr, status, error) {
+                    console.error('Error loading leaderboard:', error);
+                    console.error('Response:', xhr.responseText);
+                    showError('Có lỗi xảy ra khi tải leaderboard');
+                    $('#leaderboardTable').html(`
+                        <tr>
+                            <td colspan="6" class="text-center text-danger py-4">
+                                <i class="ri-error-warning-line fs-1"></i>
+                                <p class="mb-0">Có lỗi xảy ra khi tải dữ liệu</p>
+                            </td>
+                        </tr>
+                    `);
+                });
+        }
+
+        function loadTop3() {
+            const period = $('#periodFilter').val();
+
+            console.log('Loading top 3 with params:', { groupId, period });
+
+            $.get(`/Groups/GetGroupTop3?id=${groupId}&period=${period}`)
+                .done(function(response) {
+                    console.log('Top 3 response:', response);
+                    if (response.success) {
+                        renderTop3Cards(response.data);
+                    } else {
+                        console.error('Error loading top 3:', response.message);
+                        $('#top3Cards').html(`
+                            <div class="col-12">
+                                <div class="alert alert-warning text-center">
+                                    <i class="ri-error-warning-line me-2"></i>
+                                    Không thể tải top 3: ${response.message}
+                                </div>
+                            </div>
+                        `);
+                    }
+                })
+                .fail(function(xhr, status, error) {
+                    console.error('Error loading top 3:', error);
+                    $('#top3Cards').html(`
+                        <div class="col-12">
+                            <div class="alert alert-danger text-center">
+                                <i class="ri-error-warning-line me-2"></i>
+                                Có lỗi xảy ra khi tải top 3
+                            </div>
+                        </div>
+                    `);
+                });
+        }
+
+        function loadChart() {
+            const dataType = $('#chartDataType').val();
+            const timeRange = $('#chartTimeRange').val();
+
+            console.log('Loading chart with params:', { groupId, dataType, timeRange });
+
+            $.get(`/Groups/GetGroupMonthlyData?id=${groupId}&months=${timeRange}`)
+                .done(function(response) {
+                    console.log('Chart response:', response);
+                    if (response.success) {
+                        renderChart(response.data, dataType);
+                    } else {
+                        showError('Không thể tải biểu đồ: ' + response.message);
+                        const ctx = document.getElementById('groupChart');
+                        if (ctx) {
+                            const context = ctx.getContext('2d');
+                            context.clearRect(0, 0, ctx.width, ctx.height);
+                            context.fillStyle = '#dc3545';
+                            context.font = '16px Arial';
+                            context.textAlign = 'center';
+                            context.fillText('Lỗi: ' + response.message, ctx.width / 2, ctx.height / 2);
+                        }
+                    }
+                })
+                .fail(function(xhr, status, error) {
+                    console.error('Error loading chart:', error);
+                    showError('Có lỗi xảy ra khi tải biểu đồ');
+                    const ctx = document.getElementById('groupChart');
+                    if (ctx) {
+                        const context = ctx.getContext('2d');
+                        context.clearRect(0, 0, ctx.width, ctx.height);
+                        context.fillStyle = '#dc3545';
+                        context.font = '16px Arial';
+                        context.textAlign = 'center';
+                        context.fillText('Có lỗi xảy ra khi tải dữ liệu', ctx.width / 2, ctx.height / 2);
+                    }
+                });
+        }
+
+        function renderLeaderboardTable(data) {
+            const tbody = $('#leaderboardTable');
+            tbody.empty();
+
+            if (data && data.length > 0) {
+                data.forEach((user, index) => {
+                    const row = `
+                        <tr>
+                            <td class="text-center">
+                                <span class="badge ${index < 3 ? 'bg-warning' : 'bg-secondary'}">
+                                    #${user.refRanking}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="me-2">
+                                        <img src="${user.avatar || '/images/user.png'}"
+                                             class="rounded-circle"
+                                             style="width: 32px; height: 32px; object-fit: cover;"
+                                             onerror="this.src='/images/no-image.png'">
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold">${user.fullname}</div>
+                                        <small class="text-muted">${user.company || ''}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center fw-semibold">${user.totalRefsGiven}</td>
+                            <td class="text-center fw-semibold">${user.totalValueGiven.toLocaleString()} VNĐ</td>
+                            <td class="text-center">
+                                <span class="badge ${user.successRate >= 80 ? 'bg-success' : user.successRate >= 60 ? 'bg-warning' : 'bg-danger'}">
+                                    ${user.successRate.toFixed(1)}%
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                ${user.lastRefDate ? new Date(user.lastRefDate).toLocaleDateString('vi-VN') : 'N/A'}
+                            </td>
+                        </tr>
+                    `;
+                    tbody.append(row);
+                });
+            } else {
+                tbody.append(`
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="ri-inbox-line fs-1"></i>
+                            <p class="mb-0">Chưa có dữ liệu leaderboard</p>
+                        </td>
+                    </tr>
+                `);
+            }
+        }
+
+        function renderTop3Cards(data) {
+            const container = $('#top3Cards');
+            container.empty();
+
+            if (data && data.length > 0) {
+                const medals = ['🥇', '🥈', '🥉'];
+                data.forEach((user, index) => {
+                    const card = `
+                        <div class="col-md-4">
+                            <div class="card text-center ${index === 0 ? 'border-warning' : index === 1 ? 'border-secondary' : 'border-warning'}">
+                                <div class="card-body">
+                                    <div class="fs-1 mb-2">${medals[index] || '🏅'}</div>
+                                    <img src="${user.avatar || '/images/user.png'}"
+                                         class="rounded-circle mb-2"
+                                         style="width: 60px; height: 60px; object-fit: cover;"
+                                         onerror="this.src='/images/no-image.png'">
+                                    <h6 class="card-title">${user.fullname}</h6>
+                                    <p class="text-muted small">${user.company || ''}</p>
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <div class="fw-bold text-primary">${user.totalRefsGiven}</div>
+                                            <small class="text-muted">Ref</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="fw-bold text-success">${user.totalValueGiven.toLocaleString()}</div>
+                                            <small class="text-muted">VNĐ</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="fw-bold text-warning">${user.successRate.toFixed(1)}%</div>
+                                            <small class="text-muted">Thành công</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.append(card);
+                });
+            }
+        }
+
+        function renderChart(data, dataType) {
+            const ctx = document.getElementById('groupChart');
+            if (!ctx) return;
+
+            // Destroy existing chart
+            if (groupChartInstance) {
+                groupChartInstance.destroy();
+                groupChartInstance = null;
+            }
+
+            if (!data || data.length === 0) {
+                const context = ctx.getContext('2d');
+                context.clearRect(0, 0, ctx.width, ctx.height);
+                context.fillStyle = '#666';
+                context.font = '16px Arial';
+                context.textAlign = 'center';
+                context.fillText('Không có dữ liệu để hiển thị', ctx.width / 2, ctx.height / 2);
+                return;
+            }
+
+            // Always show all 3 datasets regardless of dataType
+            const datasets = [
+                {
+                    label: 'Ref đã trao',
+                    data: data.map(item => item.totalRefs || 0),
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Ref đã nhận',
+                    data: data.map(item => item.refsReceived || 0),
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Tỷ lệ thành công (%)',
+                    data: data.map(item => item.successRate || 0),
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.1,
+                    yAxisID: 'y1'
+                }
+            ];
+
+            groupChartInstance = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: data.map(item => item.month || 'N/A'),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Số lượng Ref'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' ref';
+                                }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Tỷ lệ thành công (%)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Tháng'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Thống kê Ref theo tháng - Tổng quan',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    if (context.datasetIndex === 2) { // Success rate dataset
+                                        return context.parsed.y + '%';
+                                    } else {
+                                        return context.parsed.y + ' ref';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function showError(message) {
+            console.error('Error:', message);
+
+            // Create a simple toast notification
+            const toast = $(`
+                <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="ri-error-warning-line me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+
+            // Add to page if toast container doesn't exist
+            if ($('#toastContainer').length === 0) {
+                $('body').append('<div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>');
+            }
+
+            $('#toastContainer').append(toast);
+
+            // Show toast
+            const bsToast = new bootstrap.Toast(toast[0]);
+            bsToast.show();
+
+            // Remove toast element after it's hidden
+            toast.on('hidden.bs.toast', function() {
+                $(this).remove();
+            });
+        }
+    </script>
+}

@@ -1,0 +1,559 @@
+@{
+    ViewData["Title"] = "Quản Lý Quy Tắc Ứng Xử";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+<style>
+    .content-display {
+        min-height: 300px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .content-display h3 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .content-display .content-body {
+        background: white;
+        padding: 20px;
+        border-radius: 4px;
+        min-height: 200px;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .pagination-controls button {
+        min-width: 100px;
+    }
+
+    .page-info {
+        font-weight: 500;
+        color: #666;
+    }
+
+    .upload-area {
+        border: 2px dashed #dee2e6 !important;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+    .upload-area:hover {
+        border-color: #667eea !important;
+        background: #f0f2ff;
+    }
+
+    .upload-area.dragover {
+        border-color: #667eea !important;
+        background: #e7eaff;
+        transform: scale(1.02);
+    }
+
+    /* PDF Preview Styles */
+    .pdf-preview {
+        margin-top: 20px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .pdf-preview iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    .image-preview {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .image-preview img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản Lý Quy Tắc Ứng Xử</h4>
+                <p class="mb-0 text-muted">Quản lý quy tắc ứng xử theo trang (page-based navigation)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Quy tắc ứng xử APP (Toàn hệ thống)
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" onclick="openCreateModal()">
+                            <i class="ri-add-line me-1"></i>
+                            Tạo mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Display -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="content-display">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 id="contentTitle">Chưa có dữ liệu</h3>
+                        <div class="btn-group" id="actionButtons" style="display: none;">
+                            <button class="btn btn-sm btn-warning" onclick="openEditModal()">
+                                <i class="ri-edit-line me-1"></i>
+                                Chỉnh sửa
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="confirmDelete()">
+                                <i class="ri-delete-bin-line me-1"></i>
+                                Xóa
+                            </button>
+                        </div>
+                    </div>
+                    <div class="content-body" id="contentBody">
+                        <p class="text-muted text-center">Chọn loại và nhóm để xem nội dung</p>
+                    </div>
+
+                    <!-- PDF/File Preview Section (hidden by default) -->
+                    <div id="filePreviewSection" class="pdf-preview" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light">
+                            <h6 class="mb-0">Xem trước tài liệu</h6>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeFilePreview()">
+                                <i class="ri-close-line me-1"></i>Đóng
+                            </button>
+                        </div>
+                        <div class="position-relative">
+                            <iframe id="fileViewer" src=""></iframe>
+                            <div class="loading-overlay" id="fileLoadingOverlay" style="display: none;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Preview Section (hidden by default) -->
+                    <div id="imagePreviewSection" class="image-preview" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Xem trước hình ảnh</h6>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="closeImagePreview()">
+                                <i class="ri-close-line me-1"></i>Đóng
+                            </button>
+                        </div>
+                        <img id="imageViewer" src="" alt="Preview" />
+                    </div>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div class="pagination-controls">
+                    <button class="btn btn-outline-primary" id="btnPrev" onclick="previousPage()" disabled>
+                        <i class="ri-arrow-left-line me-1"></i>
+                        Trang trước
+                    </button>
+                    <span class="page-info" id="pageInfo">Trang 0 / 0</span>
+                    <button class="btn btn-outline-primary" id="btnNext" onclick="nextPage()" disabled>
+                        Trang sau
+                        <i class="ri-arrow-right-line ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Create/Edit -->
+<div class="modal fade" id="behaviorRuleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-body" id="behaviorRuleModalContent">
+            <!-- Partial view will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa quy tắc này không?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let currentPage = 1;
+        let totalPages = 0;
+        let currentRule = null;
+
+        $(document).ready(function () {
+            loadPage();
+
+            // Delete confirmation
+            $('#confirmDeleteBtn').on('click', function () {
+                deleteRule();
+            });
+        });
+
+        function resetAndLoad() {
+            currentPage = 1;
+            loadPage();
+        }
+
+        window.loadPage = function () {
+            const type = 'APP'; // Hardcoded to APP only
+            const url = `/api/BehaviorRuleV2/pageInfo?page=${currentPage}&type=${type}`;
+
+            $.get(url, function (response) {
+                if (response.success && response.data) {
+                    const data = response.data;
+                    currentRule = data;
+                    totalPages = data.totalPages || 0;
+
+                    if (data.id) {
+                        $('#contentTitle').text(data.title || 'Không có tiêu đề');
+
+                        if (data.contentType === 'TEXT') {
+                            $('#contentBody').html(data.content || '<p class="text-muted">Không có nội dung</p>');
+                            // Hide file previews
+                            $('#filePreviewSection').hide();
+                            $('#imagePreviewSection').hide();
+                        } else if (data.contentType === 'FILE') {
+                            const fileName = data.content ? data.content.split('/').pop() : 'file';
+                            const fileExt = getFileExtension(data.content);
+                            const absoluteUrl = toAbsoluteUrl(data.content);
+
+                            $('#contentBody').html(`
+                                <div class="text-center">
+                                    <i class="ri-file-line" style="font-size: 48px; color: #667eea;"></i>
+                                    <p class="mt-3">File đính kèm</p>
+                                    <p class="text-muted">${fileName}</p>
+                                    <div class="btn-group mt-2">
+                                        <button class="btn btn-primary" onclick="viewFile('${data.content}')">
+                                            <i class="ri-eye-line me-1"></i>
+                                            Xem
+                                        </button>
+                                        <a href="${absoluteUrl}" download class="btn btn-success">
+                                            <i class="ri-download-line me-1"></i>
+                                            Tải xuống
+                                        </a>
+                                    </div>
+                                </div>
+                            `);
+
+                            // Auto-show preview for supported file types
+                            if (fileExt === 'pdf' || ['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                                setTimeout(() => viewFile(data.content), 300);
+                            }
+                        }
+                        $('#actionButtons').show();
+                    } else {
+                        $('#contentTitle').text('Chưa có dữ liệu');
+                        $('#contentBody').html('<p class="text-muted text-center">Chưa có quy tắc nào được tạo</p>');
+                        $('#actionButtons').hide();
+                    }
+
+                    updatePaginationControls();
+                }
+            }).fail(function (xhr) {
+                console.error('Failed to load page:', xhr);
+                showError('Lỗi', 'Không thể tải dữ liệu');
+            });
+        };
+
+        function updatePaginationControls() {
+            $('#pageInfo').text(`Trang ${totalPages > 0 ? currentPage : 0} / ${totalPages}`);
+            $('#btnPrev').prop('disabled', currentPage <= 1);
+            $('#btnNext').prop('disabled', currentPage >= totalPages || totalPages === 0);
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadPage();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadPage();
+            }
+        }
+
+        function openCreateModal() {
+            const type = 'APP'; // Hardcoded to APP only
+            const url = `/Setting/BehaviorRulesV2/Create?type=${type}`;
+
+            $.get(url, function (data) {
+                $('#behaviorRuleModalContent').html(data);
+                $('#behaviorRuleModal').modal('show');
+            }).fail(function (xhr, status, error) {
+                console.error('Error loading create form:', error);
+                showError('Lỗi', 'Không thể tải form tạo quy tắc');
+            });
+        }
+
+        function openEditModal() {
+            if (!currentRule || !currentRule.id) {
+                showWarning('Cảnh báo', 'Không có dữ liệu để chỉnh sửa');
+                return;
+            }
+
+            const url = `/Setting/BehaviorRulesV2/Edit/${currentRule.id}`;
+
+            $.get(url, function (data) {
+                $('#behaviorRuleModalContent').html(data);
+                $('#behaviorRuleModal').modal('show');
+            }).fail(function (xhr, status, error) {
+                console.error('Error loading edit form:', error);
+                showError('Lỗi', 'Không thể tải form chỉnh sửa');
+            });
+        }
+
+        function confirmDelete() {
+            if (!currentRule || !currentRule.id) {
+                showWarning('Cảnh báo', 'Không có dữ liệu để xóa');
+                return;
+            }
+            $('#deleteModal').modal('show');
+        }
+
+        function deleteRule() {
+            if (!currentRule || !currentRule.id) return;
+
+            const token = localStorage.getItem('token') || localStorage.getItem('_tk') || '';
+
+            $.ajax({
+                url: `/api/BehaviorRuleV2/delete?id=${currentRule.id}`,
+                type: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token },
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', 'Đã xóa quy tắc');
+                        $('#deleteModal').modal('hide');
+
+                        // If we deleted the last item on this page, go to previous page
+                        if (totalPages > 1 && currentPage > totalPages - 1) {
+                            currentPage--;
+                        }
+                        loadPage();
+                    } else {
+                        showError('Lỗi', response.message || 'Không thể xóa quy tắc');
+                    }
+                },
+                error: function (xhr) {
+                    showError('Lỗi', xhr.responseJSON?.message || 'Có lỗi xảy ra khi xóa');
+                    $('#deleteModal').modal('hide');
+                }
+            });
+        }
+
+        // Alert helper functions
+        function showSuccess(title, message) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: title || 'Thành công',
+                    text: message || '',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    timer: 2000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            } else {
+                alert((title || 'Thành công') + ': ' + (message || ''));
+            }
+        }
+
+        function showError(title, message) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: title || 'Lỗi',
+                    text: message || '',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            } else {
+                alert((title || 'Lỗi') + ': ' + (message || ''));
+            }
+        }
+
+        function showWarning(title, message) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: title || 'Cảnh báo',
+                    text: message || '',
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                });
+            } else {
+                alert((title || 'Cảnh báo') + ': ' + (message || ''));
+            }
+        }
+
+        // File preview functions
+        function getFileExtension(url) {
+            if (!url) return '';
+            const parts = url.split('.');
+            return parts.length > 1 ? parts.pop().toLowerCase() : '';
+        }
+
+        function viewFile(fileUrl) {
+            if (!fileUrl) return;
+
+            const fileExt = getFileExtension(fileUrl);
+            const absoluteUrl = toAbsoluteUrl(fileUrl);
+
+            // Handle images
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                showImagePreview(absoluteUrl);
+            }
+            // Handle PDF and other documents
+            else if (fileExt === 'pdf') {
+                showFilePreview(fileUrl);
+            }
+            // For other file types (doc, docx, xls, xlsx), open in new tab
+            else {
+                window.open(absoluteUrl, '_blank');
+            }
+        }
+
+        function toAbsoluteUrl(url) {
+            if (!url) return '';
+            if (url.startsWith('http://') || url.startsWith('https://')) {
+                return url;
+            }
+            return window.location.origin + (url.startsWith('/') ? url : '/' + url);
+        }
+
+        function showFilePreview(fileUrl) {
+            if (!fileUrl) return;
+
+            console.log('Opening PDF:', fileUrl);
+
+            // Convert relative URL to absolute URL (like App Brief)
+            const absoluteUrl = toAbsoluteUrl(fileUrl);
+
+            // Show loading overlay
+            $('#fileLoadingOverlay').show();
+
+            // Set iframe source with absolute URL
+            $('#fileViewer').attr('src', absoluteUrl);
+
+            // Show preview section
+            $('#filePreviewSection').show();
+            $('#imagePreviewSection').hide();
+
+            // Handle load error with fallback
+            $('#fileViewer').off('error').on('error', function() {
+                $('#fileLoadingOverlay').hide();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Không thể xem trong trình duyệt',
+                    html: `<a href="${absoluteUrl}" target="_blank" class="btn btn-primary">Mở trong tab mới</a>`,
+                    showConfirmButton: true
+                });
+            });
+
+            // Hide loading overlay after load
+            $('#fileViewer').off('load').on('load', function() {
+                setTimeout(() => {
+                    $('#fileLoadingOverlay').hide();
+                }, 500);
+            });
+
+            // Scroll to preview
+            setTimeout(() => {
+                $('html, body').animate({
+                    scrollTop: $('#filePreviewSection').offset().top - 100
+                }, 500);
+            }, 100);
+        }
+
+        function showImagePreview(imageUrl) {
+            if (!imageUrl) return;
+
+            // Convert relative URL to absolute URL
+            const absoluteUrl = toAbsoluteUrl(imageUrl);
+
+            // Set image source
+            $('#imageViewer').attr('src', absoluteUrl);
+
+            // Show preview section
+            $('#imagePreviewSection').show();
+            $('#filePreviewSection').hide();
+
+            // Scroll to preview
+            setTimeout(() => {
+                $('html, body').animate({
+                    scrollTop: $('#imagePreviewSection').offset().top - 100
+                }, 500);
+            }, 100);
+        }
+
+        function closeFilePreview() {
+            $('#filePreviewSection').hide();
+            $('#fileViewer').attr('src', '');
+        }
+
+        function closeImagePreview() {
+            $('#imagePreviewSection').hide();
+            $('#imageViewer').attr('src', '');
+        }
+    </script>
+}
+

@@ -1,0 +1,392 @@
+@{
+    ViewData["Title"] = "Quản Lý Phần Quà";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var canEdit = User?.IsInRole("ADMIN") == true || User?.IsInRole("SUPER_ADMIN") == true;
+}
+
+<style>
+    .table-success {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    .table-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        padding-right: 2.5rem;
+    }
+
+    .gift-images {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+    }
+
+    .gift-image {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản Lý Phần Quà</h4>
+                <p class="mb-0 text-muted">Quản lý các phần quà cho sự kiện</p>
+            </div>
+
+            <div class="d-flex align-items-center justify-content-between">
+                @if (canEdit)
+                {
+                    <a class="btn btn-primary shadow-sm" href="#" onclick="openCreateModal(); return false;">
+                        <i class="ri-gift-line me-2"></i>
+                        Tạo Phần Quà
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Thanh tìm kiếm -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input id="search" type="text" class="form-control"
+                                    placeholder="Tìm theo tên phần quà..." />
+                                <button class="btn btn-primary" onclick="giftsTable.ajax.reload()">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bộ lọc sự kiện -->
+                    <div class="col-md-4">
+                        <label class="form-label">Sự kiện</label>
+                        <select id="filter-event" class="form-select" onchange="giftsTable.ajax.reload()">
+                            <option value="">Tất cả sự kiện</option>
+                            @if (ViewBag.Events != null)
+                            {
+                                @foreach (var eventItem in ViewBag.Events)
+                                {
+                                    <option value="@eventItem.Id">@eventItem.Title</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Nút lọc -->
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-light border me-2" onclick="resetFilters()">
+                            <i class="ri-refresh-line me-1"></i>
+                            Đặt lại
+                        </button>
+                        <button class="btn btn-primary" onclick="giftsTable.ajax.reload()">
+                            <i class="ri-filter-line me-1"></i>
+                            Lọc
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="table-responsive rounded mb-3">
+            <table id="list-gifts" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa phần quà này không?</p>
+                <p class="text-muted small">Hành động này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gift Modal -->
+<div class="modal fade" id="giftModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="ri-gift-line me-2"></i>
+                    Quản Lý Phần Quà
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <script>
+        var giftsTable;
+        var deleteId;
+
+        $(document).ready(function () {
+            GetListGifts();
+            $('#search').on('input', search);
+        });
+
+        function GetListGifts() {
+            giftsTable = new DataTable("#list-gifts", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const eventId = $("#filter-event").val();
+                    let keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '/EventGift/GetPage',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pageSize: data.length,
+                            keyword: keyword,
+                            eventId: eventId
+                        },
+                        success: function (response) {
+                            console.log('API Response:', response);
+                            const formattedData = response.data.map((item, index) => ({
+                                index: data.start + index + 1,
+                                giftName: `<div class="d-flex flex-column">
+                                            <h6 class="mb-1">${item.giftName}</h6>
+                                            <small class="text-muted">${item.eventTitle}</small>
+                                        </div>`,
+                                images: item.images && item.images.length > 0
+                                    ? `<div class="gift-images">
+                                        ${item.images.slice(0, 3).map(img => `<img src="${img}" class="gift-image" alt="Gift">`).join('')}
+                                        ${item.images.length > 3 ? `<span class="badge bg-secondary">+${item.images.length - 3}</span>` : ''}
+                                       </div>`
+                                    : '<span class="text-muted">Chưa có ảnh</span>',
+                                quantity: `<span class="badge bg-info">${item.quantity}</span>`,
+                                isActive: item.isActive
+                                    ? '<span class="badge bg-success">Hoạt động</span>'
+                                    : '<span class="badge bg-secondary">Không hoạt động</span>',
+                                createdDate: item.createdDate,
+                                actions: `<div class="d-flex align-items-center justify-content-center gap-1">
+                                            <button onclick="openEditModal('${item.id}')"
+                                                    class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                            <button onclick="confirmDelete('${item.id}')"
+                                                    class="btn btn-sm btn-outline-danger" title="Xóa">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </div>`
+                            }));
+
+                            console.log('Formatted Data:', formattedData);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: response.recordsTotal,
+                                recordsFiltered: response.recordsFiltered,
+                                data: formattedData
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error loading data:', error);
+                            console.error('Response:', xhr.responseText);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: 0,
+                                recordsFiltered: 0,
+                                data: []
+                            });
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: "index", className: 'text-center', width: "60px" },
+                    { title: "Tên Phần Quà", data: "giftName", className: 'col-4' },
+                    { title: "Hình Ảnh", data: "images", className: 'text-center', width: "150px" },
+                    { title: "Số Lượng", data: "quantity", className: 'text-center', width: "100px" },
+                    { title: "Trạng Thái", data: "isActive", className: 'text-center', width: "120px" },
+                    { title: "Ngày Tạo", data: "createdDate", className: 'text-center', width: "140px" },
+                    { title: "Thao Tác", data: "actions", className: 'text-center', width: "120px" }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+                }
+            });
+
+            $(giftsTable.table().header()).addClass('ligth ligth-data');
+        }
+
+        function search() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                giftsTable.ajax.reload();
+            }, 500);
+        }
+
+        function resetFilters() {
+            $('#search').val('');
+            $('#filter-event').val('');
+            giftsTable.ajax.reload();
+        }
+
+        function confirmDelete(id) {
+            deleteId = id;
+            $('#deleteModal').modal('show');
+        }
+
+        $('#confirmDelete').click(function () {
+            if (deleteId) {
+                $.ajax({
+                    url: '/EventGift/Delete',
+                    type: 'POST',
+                    data: {
+                        id: deleteId,
+                        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            showSuccess('Thành công', response.message);
+                            giftsTable.ajax.reload(null, false);
+                        } else {
+                            showError('Lỗi', response.message);
+                        }
+                        $('#deleteModal').modal('hide');
+                    },
+                    error: function () {
+                        showError('Lỗi', 'Có lỗi xảy ra khi xóa phần quà');
+                        $('#deleteModal').modal('hide');
+                    }
+                });
+            }
+        });
+
+        function openCreateModal() {
+            try {
+                $.get('/EventGift/Create', function (data) {
+                    $('#giftModal .modal-body').html(data);
+                    $('#giftModal').modal('show');
+            }).fail(function (xhr, status, error) {
+                console.error('Error loading create form:', error);
+                showError('Lỗi', 'Không thể tải form tạo phần quà');
+            });
+        } catch (e) {
+            console.error('Error in openCreateModal:', e);
+            showError('Lỗi', 'Có lỗi xảy ra');
+        }
+        }
+
+        function openEditModal(giftId) {
+            try {
+                $.get(`/EventGift/Edit/${giftId}`, function (data) {
+                    $('#giftModal .modal-body').html(data);
+                    $('#giftModal').modal('show');
+            }).fail(function (xhr, status, error) {
+                console.error('Error loading edit form:', error);
+                showError('Lỗi', 'Không thể tải form chỉnh sửa phần quà');
+            });
+        } catch (e) {
+            console.error('Error in openEditModal:', e);
+            showError('Lỗi', 'Có lỗi xảy ra');
+        }
+        }
+
+        // Global function for form submission
+        function submitGiftForm(isEdit, giftId) {
+            const formData = new FormData();
+
+            // Basic fields
+            formData.append('EventId', $('#eventId').val());
+            formData.append('GiftName', $('#giftName').val());
+            formData.append('Quantity', $('#quantity').val());
+            formData.append('IsActive', $('#isActive').is(':checked'));
+
+            // Files
+            const imageFiles = $('#imageFiles')[0].files;
+            for (let i = 0; i < imageFiles.length; i++) {
+                formData.append('ImageFiles', imageFiles[i]);
+            }
+
+            // Add CSRF token
+            formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+            if (isEdit) {
+                formData.append('Id', giftId);
+            }
+
+            const url = isEdit ? '/EventGift/Edit' : '/EventGift/Create';
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', response.message);
+                        $('#giftModal').modal('hide');
+                        giftsTable.ajax.reload();
+                    } else {
+                        showError('Lỗi', response.message);
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi lưu phần quà');
+                }
+            });
+        }
+    </script>
+}

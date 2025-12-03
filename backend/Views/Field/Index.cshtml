@@ -1,0 +1,572 @@
+@{
+    ViewData["Title"] = "Quản lý Danh mục";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        padding-right: 2.5rem;
+    }
+
+    .form-control.form-select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+        padding-right: 2.5rem;
+    }
+
+    /* Style cho dropdown filter - giới hạn chiều cao và cho phép scroll */
+    .form-select[size],
+    .form-control[size] {
+        position: absolute;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        max-height: calc(1.5rem * 5 + 0.75rem * 2);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .form-select::-webkit-scrollbar,
+    .form-control::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .form-select::-webkit-scrollbar-track,
+    .form-control::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .form-select::-webkit-scrollbar-thumb,
+    .form-control::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    .form-select::-webkit-scrollbar-thumb:hover,
+    .form-control::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background-color: #d1edff;
+        color: #0c63e4;
+    }
+
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    /* Delete Modal Styles */
+    #deleteConfirmModal .modal-dialog {
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @@keyframes modalSlideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    #deleteConfirmModal .alert-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #fef9e7 100%);
+        border-left: 4px solid #ffc107;
+    }
+
+    #deleteConfirmModal .btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        transition: all 0.2s ease;
+    }
+</style>
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var canEdit = User?.IsInRole("SUPER_ADMIN") == true;
+}
+
+@Html.AntiForgeryToken()
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="mb-1 fw-bold text-dark">
+                        <i class="ri-briefcase-line me-2 text-primary"></i>
+                        Quản lý Danh mục
+                    </h4>
+                    <p class="text-muted mb-0">Quản lý các danh mục nghề nghiệp và danh mục con cho thành viên</p>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="openFieldModal()">
+                    <i class="ri-add-line me-2"></i>
+                    Thêm Danh mục
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Thanh tìm kiếm -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input id="search" type="text" class="form-control"
+                                    placeholder="Tìm theo tên danh mục..." />
+                                <button class="btn btn-primary" onclick="fieldsTable.ajax.reload()">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bộ lọc trạng thái -->
+                    <div class="col-md-3">
+                        <label class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-select" onchange="fieldsTable.ajax.reload()">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="true">Đang hoạt động</option>
+                            <option value="false">Không hoạt động</option>
+                        </select>
+                    </div>
+
+                    <!-- Nút lọc và xuất excel -->
+                    <div class="col-md-5">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light border flex-fill" onclick="resetFilters()">
+                                <i class="ri-refresh-line me-1"></i>
+                                Đặt lại
+                            </button>
+                            <button class="btn btn-primary flex-fill" onclick="fieldsTable.ajax.reload()">
+                                <i class="ri-filter-line me-1"></i>
+                                Lọc dữ liệu
+                            </button>
+                            @if (canEdit)
+                            {
+                                <button type="button" class="btn btn-success flex-fill" onclick="HandleExportData()">
+                                    <i class="ri-file-excel-line me-1"></i>
+                                    Xuất Excel
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="table-responsive rounded mb-3">
+            <table id="list-fields" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<!-- Field Modal -->
+<div class="modal fade" id="fieldModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div id="fieldModalContent">
+            <!-- Content will be loaded dynamically -->
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <!-- Header -->
+            <div class="modal-header border-0 bg-danger text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="ri-delete-bin-line me-2"></i>
+                    Xác nhận xóa danh mục
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <!-- Body -->
+            <div class="modal-body p-4 text-center">
+                <div class="mb-4">
+                    <div class="text-danger mb-3">
+                        <i class="ri-alert-line display-4"></i>
+                    </div>
+                    <h6 class="mb-3">Bạn có chắc chắn muốn xóa danh mục này?</h6>
+                    <div class="alert alert-warning border-0">
+                        <div class="d-flex align-items-start">
+                            <i class="ri-information-line text-warning me-2 mt-1"></i>
+                            <div class="text-start">
+                                <div class="fw-bold mb-1">Danh mục sẽ bị xóa:</div>
+                                <div id="deleteItemName" class="text-primary fw-medium mb-2"></div>
+                                <small class="text-muted">
+                                    <i class="ri-error-warning-line me-1"></i>
+                                    <strong>Lưu ý:</strong> Tất cả danh mục con cũng sẽ bị xóa vĩnh viễn và không thể khôi phục.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                    <i class="ri-close-line me-1"></i>
+                    Hủy bỏ
+                </button>
+                <button type="button" class="btn btn-danger px-4" id="confirmDeleteBtn">
+                    <i class="ri-delete-bin-line me-1"></i>
+                    Xóa danh mục
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let fieldsTable;
+
+        let searchTimeout;
+        
+        $(document).ready(function () {
+            GetListFields();
+            $('#search').on('input', handleSearchInput);
+            
+            // Setup scroll for filter dropdowns
+            setupSelectScroll(document.getElementById('filter-status'));
+        });
+        
+        function setupSelectScroll(selectElement) {
+            if (!selectElement) return;
+            
+            const maxVisibleOptions = 5;
+            const totalOptions = selectElement.options.length;
+            
+            if (totalOptions > maxVisibleOptions) {
+                $(selectElement).on('focus', function() {
+                    if (this.size === 0 || this.size === 1) {
+                        this.size = Math.min(maxVisibleOptions, totalOptions);
+                        this.style.position = 'relative';
+                        this.style.zIndex = '1000';
+                    }
+                });
+                
+                $(selectElement).on('blur', function() {
+                    this.size = 0;
+                    this.style.position = '';
+                    this.style.zIndex = '';
+                });
+                
+                $(selectElement).on('change', function() {
+                    setTimeout(() => {
+                        this.size = 0;
+                        this.style.position = '';
+                        this.style.zIndex = '';
+                    }, 100);
+                });
+            }
+        }
+
+        function GetListFields() {
+            fieldsTable = new DataTable("#list-fields", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const status = $("#filter-status").val();
+                    let keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '/Field/GetPage',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pageSize: data.length,
+                            keyword: keyword,
+                            status: status
+                        },
+                        success: function (response) {
+                            console.log('API Response:', response);
+                            const formattedData = response.data.map((item, index) => ({
+                                index: data.start + index + 1,
+                                id: item.id,
+                                fieldName: item.name, // Lưu raw data
+                                isActive: item.status, // Lưu raw data
+                                name: `<div class="d-flex flex-column">
+                                    <h6 class="mb-1">${item.name}</h6>
+                                    <small class="text-muted">${item.description || 'Không có mô tả'}</small>
+                                </div>`,
+                                children: `<div class="d-flex flex-wrap gap-1">
+                                    ${item.children && item.children.length > 0 
+                                        ? item.children.map(child => `<span class="badge bg-info">${child.name}</span>`).join('')
+                                        : '<span class="text-muted">Không có danh mục con</span>'
+                                    }
+                                </div>`,
+                                displayOrder: `<span class="badge bg-light text-dark">${item.displayOrderMiniApp || 0}</span>`,
+                                status: `<span class="badge ${item.status ? 'bg-success' : 'bg-secondary'}">
+                                    ${item.status ? 'Đang hoạt động' : 'Không hoạt động'}
+                                </span>`,
+                                createdDate: item.createdDate,
+                                actions: `<div class="d-flex align-items-center justify-content-center gap-1">
+                                    <button onclick="editField('${item.id}')"
+                                            class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+                                        <i class="ri-edit-line"></i>
+                                    </button>
+                                    <button onclick="confirmDelete('${item.id}', '${item.name}')"
+                                            class="btn btn-sm btn-outline-danger" title="Xóa">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </div>`
+                            }));
+
+                            console.log('Formatted Data:', formattedData);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: response.totalItems,
+                                recordsFiltered: response.totalItems,
+                                data: formattedData
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error loading data:', error);
+                            console.error('Response:', xhr.responseText);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: 0,
+                                recordsFiltered: 0,
+                                data: []
+                            });
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: "index", className: 'text-center', width: "60px" },
+                    { title: "Tên Danh Mục", data: "name", className: 'col-3' },
+                    { title: "Danh Mục Con", data: "children", className: 'col-3' },
+                    { title: "Thứ Tự", data: "displayOrder", className: 'text-center', width: "80px" },
+                    { title: "Trạng thái", data: "status", className: 'text-center', width: "120px" },
+                    { title: "Ngày tạo", data: "createdDate", className: 'text-center', width: "120px" },
+                    { title: "Thao tác", data: "actions", className: 'text-center', width: "150px" }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+                }
+            });
+
+            $(fieldsTable.table().header()).addClass('ligth ligth-data');
+        }
+
+        function getColumnName(columnIndex) {
+            const columns = ['', 'fieldName', 'isActive', 'createdDate', ''];
+            return columns[columnIndex] || '';
+        }
+
+        function handleSearchInput() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                fieldsTable.ajax.reload();
+            }, 500);
+        }
+
+        function resetFilters() {
+            $('#search').val('');
+            $('#filter-status').val('');
+            fieldsTable.ajax.reload();
+        }
+
+        function HandleExportData() {
+            const status = $("#filter-status").val() || "";
+            const keyword = $("#search").val() || "";
+
+            const queryParams = new URLSearchParams({
+                status: status,
+                keyword: keyword
+            }).toString();
+
+            const apiUrl = `/api/Fields/Export?${queryParams}`;
+
+            // Tạo form ẩn để submit
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = apiUrl;
+            form.target = '_blank';
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function openFieldModal(fieldId = null) {
+            const isEdit = fieldId !== null;
+            const url = isEdit ? `/Field/Edit/${fieldId}` : '/Field/Create';
+
+            // Clear modal content trước
+            $('#fieldModalContent').empty();
+            
+            $.ajax({
+                url: url,
+                type: 'GET',
+                cache: false, // Disable cache
+                data: { _t: new Date().getTime() }, // Cache busting
+                success: function (data) {
+                    $('#fieldModalContent').html(data);
+                    $('#fieldModal').modal('show');
+                    
+                    // Initialize form after modal content is loaded
+                    setTimeout(function() {
+                        if (typeof initFieldForm === 'function') {
+                            initFieldForm();
+                        }
+                    }, 100);
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi tải form');
+                }
+            });
+        }
+
+        function loadFieldDataAndFillForm(fieldId) {
+            // Tìm data từ table data đã load
+            const tableRows = fieldsTable.rows().data();
+            let fieldData = null;
+
+            // Tìm row có id matching
+            for (let i = 0; i < tableRows.length; i++) {
+                const row = tableRows[i];
+                if (row.id === fieldId) {
+                    fieldData = row;
+                    break;
+                }
+            }
+
+            if (fieldData) {
+                // Dùng raw data đã lưu
+                const fieldName = fieldData.fieldName;
+                const isActive = fieldData.isActive;
+
+                // Fill data vào form
+                $('input[name="FieldName"]').val(fieldName);
+                $('select[name="IsActive"]').val(isActive ? 'true' : 'false');
+
+                console.log('Form filled with data:', {
+                    fieldName: fieldName,
+                    isActive: isActive
+                });
+            } else {
+                console.error('Field data not found for ID:', fieldId);
+            }
+        }
+
+        function editField(fieldId) {
+            openFieldModal(fieldId);
+        }
+
+        let deleteItemData = null; // Store delete item data temporarily
+
+        function confirmDelete(id, name) {
+            // Store delete data for later use
+            deleteItemData = { id: id, name: name };
+            
+            // Set the item name in modal
+            $('#deleteItemName').text(`"${name}"`);
+            
+            // Show the modal
+            $('#deleteConfirmModal').modal('show');
+        }
+
+        // Handle delete confirmation
+        $(document).on('click', '#confirmDeleteBtn', function() {
+            if (!deleteItemData) return;
+            
+            const { id, name } = deleteItemData;
+            
+            // Disable button and show loading
+            const $btn = $(this);
+            const originalText = $btn.html();
+            $btn.prop('disabled', true).html('<i class="spinner-border spinner-border-sm me-1"></i>Đang xóa...');
+            
+            $.ajax({
+                url: '/Field/Delete',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    $('#deleteConfirmModal').modal('hide');
+                    
+                    if (response.success) {
+                        showSuccess('Thành công', response.message || 'Xóa danh mục thành công');
+                        fieldsTable.ajax.reload(null, false);
+                    } else {
+                        showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                    }
+                },
+                error: function () {
+                    $('#deleteConfirmModal').modal('hide');
+                    showError('Lỗi', 'Có lỗi xảy ra khi xóa danh mục');
+                },
+                complete: function() {
+                    // Reset button state
+                    $btn.prop('disabled', false).html(originalText);
+                    deleteItemData = null;
+                }
+            });
+        });
+
+        // Handle modal events
+        $(document).on('hidden.bs.modal', '#fieldModal', function () {
+            $('#fieldModalContent').empty();
+        });
+        
+        // Clean up delete modal data when closed
+        $(document).on('hidden.bs.modal', '#deleteConfirmModal', function () {
+            deleteItemData = null;
+            $('#deleteItemName').text('');
+            // Reset button state in case it was left in loading state
+            $('#confirmDeleteBtn').prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Xóa danh mục');
+        });
+    </script>
+}

@@ -1,0 +1,43 @@
+.order_cart {
+  width: 100% !important;
+  position: fixed !important;
+  bottom: 0px !important;
+  z-index: 1000;
+  border-bottom-left-radius: 0px !important;
+  border-bottom-right-radius: 0px !important;
+}
+.react-datepicker__month-text--today {
+  color: var(--primary-color);
+}
+
+/* For centering items horizontally and vertically */
+.divCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.zaui-tabs-tabbar {
+  overflow: auto;
+  background-color: #ececec;
+}
+
+.zaui-tabs-tabbar-item {
+  min-width: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.itemCategory {
+  margin-right: 15px;
+  background-color: #efefef;
+  padding: 6px 10px;
+}
+
+.ant-drawer .ant-drawer-body {
+  padding: 6px !important;
+}
+
+

@@ -1,0 +1,23 @@
+.zaui-bottom-navigation-content {
+  height: 100% !important;
+  padding-top: calc(env(safe-area-inset-bottom) - 5px) !important;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom)) !important;
+}
+
+.zaui-bottom-navigation-item {
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.zaui-bottom-navigation-item .zaui-bottom-navigation-item-icon {
+  width: 29px;
+  height: 29px;
+}
+
+.zaui-bottom-navigation-item-label {
+  margin: 0 !important;
+}
+
+.zaui-bottom-navigation-item svg path {
+  transition: all 0.3s ease-in-out;
+}

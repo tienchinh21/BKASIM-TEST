@@ -1,0 +1,426 @@
+﻿@{
+    ViewData["Title"] = "ETM";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Danh sách cài đặt template gửi tin</h4>
+                <p class="mb-0">
+                    Trang này giúp bạn quản lý các nhóm khách hàng, phân loại họ theo nhu cầu và đặc điểm để tối ưu hóa
+                    chiến lược tiếp cận và dịch vụ. <br>
+                    Việc phân nhóm khách hàng giúp kiểm soát quyền truy cập vào thông tin quan trọng, cá nhân hóa trải
+                    nghiệm, và nâng cao hiệu quả marketing, <br>
+                    từ đó xây dựng mối quan hệ lâu dài và bền vững.
+                </p>
+            </div>
+            <button type="button" class="btn btn-primary mt-2" onclick="GetFormTemplate()">
+                <i class="ri-add-line mr-3"></i>Thêm mới
+            </button>
+        </div>
+    </div>
+
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo tên">
+                            <span class="search-icon position-absolute user-select-auto"
+                                style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer"
+                                onclick="table.ajax.reload()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div class="table-responsive rounded mb-3">
+            <table id="list-template" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-template" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade">
+    <div id="modal-content" class="modal-dialog modal-xl" style="max-width: 70vw;"></div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            GetListTemplate();
+
+            $('#filter-type').on('change', function () {
+                table.ajax.reload(null, false);
+            });
+
+            $('#search').on('input', search);
+        });
+
+        function GetListTemplate() {
+            table = new DataTable("#list-template", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback) {
+                    const page = (data.start / data.length) + 1;
+                    const keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '/api/OmniTools/Template',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pagesize: data.length,
+                            keyword: keyword,
+                        },
+                        success: function (response) {
+                            const formattedData = response.data.map((item, index) => ({
+                                0: data.start + index + 1, // Số thứ tự
+                                1: item.eventName, // Tên sự kiện
+                                2: item.templateCode || item.referenceId, // Mã template
+                                5: FormatDateTime(item.createdDate), // Mã template
+                                3: item.isEnable ? `<div class="m-auto circle-active"><div>` : `<div class="m-auto circle-inactive"></div>`, // Trạng thái kích hoạt
+                                4: `<div class="d-flex align-items-center justify-content-center list-action">
+                                                                  <a onclick="GetFormTemplate('${item.id}')" class="mx-1 badge badge-info" data-toggle="tooltip" data-placement="top" title="Xem chi tiết">
+                                                                      <i class="ri-edit-line fs-6 mr-0"></i>
+                                                                  </a>
+                                                                  <a onclick="DeleteTemplate('${item.id}')" class="mx-1 badge bg-warning" data-toggle="tooltip" data-placement="top" title="Xóa">
+                                                                      <i class="ri-delete-bin-line fs-6 mr-0"></i>
+                                                                  </a>
+                                                              </div>` // Các hành động
+                            }));
+
+                            setTimeout(() => {
+                                var totalCount = response.totalCount || 0;
+                                callback({
+                                    draw: data.draw,
+                                    recordsTotal: totalCount,
+                                    recordsFiltered: totalCount,
+                                    data: formattedData
+                                });
+                            }, 400);
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: 0, className: 'text-center' },
+                    { title: "Tên sự kiện", data: 1, className: 'text-center' },
+                    { title: "Mã template tham chiếu", data: 2, className: 'text-center' },
+                    { title: "Ngày khởi tạo", data: 5, className: 'text-center' },
+                    { title: "Trạng thái hoạt động", data: 3, className: 'text-center' },
+                    { title: "Thao tác", data: 4, className: 'text-center' }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng dữ liệu",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": ""
+                }
+            });
+        }
+
+        function DeleteTemplate(id) {
+            const url = `/api/OmniTools/Template/${id}`
+            DeleteItem(url);
+        }
+
+        function GetFormTemplate(id) {
+            const url = id ? `/EventTrigger/Detail/${id}` : "@Url.Action("Create", "EventTrigger")";
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (data) {
+                    $("#modal-content").html(data);
+                    $("#modal-template").modal("toggle");
+
+                    HandleTemplateTable(id);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    let errorMsg = "Lỗi không xác định";
+                    try {
+                        if (jqXHR.responseText) {
+                            let res = JSON.parse(jqXHR.responseText);
+                            errorMsg = res.message || res.Message || errorThrown;
+                        } else {
+                            errorMsg = errorThrown;
+                        }
+                    } catch (e) {
+                        errorMsg = errorThrown;
+                    }
+                    console.log(errorMsg);
+                    AlertResponse(errorMsg, 'error');
+                }
+            });
+        }
+
+        function HandleSaveOrUpdate(id) {
+            // Validate form
+            const form = document.getElementById('eventTemplateForm');
+            if (!form.checkValidity()) {
+                // Trigger Bootstrap validation
+                form.classList.add('was-validated');
+                // AlertResponse("Vui lòng điền đầy đủ thông tin bắt buộc!", 'warning');
+                // return;
+            }
+
+            // Get template type (uid or omni)
+            const templateType = $('#typeTemplate').val()?.trim();
+
+            // Collect common form data
+            const eventName = $('#eventName').val()?.trim();
+            const isEnable = $('#isEnable').val()?.trim() === 'true';
+            const conditions = $('#conditions').val()?.trim() || '';
+
+            // Show loading indicator
+            const saveBtn = $('button[onclick^="HandleSaveOrUpdate"]');
+            const originalText = saveBtn.html();
+            saveBtn.html('<i class="ri-loader-4-line mr-1 spinning"></i> Đang lưu...');
+            saveBtn.prop('disabled', true);
+
+            // Prepare request data based on template type
+            let requestData;
+            let apiUrl;
+
+            if (templateType === 'uid') {
+                // Xử lý cho Zalo UID
+                const templateId = $('#templateId').val()?.trim();
+                const recipients = $('#recipients').val() || ['trigger'];
+
+                // Extract parameters data for UID template
+                const paramsConfig = ExtractDataParamsTemplate();
+
+                // Validate required fields for UID
+                if (!eventName || !templateId) {
+                    AlertResponse("Vui lòng điền đầy đủ thông tin bắt buộc!", 'warning');
+                    saveBtn.html(originalText);
+                    saveBtn.prop('disabled', false);
+                    return;
+                }
+
+                if (recipients.length === 0) {
+                    AlertResponse("Vui lòng chọn ít nhất một người nhận!", 'warning');
+                    saveBtn.html(originalText);
+                    saveBtn.prop('disabled', false);
+                    return;
+                }
+
+                if (paramsConfig.length === 0) {
+                    AlertResponse("Vui lòng chọn các tham số template!", 'warning');
+                    saveBtn.html(originalText);
+                    saveBtn.prop('disabled', false);
+                    return;
+                }
+
+                // Create request data for UID
+                requestData = {
+                    isEnable: isEnable,
+                    type: templateType,
+                    eventName: eventName,
+                    conditions: conditions,
+                    zaloTemplateUid: templateId,
+                    recipients: recipients,
+                    paramsConfig: paramsConfig
+                };
+
+                // Set API URL for UID
+                apiUrl = id ? `/api/OmniTools/Template/${id}/uid` : '/api/OmniTools/Template/uid';
+
+            } else {
+                // Xử lý cho Incom Omni (giữ nguyên logic hiện tại)
+                const templateCode = $('#templateCode').val()?.trim();
+                const phoneNumberType = $('#phoneNumber').val()?.trim();
+                const routingRule = $('#routeRule').val() || [];
+
+                // Handle phone number based on selection
+                let phoneNumber = phoneNumberType;
+                if (phoneNumberType === 'CUSTOM.PHONENUMBER') {
+                    phoneNumber = $('#customPhoneNumber').val()?.trim();
+                    if (!phoneNumber || !/^[0-9]{10,11}$/.test(phoneNumber)) {
+                        AlertResponse("Số điện thoại không hợp lệ!", 'warning');
+                        saveBtn.html(originalText);
+                        saveBtn.prop('disabled', false);
+                        return;
+                    }
+                }
+
+                // Extract parameters data for Omni template
+                const paramsConfig = ExtractDataParamsTemplate();
+
+                // Final validation for Omni
+                if (!eventName || !phoneNumber || !templateCode) {
+                    AlertResponse("Vui lòng điền đầy đủ thông tin bắt buộc!", 'warning');
+                    saveBtn.html(originalText);
+                    saveBtn.prop('disabled', false);
+                    return;
+                }
+
+                if (routingRule.length === 0) {
+                    AlertResponse("Vui lòng chọn ít nhất một router rule!", 'warning');
+                    saveBtn.html(originalText);
+                    saveBtn.prop('disabled', false);
+                    return;
+                }
+
+                if (paramsConfig.length === 0) {
+                    AlertResponse("Vui lòng chọn các tham số template!", 'warning');
+                    saveBtn.html(originalText);
+                    saveBtn.prop('disabled', false);
+                    return;
+                }
+
+                // Create request data for Omni
+                requestData = {
+                    eventName: eventName,
+                    phoneNumber: phoneNumber,
+                    conditions: conditions,
+                    templateCode: templateCode,
+                    routingRule: routingRule,
+                    isEnable: isEnable,
+                    paramsConfig: paramsConfig,
+                    type: templateType
+                };
+
+                // Set API URL for Omni
+                apiUrl = id ? `/api/OmniTools/Template/${id}` : '/api/OmniTools/Template';
+            }
+
+            // Send request
+            const method = id ? 'PUT' : 'POST';
+
+            $.ajax({
+                url: apiUrl,
+                type: method,
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                success: function (response) {
+                    if (response.code === 0) {
+                        AlertResponse(response.message || "Lưu thành công!", 'success');
+                        $("#modal-template").modal("hide");
+                        table.ajax.reload(null, false);
+                    } else {
+                        AlertResponse(response.message || "Có lỗi xảy ra!", 'error');
+                    }
+                },
+                error: function (error) {
+                    console.error(error);
+                    AlertResponse("Đã xảy ra lỗi! Vui lòng thử lại sau.", 'error');
+                },
+                complete: function () {
+                    // Restore button state
+                    saveBtn.html(originalText);
+                    saveBtn.prop('disabled', false);
+                }
+            });
+        }
+
+        function GetTableParamsOmni(referenceId) {
+            const code = $("#templateCode").val();
+            const url = '@Url.Action("TableParams", "OmniTool")' + `?code=${code}`;
+            $.ajax({
+                url: url,
+                type: "GET",
+                data: { referenceId },
+                success: function (response) {
+                    $("#table-params").html(response)
+                },
+                error: function (error) {
+                    AlertResponse("Đã xảy ra lỗi! Vui lòng thử lại sau.", 'error')
+                }
+            });
+        }
+
+        function GetTableParamsUid(referenceId) {
+            const code = $("#templateId").val();
+            const url = '@Url.Action("TableParams", "OmniTool")' + `?code=${code}&type=uid`;
+            $.ajax({
+                url: url,
+                type: "GET",
+                data: { referenceId },
+                success: function (response) {
+                    $("#table-params").html(response)
+                },
+                error: function (error) {
+                    AlertResponse("Đã xảy ra lỗi! Vui lòng thử lại sau.", 'error')
+                }
+            });
+        }
+
+        // Cải thiện hàm ExtractDataParamsTemplate
+        function ExtractDataParamsTemplate() {
+            const paramsData = [];
+            let hasInvalidParam = false;
+            let hasMappedParam = false;
+
+            $('#table-params tbody tr').each(function () {
+                const $row = $(this);
+
+                // Skip if this is "no data" row
+                if ($row.find('td[colspan]').length > 0) return;
+
+                const paramCell = $row.find('td[data-param]');
+                if (!paramCell.length) return;
+
+                const paramName = paramCell.data("param");
+                if (!paramName) return;
+
+                // Fix: Sử dụng selector chính xác cho các phần tử được cập nhật
+                const tableMapping = $row.find('.data-source-select').val() || '';
+                const fieldMapping = $row.find('.field-select').val() || '';
+                const defaultData = $row.find('input[type="text"]').val()?.trim() || '';
+
+                // Check if we have at least one properly mapped parameter
+                if (tableMapping && fieldMapping) {
+                    hasMappedParam = true;
+                }
+
+                // Validate required fields if a data source is selected
+                if (tableMapping && !fieldMapping) {
+                    // Fix: Không sử dụng .select2-container vì đã loại bỏ select2
+                    $row.find('.field-select').addClass('is-invalid');
+                    hasInvalidParam = true;
+                } else {
+                    $row.find('.field-select').removeClass('is-invalid');
+                }
+
+                // Add to params list with the correct property names for API
+                paramsData.push({
+                    paramName: paramName,
+                    mappingTableName: tableMapping,
+                    mappingColumnName: fieldMapping,
+                    defaultValue: defaultData
+                });
+            });
+
+            // Báo cáo lỗi nếu có
+            if (hasInvalidParam) {
+                AlertResponse("Vui lòng chọn đầy đủ trường dữ liệu cho các nguồn đã chọn!", 'warning');
+                return [];
+            }
+
+            // Kiểm tra xem có ít nhất một tham số được map đúng cách không
+            if (paramsData.length > 0 && !hasMappedParam) {
+                AlertResponse("Vui lòng chọn ít nhất một tham số với nguồn dữ liệu và trường tương ứng!", 'warning');
+                return [];
+            }
+
+            // Debug để kiểm tra
+            console.log("Đã trích xuất " + paramsData.length + " tham số", paramsData);
+            return paramsData;
+        }
+    </script>
+}

@@ -1,0 +1,258 @@
+<div class="modal-content border-0 shadow-lg">
+    <!-- Header -->
+    <div class="modal-header border-0 bg-warning text-white">
+        <h5 class="modal-title fw-bold">
+            <i class="ri-vip-crown-line me-2"></i>
+            Quản lý Gói Cước Thành Viên
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body p-4">
+        <!-- User Info -->
+        <div class="alert alert-info mb-4">
+            <i class="ri-user-line me-2"></i>
+            Thành viên: <strong id="subscriptionUserName"></strong>
+        </div>
+
+        <!-- Subscription List -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="ri-list-check me-2"></i>
+                    Danh sách gói cước
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="5%" class="text-center">#</th>
+                                <th width="25%">Tên Gói</th>
+                                <th width="15%" class="text-center">Thời Hạn</th>
+                                <th width="15%" class="text-center">Ngày Bắt Đầu</th>
+                                <th width="15%" class="text-center">Ngày Hết Hạn</th>
+                                <th width="15%" class="text-center">Trạng Thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscriptionListBody">
+                            <tr>
+                                <td colspan="6" class="text-center">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Đang tải...</span>
+                                    </div>
+                                    <span class="ms-2">Đang tải dữ liệu...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Subscription Button -->
+        <div class="mt-3">
+            <button type="button" class="btn btn-primary" onclick="showAddSubscriptionModal()">
+                <i class="ri-add-line me-1"></i>
+                Thêm Gói Cước Mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-close-line me-1"></i>
+            Đóng
+        </button>
+    </div>
+</div>
+
+<!-- Add Subscription Modal (nested modal) -->
+<div class="modal fade" id="addSubscriptionModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="ri-add-circle-line me-2"></i>
+                    Thêm Gói Cước Mới
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Plan Selection -->
+                <div class="mb-3">
+                    <label for="newSubscriptionPlan" class="form-label">
+                        Chọn gói cước <span class="text-danger">*</span>
+                    </label>
+                    <select id="newSubscriptionPlan" class="form-select" required>
+                        <option value="">-- Chọn gói cước --</option>
+                    </select>
+                </div>
+
+                <!-- Plan Info Display -->
+                <div id="newPlanInfo" class="card bg-light mb-3" style="display: none;">
+                    <div class="card-body">
+                        <h6 class="text-primary mb-2">Thông tin gói:</h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted">Thời hạn:</small>
+                                <p class="mb-0 fw-semibold" id="newPlanDuration"></p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Giá:</small>
+                                <p class="mb-0 fw-semibold" id="newPlanPrice"></p>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted">Mô tả:</small>
+                                <p class="mb-0" id="newPlanDescription"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Start Date -->
+                <div class="mb-3">
+                    <label for="newStartDate" class="form-label">
+                        Ngày bắt đầu <span class="text-danger">*</span>
+                    </label>
+                    <input type="date" id="newStartDate" class="form-control" required>
+                    <div class="form-text">Mặc định là hôm nay</div>
+                </div>
+
+                <!-- Additional Days -->
+                <div class="mb-3">
+                    <label for="newAdditionalDays" class="form-label">
+                        Số ngày thêm (không bắt buộc)
+                    </label>
+                    <input type="number" id="newAdditionalDays" class="form-control" min="0" placeholder="0">
+                    <div class="form-text">Thêm số ngày vào thời hạn gói</div>
+                </div>
+
+                <!-- Notes -->
+                <div class="mb-3">
+                    <label for="newNotes" class="form-label">Ghi chú</label>
+                    <textarea id="newNotes" class="form-control" rows="3" placeholder="Nhập ghi chú (không bắt buộc)"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ri-close-line me-1"></i>
+                    Hủy
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmAddSubscription">
+                    <i class="ri-check-line me-1"></i>
+                    Thêm Gói Cước
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let availableNewPlans = [];
+
+    function showAddSubscriptionModal() {
+        // Load available plans
+        $.get('/Membership/GetActivePlans', function (response) {
+            if (response.success && response.data) {
+                availableNewPlans = response.data;
+                const select = $('#newSubscriptionPlan');
+                select.find('option:not(:first)').remove();
+
+                response.data.forEach(plan => {
+                    const price = plan.price ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.price) : 'Miễn phí';
+                    select.append(`<option value="${plan.id}">${plan.planName} - ${plan.durationDays} ngày - ${price}</option>`);
+                });
+
+                // Set default start date to today
+                const today = new Date().toISOString().split('T')[0];
+                $('#newStartDate').val(today);
+
+                // Reset form
+                $('#newSubscriptionPlan').val('');
+                $('#newAdditionalDays').val('');
+                $('#newNotes').val('');
+                $('#newPlanInfo').hide();
+
+                $('#addSubscriptionModal').modal('show');
+            }
+        }).fail(function () {
+            showError('Lỗi', 'Không thể tải danh sách gói cước');
+        });
+    }
+
+    // Handle plan selection
+    $('#newSubscriptionPlan').change(function () {
+        const planId = $(this).val();
+        if (planId) {
+            const plan = availableNewPlans.find(p => p.id === planId);
+            if (plan) {
+                const price = plan.price ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.price) : 'Miễn phí';
+                $('#newPlanDuration').text(`${plan.durationDays} ngày`);
+                $('#newPlanPrice').text(price);
+                $('#newPlanDescription').text(plan.description || 'Không có mô tả');
+                $('#newPlanInfo').show();
+            }
+        } else {
+            $('#newPlanInfo').hide();
+        }
+    });
+
+    // Handle add subscription confirmation
+    $('#confirmAddSubscription').click(function () {
+        const userZaloId = $('#membershipModal').data('userZaloId');
+        const planId = $('#newSubscriptionPlan').val();
+        const startDate = $('#newStartDate').val();
+        const additionalDays = $('#newAdditionalDays').val();
+        const notes = $('#newNotes').val();
+
+        if (!planId) {
+            showWarning('Cảnh báo', 'Vui lòng chọn gói cước!');
+            return;
+        }
+
+        if (!startDate) {
+            showWarning('Cảnh báo', 'Vui lòng chọn ngày bắt đầu!');
+            return;
+        }
+
+        // Disable button
+        $('#confirmAddSubscription').prop('disabled', true).html('<i class="ri-loader-4-line ri-spin me-1"></i>Đang xử lý...');
+
+        $.ajax({
+            url: '/Membership/AddUserSubscription',
+            type: 'POST',
+            contentType: 'application/json',
+            headers: {
+                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+            },
+            data: JSON.stringify({
+                userZaloId: userZaloId,
+                subscriptionPlanId: planId,
+                startDate: startDate,
+                additionalDays: additionalDays ? parseInt(additionalDays) : 0,
+                notes: notes
+            }),
+            success: function (response) {
+                if (response.success) {
+                    showSuccess('Thành công', response.message || 'Thêm gói cước thành công!');
+                    $('#addSubscriptionModal').modal('hide');
+                    // Reload subscription list
+                    loadUserSubscriptions(userZaloId);
+                } else {
+                    showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                }
+            },
+            error: function () {
+                showError('Lỗi', 'Có lỗi xảy ra khi thêm gói cước');
+            },
+            complete: function () {
+                $('#confirmAddSubscription').prop('disabled', false).html('<i class="ri-check-line me-1"></i>Thêm Gói Cước');
+            }
+        });
+    });
+</script>
+

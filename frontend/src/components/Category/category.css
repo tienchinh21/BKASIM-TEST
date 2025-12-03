@@ -1,0 +1,29 @@
+.item-category {
+  margin-right: 15px;
+  padding: 6px 10px;
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.item-category-active {
+  cursor: pointer;
+  color: #fbbf24;
+  border-bottom: 2px solid #fbbf24;
+}
+
+.item-category-child {
+  margin: 4px;
+  padding: 4px 6px;
+  font-weight: 500;
+  border: 2px solid #efefef;
+  border-radius: 10px;
+  color: #000 !important;
+  cursor: pointer;
+}
+
+.item-category-child-active {
+  cursor: pointer;
+  color: #fbbf24 !important;
+  border-bottom: 2px solid #fbbf24;
+}

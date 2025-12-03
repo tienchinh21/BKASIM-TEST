@@ -1,0 +1,181 @@
+@model MiniAppGIBA.Models.DTOs.Groups.MembershipGroupDTO
+
+<div class="modal-content border-0 shadow-lg">
+    <!-- Header -->
+    <div class="modal-header border-0 bg-info text-white">
+        <h5 class="modal-title fw-bold">
+            <i class="ri-information-line me-2"></i>
+            Chi tiết đơn xin tham gia
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body p-4">
+        <div class="row g-4">
+            <!-- Thông tin thành viên -->
+            <div class="col-12">
+                <h6 class="text-primary mb-3">
+                    <i class="ri-user-line me-2"></i>
+                    Thông tin thành viên
+                </h6>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Họ và tên</label>
+                                <p class="fw-semibold mb-0">@Model.MemberName</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Hội nhóm</label>
+                                <p class="fw-semibold mb-0">@Model.GroupName</p>
+                            </div>
+                            @{
+                                var fullMembership = ViewBag.FullMembership as MiniAppGIBA.Models.DTOs.Memberships.MembershipDTO;
+                            }
+                            @if (fullMembership != null)
+                            {
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Số điện thoại</label>
+                                    <p class="mb-0">@(fullMembership.PhoneNumber ?? "Chưa có")</p>
+                                </div>
+                            }
+                            <div class="col-md-6">
+                                <label class="text-muted small">Công ty</label>
+                                <p class="mb-0">@(Model.Company ?? "Chưa có")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Chức vụ</label>
+                                <p class="mb-0">@(Model.Position ?? "Chưa có")</p>
+                            </div>
+                            <div class="col-12">
+                                <label class="text-muted small">Lý do tham gia</label>
+                                <p class="mb-0">@(Model.Reason ?? "Chưa có")</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trạng thái -->
+            <div class="col-12">
+                <h6 class="text-primary mb-3">
+                    <i class="ri-checkbox-circle-line me-2"></i>
+                    Trạng thái phê duyệt
+                </h6>
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Trạng thái</label>
+                                <p class="mb-0">
+                                    <span class="badge bg-@Model.StatusClass">@Model.StatusText</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Ngày tạo</label>
+                                <p class="mb-0">@Model.CreatedDate.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                            @if (Model.ApprovedDate.HasValue)
+                            {
+                                <div class="col-md-6">
+                                    <label class="text-muted small">Ngày phê duyệt</label>
+                                    <p class="mb-0">@Model.ApprovedDate.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.RejectReason))
+                            {
+                                <div class="col-12">
+                                    <label class="text-muted small">Lý do từ chối</label>
+                                    <div class="alert alert-danger mb-0">
+                                        <i class="ri-error-warning-line me-2"></i>
+                                        @Model.RejectReason
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer border-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-close-line me-1"></i>
+            Đóng
+        </button>
+        @if (Model.IsApproved == null)
+        {
+            <button type="button" class="btn btn-danger" onclick="rejectFromDetail('@Model.Id', '@Model.MemberName')">
+                <i class="ri-close-line me-1"></i>
+                Từ chối
+            </button>
+            <button type="button" class="btn btn-success" onclick="showApprovalOptions('@Model.Id', '@Model.MemberName')">
+                <i class="ri-check-line me-1"></i>
+                Phê duyệt
+            </button>
+        }
+    </div>
+</div>
+
+<script>
+    function approveFromDetail(id, memberName) {
+        if (confirm(`Bạn có chắc chắn muốn phê duyệt đơn của "${memberName}"?`)) {
+            $.ajax({
+                url: '/Membership/Approve',
+                type: 'POST',
+                data: {
+                    id: id,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', response.message || 'Phê duyệt thành công');
+                        $('#detailModal').modal('hide');
+                        if (typeof pendingTable !== 'undefined') {
+                            pendingTable.ajax.reload(null, false);
+                        }
+                    } else {
+                        showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi phê duyệt');
+                }
+            });
+        }
+    }
+
+    function rejectFromDetail(id, memberName) {
+        const reason = prompt(`Nhập lý do từ chối đơn của "${memberName}":`);
+        if (reason !== null && reason.trim() !== '') {
+            $.ajax({
+                url: '/Membership/Reject',
+                type: 'POST',
+                data: {
+                    id: id,
+                    rejectReason: reason,
+                    __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+                    if (response.success) {
+                        showSuccess('Thành công', response.message || 'Từ chối thành công');
+                        $('#detailModal').modal('hide');
+                        if (typeof pendingTable !== 'undefined') {
+                            pendingTable.ajax.reload(null, false);
+                        }
+                    } else {
+                        showError('Lỗi', response.message || 'Có lỗi xảy ra');
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi từ chối');
+                }
+            });
+        } else if (reason !== null) {
+            showWarning('Cảnh báo', 'Vui lòng nhập lý do từ chối!');
+        }
+    }
+</script>

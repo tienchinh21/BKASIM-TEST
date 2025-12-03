@@ -1,0 +1,67 @@
+﻿@model MiniAppGIBA.Entities.ETM.DatasourceETM;
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" data-bs-dismiss="modal">
+            <span aria-hidden="true">×</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <div class="card-body">
+            <form data-toggle="validator">
+                <input type="hidden" value="@Model.Id" />
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Tên chiến dịch (viết liền không dấu) <span style="color:red">*</span></label>
+                            <input id="code" type="text" class="form-control" value="@Model.Code" onkeypress="preventInvalidChars(event)" placeholder="Tên chiến dịch (viết liền không dấu)"
+                                data-errors="Tên sự kiện" required>
+                        </div>
+                    </div>
+
+                    <!-- Adding Status field -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Trạng thái<span style="color:red">*</span></label>
+                            <select class="form-control" id="isUsed" required>
+                                <option value="true" selected="@(Model.IsUsed)">Đã sử dụng</option>
+                                <option value="false" selected="@(!Model.IsUsed)">Chưa sử dụng</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Adding RankingPoint field -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Tên biến <span style="color:red">*</span></label>
+                            <input id="key" type="text" class="form-control" value="@Model.Key" onkeypress="preventInvalidChars(event)" placeholder="Tên biến (viết liền không dấu)" min="0" required>
+
+                        </div>
+                    </div>
+
+                    <!-- Adding ConvertRate field -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Giá trị biến<span style="color:red">*</span></label>
+                            <input id="value" type="text" class="form-control" value="@Model.Value" placeholder="Giá trị bến" required>
+                        </div>
+                    </div>
+
+
+                </div>
+
+            </form>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <button type="button" class="btn btn-secondary" onclick="ClearForm()">Làm mới</button>
+        <button type="submit" class="btn btn-primary" onclick="HandleSaveOrUpdate('@Model.Id')">@ViewBag.Button</button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(() => {
+        currentImages = $("#preview .image-preview img").length;
+    });
+</script>

@@ -1,0 +1,264 @@
+﻿@{
+    ViewData["Title"] = "Mẫu Zalo UID";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div class="row">
+    <!-- Header Section -->
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Danh sách template UID</h4>
+                <p class="mb-0">Quản lý các mẫu template Zalo UID</p>
+            </div>
+            <!-- Add Template Button -->
+            <button type="button" class="btn btn-primary mt-2" onclick="GetFormTemplate()">
+                <i class="ri-add-line mr-3"></i>Thêm mới
+            </button>
+        </div>
+    </div>
+
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo tên">
+                            <span class="search-icon position-absolute user-select-auto"
+                                style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer"
+                                onclick="table.ajax.reload()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12" style="z-index: 1">
+        <div id="spinner" class="text-center my-4"></div>
+        <div class="table-responsive rounded mb-3">
+            <table id="list-template" class="data-table table table-bordered table-hover mb-0">
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-template" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade">
+    <div id="modal-content" class="modal-dialog modal-dialog-centered modal-xl"></div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+    <!--TinyMCE-->
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@7.7.2/tinymce.min.js"></script>
+    <script>
+        let tinymce;
+        $(document).ready(function () {
+            GetListTemplate();
+            $('#search').on('input', function () {
+                table.ajax.reload();
+            });
+        });
+
+        function GetListTemplate() {
+            table = new DataTable("#list-template", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const pageSize = data.length;
+                    const keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '@Url.Action("GetPageTemplateUid", "OmniTools")',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pagesize: data.length,
+                            sort: data.order[0]?.dir || 'asc',
+                            keyword: keyword
+                        },
+                        success: function (response) {
+                            const formattedData = response.data.map((item, index) => ({
+                                0: data.start + index + 1, // STT
+                                1: item.name, // Tên
+                                2: FormatDateTime(item.createdDate),
+                                3: `<div class="d-flex align-items-center justify-content-center gap-2">
+                                            <button onclick="GetFormTemplate('${item.id}')" class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Xem chi tiết">
+                                                <i class="ri-edit-line fs-6 mx-0"></i>
+                                            </button>
+                                            <button onclick="DeleteTemplate('${item.id}')" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="Xóa">
+                                                <i class="ri-delete-bin-line fs-6 mx-0"></i>
+                                            </button>
+                                        </div>`
+                            }));
+
+                            setTimeout(() => {
+                                var totalCount = response.totalCount || 0;
+                                callback({
+                                    draw: data.draw,
+                                    recordsTotal: totalCount,
+                                    recordsFiltered: totalCount,
+                                    data: formattedData
+                                });
+                            }, 400);
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: 0, className: 'text-center' },
+                    { title: "Tên", data: 1, className: 'text-center' },
+                    { title: "Ngày tạo", data: 2, className: 'text-center' },
+                    { title: "Thao tác", data: 3, className: 'text-center' }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng dữ liệu",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": ""
+                }
+            });
+
+            $(table.table().header()).addClass('light light-data');
+        }
+
+        function GetFormTemplate(id) {
+            if (tinymce && tinymce.get('content')) {
+                tinymce.get('content').remove();
+            }
+
+            const url = id ? `/TemplateUid/Detail/${id}` : "@Url.Action("CreateTemplateUid", "OmniTool")"
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (data) {
+                    $("#modal-content").html(data);
+                    $("#modal-template").modal("show");
+
+                    // Khởi tạo trình soạn thảo sau khi modal hiển thị
+                    InitialEditor();
+
+                    // Khởi tạo tooltip
+                    $('[data-bs-toggle="tooltip"]').tooltip();
+                }
+            })
+        }
+
+        function DeleteTemplate(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa template này?')) {
+                const url = `/api/OmniTools/TemplateUid/${id}`;
+                $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                    success: function (response) {
+                        showError("Xóa template thành công", 'success');
+                        table.ajax.reload();
+                    },
+                    error: function () {
+                        showError("Không thể xóa template", 'error');
+                    }
+                });
+            }
+        }
+
+        function InitialEditor() {
+            tinymce.init({
+                selector: '#content',
+                height: 350,
+                menubar: false,
+                plugins: [
+                    'lists', 'link', 'image', 'table', 'code'
+                ],
+                toolbar: `
+                                    undo redo |
+                                    formatselect fontsizeselect |
+                                    bold italic underline strikethrough |
+                                    forecolor backcolor |
+                                    alignleft aligncenter alignright alignjustify |
+                                    bullist numlist outdent indent |
+                                    blockquote code |
+                                    image link table | removeformat
+                                `,
+                fontsize_formats: '8px 10px 12px 13px 14px 16px 18px 20px 24px 28px 32px 36px 48px 72px',
+                content_style: `
+                                    body { font-family:Arial,sans-serif; font-size:14px; }
+                                    table { width: 100%; border-collapse: collapse; }
+                                    th, td { border: 1px solid #000; padding: 6px; } `
+            });
+        }
+
+        function HandleSaveOrUpdate(id) {
+            $(".error-message").text("");
+
+            // Lấy dữ liệu từ form
+            const data = {
+                name: $("#name").val().trim(),
+                message: tinymce && tinymce.get('content') ? tinymce.get('content').getContent() : $("#content").val(),
+                listParams: $("#listParams").val().trim()
+            };
+
+            // Kiểm tra dữ liệu
+            const requiredFields = {
+                name: "Tên template là bắt buộc",
+                message: "Nội dung template là bắt buộc",
+                listParams: "Danh sách biến là bắt buộc"
+            };
+
+            // Kiểm tra các trường bắt buộc
+            let hasError = false;
+            for (const [field, message] of Object.entries(requiredFields)) {
+                if (!data[field]) {
+                    $(`#${field}`).addClass('is-invalid');
+                    $(`#${field}`).after(`<div class="invalid-feedback">${message}</div>`);
+                    hasError = true;
+                } else {
+                    $(`#${field}`).removeClass('is-invalid');
+                }
+            }
+
+            if (hasError) {
+                showError("Vui lòng điền đầy đủ thông tin", 'warning');
+                return;
+            }
+
+            // Xác định API endpoint và phương thức
+            const isNew = !id || id.trim() === "";
+            const url = !isNew ? `/api/OmniTools/TemplateUid/${id}` : '/api/OmniTools/TemplateUid';
+            const method = !isNew ? 'PUT' : 'POST';
+
+            // Gửi request
+            $.ajax({
+                url: url,
+                type: method,
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: function (response) {
+                    if (response.code === 0) {
+                        showSuccess(response.message || "Lưu thành công", 'success');
+                        table.ajax.reload(null, false);
+                        $("#modal-template").modal("hide");
+                    } else {
+                        showError(response.message || "Lỗi khi lưu dữ liệu", 'warning');
+                    }
+                },
+                error: function (err) {
+                    showError(err.responseJSON?.message || "Lỗi máy chủ, vui lòng thử lại sau!", 'error');
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,342 @@
+﻿@{
+    ViewData["Title"] = "Thông tin ứng dụng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using MiniAppGIBA.Models.DTOs.SystemSettings
+@model (OmniAccountDTO omniAccount, OaInfoDTO oaInfo)
+
+<div class="container py-4">
+    <!-- Tiêu đề trang -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="mb-1">Thông tin ứng dụng</h4>
+            <small class="text-muted">Thiết lập các tham số & thông tin liên quan</small>
+        </div>
+        <div class="text-muted">
+            <i class="fa-solid fa-cog"></i>
+        </div>
+    </div>
+
+    <!-- Thông tin tài khoản Omni -->
+    <section class="card shadow-sm mb-4">
+        <div class="card-header bg-white rounded-top">
+            <h5 class="card-title mb-0">Thông tin tài khoản omni</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label" for="envUrlInput">Môi trường</label>
+                    <input type="text"
+                           class="form-control"
+                           data-default="@Model.omniAccount.EnvUrl"
+                           value="@Model.omniAccount.EnvUrl"
+                           id="envUrlInput" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="usernameInput">Username</label>
+                    <input type="text"
+                           class="form-control"
+                           name="username"
+                           data-default="@Model.omniAccount.Username"
+                           value="@Model.omniAccount.Username"
+                           id="usernameInput" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="passwordInput">Mật khẩu</label>
+                    <input type="password"
+                           class="form-control"
+                           name="password"
+                           data-default="@Model.omniAccount.Password"
+                           value="@Model.omniAccount.Password"
+                           id="passwordInput" />
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-primary" onclick="HandleSaveChangeAccount()">Lưu thay đổi</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Thông tin Token OA -->
+    <section class="card shadow-sm mb-4">
+        <div class="card-header bg-white rounded-top">
+            <h5 class="card-title mb-0">Thông tin Token OA</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <!-- Cột trái -->
+                <div class="col-lg-6">
+                    <div class="mb-3">
+                        <label for="accessToken" id="enableEdit" class="form-label" style="cursor:pointer; user-select:none;">
+                            Access Token
+                        </label>
+                        <input type="text" class="form-control" id="accessToken" value="@Model.oaInfo.AccessToken"
+                               placeholder="Nhập Access Token" disabled>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="refreshToken" class="form-label">Refresh token</label>
+                        <input type="text" class="form-control" id="refreshToken" value="@Model.oaInfo.RefreshToken"
+                               placeholder="Nhập Refresh token" disabled>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button id="updateToken" class="btn btn-primary" disabled>Cập nhật token</button>
+                        <button id="btnRefreshToken" class="btn btn-outline-danger" disabled>Refresh Token</button>
+                    </div>
+                </div>
+
+                <!-- Cột phải -->
+                <div class="col-lg-6">
+                    <div class="mb-3">
+                        <label for="appId" class="form-label">AppId</label>
+                        <input type="text" class="form-control" id="appId" placeholder="Nhập AppId" value="@Model.oaInfo.AppId">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="secretKey" class="form-label">Secret key</label>
+                        <input type="text" class="form-control" id="secretKey" placeholder="Nhập Secret key" value="@Model.oaInfo.SecretKey">
+                    </div>
+
+                    <button id="updateInfo" class="btn btn-primary">Cập nhật thông tin</button>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+	    const editors = {};
+        $(document).ready(function () {
+            SetupInputChangeHandling();
+        });
+
+        function SetupInputChangeHandling() {
+
+                $('.modal-body input').each(function () {
+                    const $input = $(this);
+                    $input.on('input', function () {
+                        const $modal = $(this).closest('.modal-content');
+                        const saveButton = $modal.find('.saveButton');
+                        const cancelButton = $modal.find('.cancelButton');
+
+                        saveButton.removeAttr('hidden');
+                        cancelButton.removeAttr('hidden');
+                    });
+                });
+
+                // Hủy và khôi phục giá trị mặc định
+                $('.cancelButton').on('click', function () {
+                    const $modal = $(this).closest('.modal-content');
+                    $modal.find('input').each(function () {
+                        const $input = $(this);
+                        $input.val($input.attr('data-default'));
+                        $input.trigger('input');
+                    });
+
+                    $modal.find('select').each(function () {
+                        const $input = $(this);
+                        $input.val($input.attr('data-default'));
+                        $input.trigger('change');
+                    });
+
+                    const $policyInput = $modal.find('#policyInput .ql-editor');
+                    const defaultContent = $modal.find('#policyInput').attr('data-default');
+                    if (defaultContent) {
+                        $policyInput.html(defaultContent);
+                        $policyInput.trigger('input');
+                    }
+
+                    $modal.find('.saveButton, .cancelButton').attr('hidden', true);
+                });
+            }
+
+        function InitialEditor(selector) {
+             const quill = createQuillEditor(`#${selector}`);
+             editors[selector] = quill;
+        }
+
+        function HandleSaveChangeAccount() {
+                const envUrl = $('#envUrlInput').val()?.trim();
+                const username = $('#usernameInput').val()?.trim();
+                const password = $('#passwordInput').val()?.trim();
+
+                if (!username || !password) {
+                    showError("Vui lòng nhập đầy đủ thông tin tài khoản và mật khẩu.", "warning");
+                    return;
+                }
+
+                const data = {
+                    envUrl: envUrl,
+                    username: username,
+                    password: password
+                };
+
+                $.ajax({
+                    url: '@Url.Action("CreateOrUpdateOmniAccount", "SystemSettings")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (response) {
+                        if (response.code === 0) {
+                            $('#usernameInput').attr('data-default', username);
+                            $('#passwordInput').attr('data-default', password);
+
+                            $('.cancelButton').attr('hidden', true);
+                            $('.saveButton').attr('hidden', true);
+                            showSuccess(response.message, "success");
+                        } else {
+                            showError("Cập nhật thất bại! Vui lòng thử lại!", "warning");
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        showError("Đã xảy ra lỗi khi gọi API.", "error");
+                    }
+                });
+            }
+
+        function HandleSaveChangeAbout() {
+                const data = {
+                    email: $('#emailInput')?.val()?.trim(),
+                    address: $('#addressInput')?.val()?.trim(),
+                    hotline: $('#hotlineInput')?.val()?.trim(),
+                    // phoneNumber: $('#phoneNumberInput')?.val()?.trim(),
+                    businessCode: $('#businessCodeInput')?.val()?.trim(),
+                    paymentInstruction: $('#linkPaymentGuide')?.val()?.trim(),
+                    
+                    policy: editors["policyInput"]?.root?.innerHTML?.trim(),
+                    businessInformation: editors["businessInfoInput"]?.root?.innerHTML?.trim(),
+                };
+
+                $.ajax({
+                    url: '@Url.Action("CreateOrUpdateEnterpriseInformation", "SystemSettings")',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(data),
+                    success: function (response) {
+                        if (response.code === 0) {
+                            // Cập nhật lại giá trị data-default sau khi lưu thành công
+                            $('#linkPaymentGuide').attr('data-default', data.paymentInstruction);
+                            $('#businessCodeInput').attr('data-default', data.businessCode);
+                            $('#addressInput').attr('data-default', data.address);
+                            $('#emailInput').attr('data-default', data.email);
+                            // $('#phoneNumberInput').attr('data-default', data.phoneNumber);
+                            $('#hotlineInput').attr('data-default', data.hotline);
+
+                            // Cập nhật data-default của editor
+                            $('#businessInfoInput').attr('data-default', data.businessInformation);
+                            $('#policyInput').attr('data-default', data.policy);
+
+                            $('.cancelButton, .saveButton').attr('hidden', true);
+                            showError(response.message, "success");
+                        } else {
+                            showError("Cập nhật thất bại! Vui lòng thử lại!", "warning");
+                        }
+                    },
+                    error: function () {
+                        showError("Đã xảy ra lỗi khi gọi API.", "error");
+                    }
+                });
+            }           
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $("#updateToken").on('click',async () => {
+                 try{
+                    const credentials = {
+                        accessToken: $("#accessToken").val(),
+                        refreshToken: $("#refreshToken").val()
+                    };
+
+                    // 5️⃣ Gửi request đến API
+                    const response = await $.ajax({
+                        url: '@Url.Action("UpdateToken", "SystemSettings")',
+                        type: 'POST',
+                        contentType: "application/json",
+                        data: JSON.stringify(credentials)
+                    });
+
+                    // 6️⃣ Xử lý phản hồi từ API
+                    if (response.code === 0) {
+                        showSuccess(response.message, "success");
+                    } else {
+                        showError(response.message, "error");
+                    }
+                }catch(err){
+                    showError(err.message, "error");
+                }
+            })
+
+            $("#updateInfo").on('click',async () => {
+                try{
+                    const credentials = {
+                        appId: $("#appId").val(),
+                        secretKey: $("#secretKey").val(),
+                    };
+
+                    // 5️⃣ Gửi request đến API
+                    const response = await $.ajax({
+                        url: '@Url.Action("UpdateApp", "SystemSettings")',
+                        type: 'POST',
+                        contentType: "application/json",
+                        data: JSON.stringify(credentials)
+                    });
+
+                    // 6️⃣ Xử lý phản hồi từ API
+                    if (response.code === 0) {
+                        showSuccess(response.message, "success");
+                    } else {
+                        showError(response.message, "error");
+                    }
+                }catch(err){
+                    showError(err.message, "error");
+                }
+            });
+
+            $("#btnRefreshToken").on('click', function () {
+                try{
+                    $.ajax({
+                        url: '/api/Helpers/RefreshToken', // Đường dẫn API
+                        type: 'GET',
+                        success: function (result) {
+                            if (result && result.code === 0) {
+                                // Lấy AccessToken và RefreshToken từ response
+                                var accessToken = result.data.accessToken;
+                                var refreshToken = result.data.refreshToken;
+
+                                // Set lại giá trị vào input
+                                $('#accessToken').val(accessToken);
+                                $('#refreshToken').val(refreshToken);
+
+                                alert('Refresh token thành công!');
+                            } else {
+                                alert('Có lỗi xảy ra: ' + (result.Message || 'Không rõ lỗi'));
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Lỗi gọi API:', error);
+                            alert('Lỗi khi gọi API: ' + error);
+                        }
+                    });
+                }catch(err){
+                    console.log(err)
+                }
+            });
+
+            let clickCount = 0; // Biến đếm số lần click
+            let isEditable = false;
+            $("#enableEdit").on('click', function () {
+                clickCount++;
+                if (clickCount >= 10) {
+                    isEditable = !isEditable;
+                    clickCount = 0;
+                    $('#accessToken, #refreshToken, #updateToken, #btnRefreshToken').prop('disabled', !isEditable);
+                }
+            });
+        });
+    </script>
+}

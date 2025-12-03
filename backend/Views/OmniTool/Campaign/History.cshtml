@@ -1,0 +1,129 @@
+﻿﻿﻿@{
+    ViewData["Title"] = "Nhật kí gửi tin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Nhật kí gửi tin</h4>
+            </div>
+            @* <div>
+                <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#modal-import">
+                    <i class="ri-file-excel-line"></i>Xuất excel
+                </button>
+            </div> *@
+        </div>
+    </div>
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo tên">
+                            <span class="search-icon position-absolute user-select-auto" style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer" onclick="table.ajax.reload()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div id="table-log" class="table-responsive rounded mb-3">
+            <table id="list-log" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            GetLogsHistory();
+            $('#search').on('input', search);
+        });
+
+        function GetLogsHistory() {
+            table = new DataTable("#list-log", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = Math.floor(data.start / data.length) + 1;
+                    const pageSize = data.length;
+                    const keyword = $("#search").val().trim();
+
+                    // Gọi API để lấy danh sách log
+                    $.ajax({
+                        url: '@Url.Action("GetCampaignHistory", "OmniTools")', // Điều chỉnh URL này nếu cần
+                        type: 'GET',
+                        contentType: "application/json",
+                        data: {
+                            page: page,
+                            pagesize: pageSize, 
+                            keyword: keyword,
+                        },
+                        success: function (response) {
+                            const formattedData = response.data.map((item, index) => ({
+                                index: data.start + index + 1, // Tạo số thứ tự
+                                phoneNumber: item.phoneNumber,
+                                templateCode: item.templateCode,
+                                paramContent: item.paramContent,
+                                idOmniMess: item.idOmniMess ?? "-",
+                                status: `<span class="badge bg-${item.status == 1 ? 'success' : 'danger'}">${item.status}</span>`, // Convert status to badge
+                                createdDate: FormatDateTime(item.createdDate),
+                                action: ""
+                            }));
+
+                           setTimeout(() => {
+                                callback({
+                                    draw: data.draw,
+                                    recordsTotal: response.totalPages * pageSize,
+                                    recordsFiltered: response.totalCount,
+                                    data: formattedData
+                                });
+                            }, 400);
+                        },
+                        error: function (xhr) {
+                            console.error("Failed to fetch logs: ", xhr);
+                        }
+                    });
+                },
+                columns: [
+                    { title: "#", data: "index", className: "text-center" },
+                    { title: "Số điện thoại", data: "phoneNumber", className: "text-center"},
+                    { title: "TemplateCode", data: "templateCode", className: "col-1" },
+                    { title: "Nội dung biến", data: "paramContent", className: "text-center col-3" },
+                    { title: "IdOmniMess", data: "idOmniMess", className: "text-center col-2" },
+                    { title: "Thời gian", data: "createdDate", className: "text-center col-1" },
+                    { title: "Trạng thái", data: "status", className: "text-center" },
+                    { title: "Hành động", data: "action", className: "text-center col-1" },
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": `<p class="text-center m-0">Không tìm thấy kết quả</p>`,
+                     "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng dữ liệu",
+                    "emptyTable": `<p class="text-center m-0">Không có dữ liệu</p>`,
+                    "infoFiltered": ""
+                }
+            });
+
+            $(table.table().header()).addClass('light light-data text-header-sm');
+        }
+
+        function getStatusColor(statusCode) {
+            if (statusCode >= 200 && statusCode < 300) return 'success';
+            if (statusCode >= 400 && statusCode < 500) return 'warning';
+            if (statusCode >= 500) return 'danger';
+            return 'secondary';
+        }
+    </script>
+}

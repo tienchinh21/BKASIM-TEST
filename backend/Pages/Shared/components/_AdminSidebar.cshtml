@@ -1,0 +1,119 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    bool isAdmin = User?.IsInRole("ADMIN") == true;
+}
+
+<div class="data-scrollbar" data-bs-scrollbar="true" style="overflow: auto; outline: none;" tabindex="-1">
+    <nav class="iq-sidebar-menu" style="padding-bottom: 100px">
+        <ul id="iq-sidebar-toggle" class="iq-menu">
+
+            @* Dashboard *@
+            @if (isAdmin)
+            {
+                <li class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Dashboard" ? "active" : "")">
+                    <a asp-page="/Dashboard" class="svg-icon">
+                        <i class="ri-dashboard-line" style="font-size: 20px;"></i>
+                        <span class="ml-4">Tổng Quan</span>
+                    </a>
+                </li>
+            }
+
+            @* Hội Nhóm *@
+            <li class="@(new string[] { "Group" }.Contains(controller) ? "active" : "")">
+                <a asp-controller="Group" asp-action="Index" class="svg-icon">
+                    <i class="ri-team-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Quản Lý Hội Nhóm</span>
+                </a>
+            </li>
+
+            @* Lĩnh Vực *@
+            @if (isAdmin)
+            {
+                <li class="@(new string[] { "Field" }.Contains(controller) ? "active" : "")">
+                    <a asp-controller="Field" asp-action="Index" class="svg-icon">
+                        <i class="ri-briefcase-line" style="font-size: 20px;"></i>
+                        <span class="ml-4">Lĩnh Vực</span>
+                    </a>
+                </li>
+            }
+
+            @* Sự Kiện *@
+            <li class="@(new string[] { "Event", "Sponsor", "SponsorshipTier" }.Contains(controller) ? "active" : "")">
+                <a href="#event" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="ri-calendar-event-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Quản Lý Sự Kiện</span>
+                    <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                </a>
+                <ul id="event"
+                    class="iq-submenu collapse @(new string[] { "Event", "Sponsor", "SponsorshipTier" }.Contains(controller) ? "show" : "")"
+                    data-parent="#iq-sidebar-toggle">
+                    <li class="">
+                        <a asp-controller="Event" asp-action="Index">
+                            <i class="ri-subtract-line"></i><span>Danh Sách Sự Kiện</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a asp-controller="Sponsor" asp-action="Index">
+                            <i class="ri-subtract-line"></i><span>Nhà Tài Trợ</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a asp-controller="SponsorshipTier" asp-action="Index">
+                            <i class="ri-subtract-line"></i><span>Hạng Tài Trợ</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            @* Thành Viên *@
+            <li class="@(new string[] { "Membership" }.Contains(controller) ? "active" : "")">
+                <a href="#membership" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
+                    <i class="ri-user-settings-line" style="font-size: 20px;"></i>
+                    <span class="ml-4">Quản Lý Thành Viên</span>
+                    <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
+                </a>
+                <ul id="membership"
+                    class="iq-submenu collapse @(new string[] { "Membership" }.Contains(controller) ? "show" : "")"
+                    data-parent="#iq-sidebar-toggle">
+                    <li class="">
+                        <a asp-controller="Membership" asp-action="Index">
+                            <i class="ri-subtract-line"></i><span>Danh Sách Thành Viên</span>
+                        </a>
+                    </li>
+                    <li class="">
+                        <a asp-controller="Membership" asp-action="PendingApproval">
+                            <i class="ri-subtract-line"></i><span>Chờ Phê Duyệt</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            @* Tài Khoản Admin *@
+            @if (isAdmin)
+            {
+                <li class="@(new string[] { "Account" }.Contains(controller) ? "active" : "")">
+                    <a asp-controller="Account" asp-action="Index" class="svg-icon">
+                        <i class="ri-admin-line" style="font-size: 20px;"></i>
+                        <span class="ml-4">Quản Lý Tài Khoản</span>
+                    </a>
+                </li>
+            }
+
+            @* Cài Đặt *@
+            @if (isAdmin)
+            {
+                <li class="@(new string[] { "Setting" }.Contains(controller) ? "active" : "")">
+                    <a asp-controller="Setting" asp-action="Index" class="svg-icon">
+                        <i class="ri-settings-3-line" style="font-size: 20px;"></i>
+                        <span class="ml-4">Cài Đặt Hệ Thống</span>
+                    </a>
+                </li>
+            }
+
+        </ul>
+    </nav>
+    <div style="height:40px;"></div>
+</div>

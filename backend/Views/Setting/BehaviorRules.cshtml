@@ -1,0 +1,782 @@
+@{
+    ViewData["Title"] = "Cấu hình quy tắc ứng xử";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .file-card {
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 2rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+
+    .file-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .file-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .file-icon-large.pdf {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+    }
+
+    .file-icon-large.doc {
+        background: linear-gradient(135deg, #2b5797 0%, #1e3a5f 100%);
+        color: white;
+    }
+
+    .file-icon-large.excel {
+        background: linear-gradient(135deg, #217346 0%, #185c37 100%);
+        color: white;
+    }
+
+    .file-icon-large.image {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .file-icon-large.default {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+    }
+
+    .action-btn {
+        border-radius: 8px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 2px dashed #dee2e6;
+    }
+
+    .empty-state i {
+        font-size: 5rem;
+        color: #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+
+    .badge-custom {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    /* Modal Styling */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+    }
+
+    .modal-header-custom {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px 12px 0 0;
+        padding: 1.5rem;
+    }
+
+    .modal-header-custom .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .modal-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+    .modal-upload-area:hover {
+        border-color: #667eea;
+        background: #f0f2ff;
+    }
+
+    .modal-upload-area.dragover {
+        border-color: #667eea;
+        background: #e7eaff;
+        transform: scale(1.02);
+    }
+
+    .selected-file-preview {
+        background: #d1e7dd;
+        border: 1px solid #badbcc;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .pdf-preview {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        margin-top: 1.5rem;
+    }
+
+    .pdf-preview iframe {
+        width: 100%;
+        height: 600px;
+        border: none;
+        border-radius: 4px;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        border-radius: 8px;
+    }
+</style>
+
+
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-2 fw-bold">
+                        <i class="ri-file-text-line me-2 text-primary"></i>
+                        Cấu hình quy tắc ứng xử
+                    </h3>
+                    <p class="text-muted mb-0">
+                        <i class="ri-information-line me-1"></i>
+                        Quản lý tài liệu quy tắc ứng xử cho Mini App GIBA
+                    </p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary action-btn" id="btnUploadFile">
+                        <i class="ri-upload-line me-2"></i>
+                        Tải lên tài liệu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Display Section -->
+    <div class="row" id="fileDisplaySection" style="display: none;">
+        <div class="col-12">
+            <div class="card file-card">
+                <div class="d-flex align-items-start">
+                    <div class="file-icon-large pdf" id="fileIconLarge">
+                        <i class="ri-file-pdf-line"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h5 class="mb-2 fw-bold" id="fileName">Tài liệu quy tắc ứng xử.pdf</h5>
+                        <p class="text-muted mb-3" id="fileDate">
+                            <i class="ri-calendar-line me-1"></i>
+                            Cập nhật: 07/11/2025
+                        </p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-outline-primary action-btn" id="btnViewFile">
+                                <i class="ri-eye-line me-2"></i>
+                                Xem tài liệu
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary action-btn" id="btnChangeFile">
+                                <i class="ri-refresh-line me-2"></i>
+                                Thay đổi
+                            </button>
+                            <button type="button" class="btn btn-outline-danger action-btn" id="btnDeleteFile">
+                                <i class="ri-delete-bin-line me-2"></i>
+                                Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDF Preview Section (hidden by default, shown when clicking "Xem tài liệu") -->
+                <div id="pdfPreviewSection" class="pdf-preview" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Xem trước PDF</h6>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnClosePreview">
+                            <i class="ri-close-line me-1"></i>Đóng
+                        </button>
+                    </div>
+                    <div class="position-relative">
+                        <iframe id="pdfViewer" src=""></iframe>
+                        <div class="loading-overlay" id="pdfLoadingOverlay" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      
+
+    <!-- Empty State -->
+    <div class="row" id="emptyState">
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="ri-file-upload-line"></i>
+                <h4 class="mb-3">Chưa có tài liệu quy tắc ứng xử</h4>
+                <p class="text-muted mb-4">Tải lên tài liệu để bắt đầu quản lý quy tắc ứng xử cho Mini App</p>
+                <button type="button" class="btn btn-primary action-btn" id="btnUploadFirst">
+                    <i class="ri-upload-line me-2"></i>
+                    Tải lên tài liệu đầu tiên
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header-custom">
+                <h5 class="modal-title">
+                    <i class="ri-upload-line me-2"></i>
+                    <span id="modalTitle">Tải lên tài liệu quy tắc ứng xử</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Current File Info (shown in edit mode) -->
+                <div id="currentFileInfo" style="display:none;">
+                    <div class="alert alert-info border-0">
+                        <div class="d-flex align-items-center">
+                            <i class="ri-information-line me-2 fs-4"></i>
+                            <div>
+                                <strong>File hiện tại:</strong>
+                                <span id="currentFileName" class="ms-2"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Area -->
+                <div class="modal-upload-area" id="modalUploadArea" style="position: relative;">
+                    <input type="file" id="fileInput" class="d-none" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
+                    <div style="pointer-events: none;">
+                        <i class="ri-upload-cloud-2-line display-3 text-muted mb-3"></i>
+                        <h5 class="mb-2">Kéo thả file hoặc click để chọn</h5>
+                        <p class="text-muted mb-3">
+                            Định dạng hỗ trợ: PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG, GIF
+                        </p>
+                        <p class="text-muted small mb-0">
+                            <i class="ri-error-warning-line me-1"></i>
+                            Kích thước tối đa: 50MB
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Selected File Info (shown after file selection) -->
+                <div id="selectedFileInfo" class="selected-file-preview" style="display: none;">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="ri-file-line fs-3 me-3 text-success"></i>
+                            <div>
+                                <div class="fw-bold" id="selectedFileName"></div>
+                                <small class="text-muted" id="selectedFileSize"></small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="btnRemoveSelectedFile">
+                            <i class="ri-close-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light action-btn" data-bs-dismiss="modal" id="btnCancelModal">
+                    <i class="ri-close-line me-2"></i>
+                    Hủy
+                </button>
+                <button type="button" class="btn btn-primary action-btn" id="btnSaveFile" disabled>
+                    <i class="ri-save-line me-2"></i>
+                    Lưu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        $(document).ready(function () {
+            // ==================== GLOBAL VARIABLES ====================
+            let currentFileData = null;
+            let selectedFile = null;
+            let isEditMode = false;
+            let tempFileUrl = null; // Lưu temp file URL sau khi upload
+            let isFileSaved = false; // Kiểm tra file đã được lưu vào DB chưa
+
+            // ==================== INITIALIZATION ====================
+            loadBehaviorRules();
+
+            // ==================== EVENT HANDLERS ====================
+
+            // Upload buttons
+            $('#btnUploadFile, #btnUploadFirst').on('click', function () {
+                openUploadModal(false);
+            });
+
+            $('#btnChangeFile').on('click', function () {
+                openUploadModal(true);
+            });
+
+            // View file - CHỈ HIỂN THỊ PREVIEW KHI CLICK NÚT NÀY
+            $('#btnViewFile').on('click', function () {
+                if (currentFileData && currentFileData.fileUrl) {
+                    const fileExt = getFileExtension(currentFileData.fileUrl);
+                    // If PDF, show preview section, otherwise open in new tab
+                    if (fileExt === 'pdf') {
+                        showPdfPreview(currentFileData.fileUrl);
+                        // Scroll to preview section
+                        $('html, body').animate({
+                            scrollTop: $('#pdfPreviewSection').offset().top - 100
+                        }, 500);
+                    } else {
+                        window.open(toAbsoluteUrl(currentFileData.fileUrl), '_blank');
+                    }
+                }
+            });
+
+            // Close preview
+            $('#btnClosePreview').on('click', function () {
+                $('#pdfPreviewSection').hide();
+            });
+
+            // Delete file
+            $('#btnDeleteFile').on('click', function () {
+                confirmDelete();
+            });
+
+            // Modal upload area click - QUAN TRỌNG: Phải đặt trước drag & drop events
+            $('#modalUploadArea').on('click', function (e) {
+                // Chỉ trigger click file input nếu không phải là drag & drop
+                if (!$(e.target).is('input[type="file"]')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    $('#fileInput').click();
+                }
+            });
+
+            // File input change
+            $('#fileInput').on('change', function () {
+                const file = this.files[0];
+                if (file) {
+                    handleFileSelection(file);
+                }
+            });
+
+            // Remove selected file
+            $('#btnRemoveSelectedFile').on('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                clearFileSelection();
+            });
+
+            // Save file (upload temp + save to DB)
+            $('#btnSaveFile').on('click', function (e) {
+                e.preventDefault();
+                if (selectedFile) {
+                    uploadAndSaveFile(selectedFile);
+                }
+            });
+
+            // Drag & Drop events - QUAN TRỌNG: Phải preventDefault để tránh mở file
+            $('#modalUploadArea').on('dragover', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).addClass('dragover');
+            });
+
+            $('#modalUploadArea').on('dragleave', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('dragover');
+            });
+
+            $('#modalUploadArea').on('drop', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('dragover');
+
+                const files = e.originalEvent.dataTransfer.files;
+                if (files && files.length > 0) {
+                    handleFileSelection(files[0]);
+                }
+            });
+
+            // Thêm click handler trực tiếp cho file input để đảm bảo hoạt động
+            $('#fileInput').on('click', function (e) {
+                e.stopPropagation();
+            });
+
+            // Modal reset on close
+            $('#uploadModal').on('hidden.bs.modal', function () {
+                clearFileSelection();
+            });
+
+            // ==================== CORE FUNCTIONS ====================
+
+            function loadBehaviorRules() {
+                $.get('/Setting/GetBehaviorRulesFile?type=1')
+                    .done(function (res) {
+                        if (res && res.success && res.data) {
+                            currentFileData = res.data;
+                            displayFileInfo(res.data);
+                        } else {
+                            currentFileData = null;
+                            showEmptyState();
+                        }
+                    })
+                    .fail(function () {
+                        currentFileData = null;
+                        showEmptyState();
+                    });
+            }
+
+            function displayFileInfo(data) {
+                const fileName = data.fileName || getFileNameFromUrl(data.fileUrl);
+                const fileExtension = getFileExtension(data.fileUrl);
+                const displayDate = formatDate(data.updatedDate || data.createdDate);
+
+                // Set file name
+                $('#fileName').text(fileName);
+
+                // Set file date
+                $('#fileDate').text('Cập nhật: ' + displayDate);
+
+                // Set file icon
+                const iconHtml = getFileIconClass(fileExtension);
+                $('#fileIconLarge').removeClass('pdf doc excel image default').addClass(iconHtml.class);
+                $('#fileIconLarge i').attr('class', iconHtml.icon);
+
+                // Show file section, hide empty state
+                $('#fileDisplaySection').show();
+                $('#emptyState').hide();
+
+                // QUAN TRỌNG: MẶC ĐỊNH ẨN PREVIEW
+                // Preview chỉ hiển thị khi user click nút "Xem tài liệu"
+                $('#pdfPreviewSection').hide();
+            }
+
+
+            function showPdfPreview(pdfUrl) {
+                if (!pdfUrl) return;
+
+                const absoluteUrl = toAbsoluteUrl(pdfUrl);
+                
+                // Show loading overlay
+                $('#pdfLoadingOverlay').show();
+                
+                // Set iframe source
+                $('#pdfViewer').attr('src', absoluteUrl);
+                $('#pdfPreviewSection').show();
+
+                // Handle load
+                $('#pdfViewer').off('load').on('load', function() {
+                    setTimeout(() => {
+                        $('#pdfLoadingOverlay').hide();
+                    }, 500);
+                });
+
+                // Handle error with fallback
+                $('#pdfViewer').off('error').on('error', function() {
+                    $('#pdfLoadingOverlay').hide();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Không thể xem trong trình duyệt',
+                        html: `<a href="${absoluteUrl}" target="_blank" class="btn btn-primary">Mở trong tab mới</a>`,
+                        showConfirmButton: true
+                    });
+                });
+            }
+
+            function showEmptyState() {
+                $('#fileDisplaySection').hide();
+                $('#emptyState').show();
+            }
+
+            function openUploadModal(editMode) {
+                isEditMode = editMode;
+
+                if (editMode && currentFileData) {
+                    $('#modalTitle').text('Thay đổi tài liệu quy tắc ứng xử');
+                    const fileName = currentFileData.fileName || getFileNameFromUrl(currentFileData.fileUrl);
+                    $('#currentFileName').text(fileName);
+                    $('#currentFileInfo').show();
+                } else {
+                    $('#modalTitle').text('Tải lên tài liệu quy tắc ứng xử');
+                    $('#currentFileInfo').hide();
+                }
+
+                $('#uploadModal').modal('show');
+            }
+
+            function handleFileSelection(file) {
+                // Validate file
+                if (!validateFile(file)) {
+                    return;
+                }
+
+                selectedFile = file;
+
+                // Show file info (KHÔNG PREVIEW TRONG MODAL)
+                $('#selectedFileName').text(file.name);
+                $('#selectedFileSize').text(formatFileSize(file.size));
+                $('#selectedFileInfo').show();
+                $('#modalUploadArea').hide();
+
+                // Enable save button
+                $('#btnSaveFile').prop('disabled', false);
+            }
+
+            function clearFileSelection() {
+                selectedFile = null;
+                tempFileUrl = null;
+                $('#fileInput').val('');
+                $('#selectedFileInfo').hide();
+                $('#modalUploadArea').show();
+                $('#btnSaveFile').prop('disabled', true);
+            }
+
+            function validateFile(file) {
+                const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif'];
+                const maxSize = 50 * 1024 * 1024; // 50MB
+
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (!allowedExtensions.includes(ext)) {
+                    showError('Định dạng file không được hỗ trợ. Vui lòng chọn file PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG hoặc GIF.');
+                    return false;
+                }
+
+                if (file.size > maxSize) {
+                    showError('Kích thước file vượt quá giới hạn 50MB.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            // QUAN TRỌNG: Upload file temp và lưu vào DB trong một lần
+            function uploadAndSaveFile(file) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                $('#btnSaveFile').prop('disabled', true);
+                $('#btnSaveFile').html('<i class="ri-loader-4-line spinner-border spinner-border-sm me-2"></i>Đang tải lên...');
+
+                // Step 1: Upload to temp
+                $.ajax({
+                    url: '/Setting/UploadBehaviorRulesFileTemp',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        if (res && res.success) {
+                            tempFileUrl = res.data.url;
+
+                            // Step 2: Save to DB immediately
+                            saveFileFromTemp();
+                        } else {
+                            showError(res.message || 'Có lỗi xảy ra khi tải lên file');
+                            resetUploadButton();
+                        }
+                    },
+                    error: function () {
+                        showError('Có lỗi xảy ra khi tải lên file');
+                        resetUploadButton();
+                    }
+                });
+            }
+
+            function saveFileFromTemp() {
+                if (!tempFileUrl) {
+                    showError('Không có file để lưu');
+                    resetUploadButton();
+                    return;
+                }
+
+                $.ajax({
+                    url: '/Setting/SaveBehaviorRulesFile',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ tempFilePath: tempFileUrl }),
+                    success: function (res) {
+                        if (res && res.success) {
+                            showSuccess('Thành công', res.message || 'Lưu file thành công');
+
+                            // Close modal
+                            $('#uploadModal').modal('hide');
+
+                            // Reload data (KHÔNG TỰ ĐỘNG HIỂN THỊ PREVIEW)
+                            loadBehaviorRules();
+
+                            // Reset
+                            clearFileSelection();
+                        } else {
+                            showError(res.message || 'Có lỗi xảy ra khi lưu file');
+                        }
+                        resetUploadButton();
+                    },
+                    error: function () {
+                        showError('Có lỗi xảy ra khi lưu file');
+                        resetUploadButton();
+                    }
+                });
+            }
+
+            function resetUploadButton() {
+                $('#btnSaveFile').prop('disabled', false);
+                $('#btnSaveFile').html('<i class="ri-save-line me-2"></i>Lưu');
+            }
+
+
+            function confirmDelete() {
+                Swal.fire({
+                    title: 'Xác nhận xóa',
+                    text: 'Bạn có chắc chắn muốn xóa tài liệu quy tắc ứng xử này không?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Có, xóa',
+                    cancelButtonText: 'Hủy',
+                    confirmButtonColor: '#dc3545'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        deleteFile();
+                    }
+                });
+            }
+
+            function deleteFile() {
+                $.ajax({
+                    url: '/Setting/DeleteBehaviorRules',
+                    type: 'DELETE',
+                    success: function (res) {
+                        if (res && res.success) {
+                            showSuccess('Thành công', res.message || 'Đã xóa tài liệu thành công');
+                            loadBehaviorRules();
+                        } else {
+                            showError(res.message || 'Có lỗi xảy ra khi xóa file');
+                        }
+                    },
+                    error: function () {
+                        showError('Có lỗi xảy ra khi xóa file');
+                    }
+                });
+            }
+
+            // ==================== UTILITY FUNCTIONS ====================
+
+            function getFileExtension(url) {
+                if (!url) return '';
+                const parts = url.split('.');
+                return parts[parts.length - 1].toLowerCase();
+            }
+
+            function getFileNameFromUrl(url) {
+                if (!url) return '';
+                const parts = url.split('/');
+                return parts[parts.length - 1];
+            }
+
+            function getFileIconClass(extension) {
+                switch (extension) {
+                    case 'pdf':
+                        return { class: 'pdf', icon: 'ri-file-pdf-line' };
+                    case 'doc':
+                    case 'docx':
+                        return { class: 'doc', icon: 'ri-file-word-line' };
+                    case 'xls':
+                    case 'xlsx':
+                        return { class: 'excel', icon: 'ri-file-excel-line' };
+                    case 'jpg':
+                    case 'jpeg':
+                    case 'png':
+                    case 'gif':
+                        return { class: 'image', icon: 'ri-image-line' };
+                    default:
+                        return { class: 'default', icon: 'ri-file-line' };
+                }
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            function formatDate(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+
+            function toAbsoluteUrl(url) {
+                if (!url) return '';
+                if (url.startsWith('http://') || url.startsWith('https://')) {
+                    return url;
+                }
+                return window.location.origin + (url.startsWith('/') ? url : '/' + url);
+            }
+
+            function showSuccess(title, message) {
+                Swal.fire({
+                    icon: 'success',
+                    title: title,
+                    text: message,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+
+            function showError(message) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi',
+                    text: message
+                });
+            }
+        });
+    </script>
+}

@@ -1,0 +1,1232 @@
+@{
+    ViewData["Title"] = "Quản Lý Giới Thiệu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* Style cho dropdown filter - giới hạn chiều cao và cho phép scroll */
+    .form-control[size],
+    .form-select[size] {
+        position: absolute;
+        z-index: 1000;
+        background: white;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        max-height: calc(1.5rem * 5 + 0.75rem * 2);
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .form-control::-webkit-scrollbar,
+    .form-select::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .form-control::-webkit-scrollbar-track,
+    .form-select::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .form-control::-webkit-scrollbar-thumb,
+    .form-select::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+
+    .form-control::-webkit-scrollbar-thumb:hover,
+    .form-select::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Quản Lý Giới Thiệu</h4>
+                <p class="mb-0 text-muted">Quản lý các giới thiệu trong hệ thống</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                    <!-- Thanh tìm kiếm -->
+                        <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input id="search" type="text" class="form-control"
+                                    placeholder="Tìm theo tên, nội dung..." />
+                                <button class="btn btn-primary" onclick="refsTable.ajax.reload()">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bộ lọc loại -->
+                        <div class="col-md-2">
+                            <label class="form-label">Loại</label>
+                        <select id="filter-type" class="form-control" onchange="refsTable.ajax.reload()">
+                                <option value="">Tất cả</option>
+                                <option value="0">Gửi cho thành viên</option>
+                                <option value="1">Gửi cho bên ngoài</option>
+                            </select>
+                        </div>
+
+                    <!-- Bộ lọc trạng thái -->
+                        <div class="col-md-2">
+                            <label class="form-label">Trạng thái</label>
+                        <select id="filter-status" class="form-control" onchange="refsTable.ajax.reload()">
+                                <option value="">Tất cả</option>
+                                <option value="1">Đã gửi</option>
+                                <option value="3">Hoàn thành</option>
+                            </select>
+                        </div>
+
+                    <!-- Bộ lọc đánh giá -->
+                        <div class="col-md-2">
+                            <label class="form-label">Đánh giá</label>
+                        <select id="filter-rating" class="form-control" onchange="refsTable.ajax.reload()">
+                                <option value="">Tất cả</option>
+                                <option value="1">1 sao trở lên</option>
+                                <option value="2">2 sao trở lên</option>
+                                <option value="3">3 sao trở lên</option>
+                                <option value="4">4 sao trở lên</option>
+                                <option value="5">5 sao</option>
+                            </select>
+                        </div>
+
+                    <!-- Nút lọc -->
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-light border flex-fill" onclick="resetFilters()">
+                                <i class="ri-refresh-line me-1"></i>
+                                Đặt lại
+                            </button>
+                            <button class="btn btn-primary flex-fill" onclick="refsTable.ajax.reload()">
+                                <i class="ri-filter-line me-1"></i>
+                                Lọc dữ liệu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                                    </div>
+                </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="table-responsive rounded mb-3">
+            <table id="list-refs" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi Tiết Giới Thiệu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailContent" style="max-height: calc(100vh - 200px); overflow-y: auto; overflow-x: hidden;">
+                <!-- Content loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thông Tin Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="profileContent" style="max-height: 80vh; overflow-y: auto;">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Đang tải thông tin...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var refsTable;
+
+        $(document).ready(function() {
+            GetListRefs();
+            $('#search').on('input', handleSearchInput);
+            
+            // Setup scroll for filter dropdowns
+            setupSelectScroll(document.getElementById('filter-type'));
+            setupSelectScroll(document.getElementById('filter-status'));
+            setupSelectScroll(document.getElementById('filter-rating'));
+        });
+        
+        function setupSelectScroll(selectElement) {
+            if (!selectElement) return;
+            
+            const maxVisibleOptions = 5;
+            const totalOptions = selectElement.options.length;
+            
+            if (totalOptions > maxVisibleOptions) {
+                $(selectElement).on('focus', function() {
+                    if (this.size === 0 || this.size === 1) {
+                        this.size = Math.min(maxVisibleOptions, totalOptions);
+                        this.style.position = 'relative';
+                        this.style.zIndex = '1000';
+                    }
+                });
+                
+                $(selectElement).on('blur', function() {
+                    this.size = 0;
+                    this.style.position = '';
+                    this.style.zIndex = '';
+                });
+                
+                $(selectElement).on('change', function() {
+                    setTimeout(() => {
+                        this.size = 0;
+                        this.style.position = '';
+                        this.style.zIndex = '';
+                    }, 100);
+                });
+            }
+        }
+
+        function GetListRefs() {
+            refsTable = new DataTable("#list-refs", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const status = $("#filter-status").val();
+                    const type = $("#filter-type").val();
+                    const minRating = $("#filter-rating").val();
+                    let keyword = $("#search").val();
+
+            $.ajax({
+                url: '/Refs/GetPage',
+                type: 'GET',
+                data: {
+                            page: page,
+                            pageSize: data.length,
+                    keyword: keyword,
+                    status: status ? parseInt(status) : null,
+                    type: type ? parseInt(type) : null,
+                    minRating: minRating ? parseInt(minRating) : null,
+                    sortBy: 'date',
+                    sortOrder: 'desc'
+                },
+                        success: function (response) {
+                            const formattedData = response.data.map((ref, index) => {
+                                // Hiển thị thông tin người nhận/recipient theo Type
+                                let recipientInfo = '';
+                                if (ref.type === 0) {
+                                    // Type 0: Người nhận là member
+                                    recipientInfo = `<div class="d-flex flex-column">
+                                        <h6 class="mb-1">${ref.toMemberName || 'N/A'}</h6>
+                                        <small class="text-muted">${ref.toMemberCompany || 'N/A'}</small>
+                                        ${ref.referralName ? `<small class="text-primary mt-1"><i class="ri-user-line"></i> Giới thiệu: ${ref.referralName}</small>` : ''}
+                                    </div>`;
+                                } else if (ref.type === 1) {
+                                    // Type 1: Người nhận là external
+                                    recipientInfo = `<div class="d-flex flex-column">
+                                        <h6 class="mb-1 text-info"><i class="ri-external-link-line"></i> ${ref.recipientName || 'N/A'}</h6>
+                                        <small class="text-muted">${ref.recipientPhone || 'N/A'}</small>
+                                        ${ref.referralName ? `<small class="text-primary mt-1"><i class="ri-user-line"></i> Member: ${ref.referralName}</small>` : ''}
+                                    </div>`;
+                                } else {
+                                    recipientInfo = `<div class="d-flex flex-column">
+                                        <h6 class="mb-1">${ref.toMemberName || 'N/A'}</h6>
+                                        <small class="text-muted">${ref.toMemberCompany || 'N/A'}</small>
+                                    </div>`;
+                                }
+
+                                // Determine group name to display
+                                let displayGroupName = 'N/A';
+                                if (ref.type === 0 && ref.refToGroupName) {
+                                    displayGroupName = ref.refToGroupName;
+                                } else if (ref.referredMemberGroupName) {
+                                    displayGroupName = ref.referredMemberGroupName;
+                                }
+
+                                return {
+                                    index: data.start + index + 1,
+                                    type: `<span class="badge ${ref.type === 0 ? 'bg-primary' : 'bg-info'}">${ref.typeText || 'N/A'}</span>`,
+                                    fromMember: `<div class="d-flex flex-column">
+                                                    <h6 class="mb-1">${ref.fromMemberName || 'N/A'}</h6>
+                                                    <small class="text-muted">${ref.fromMemberCompany || 'N/A'}</small>
+                                                </div>`,
+                                    recipient: recipientInfo,
+                                    groupName: displayGroupName,
+                                    content: ref.content || 'N/A',
+                                    value: `<strong>${ref.value.toLocaleString('vi-VN')} đ</strong>`,
+                                    rating: ref.rating
+                                        ? `<span class="badge bg-success">${ref.rating}/5</span>`
+                                        : '<span class="badge bg-secondary">Chưa đánh giá</span>',
+                                    status: ref.status === 3
+                                        ? '<span class="badge bg-success">Hoàn thành</span>'
+                                        : '<span class="badge bg-warning">Đã gửi</span>',
+                                    createdDate: ref.createdDateDisplay,
+                                    actions: `<button class="btn btn-sm btn-info" onclick="viewDetail('${ref.id}')">
+                                                <i class="ri-eye-line"></i>
+                                            </button>`
+                                };
+                            });
+
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: response.pagination.totalItems,
+                                recordsFiltered: response.pagination.totalItems,
+                                data: formattedData
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error loading data:', error);
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: 0,
+                                recordsFiltered: 0,
+                                data: []
+                            });
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: "index", className: 'text-center', width: "60px" },
+                    { title: "Loại", data: "type", className: 'text-center', width: "120px" },
+                    { title: "Người Gửi", data: "fromMember", className: 'col-2' },
+                    { title: "Người Nhận/Recipient", data: "recipient", className: 'col-2' },
+                    { title: "Nhóm", data: "groupName", className: 'text-center', width: "100px" },
+                    { title: "Nội Dung", data: "content", className: 'col-2' },
+                    { title: "Giá Trị", data: "value", className: 'text-center', width: "120px" },
+                    { title: "Đánh Giá", data: "rating", className: 'text-center', width: "100px" },
+                    { title: "Trạng Thái", data: "status", className: 'text-center', width: "100px" },
+                    { title: "Ngày Tạo", data: "createdDate", className: 'text-center', width: "120px" },
+                    { title: "Thao tác", data: "actions", className: 'text-center', width: "80px" }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+                }
+            });
+
+            $(refsTable.table().header()).addClass('ligth ligth-data');
+        }
+
+        function handleSearchInput() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                refsTable.ajax.reload();
+            }, 500);
+        }
+
+        function resetFilters() {
+            $('#search').val('');
+            $('#filter-type').val('');
+            $('#filter-status').val('');
+            $('#filter-rating').val('');
+            refsTable.ajax.reload();
+        }
+
+        function viewDetail(refId) {
+            $.ajax({
+                url: `/Refs/GetById/${refId}`,
+                type: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        const ref = response.data;
+                        const ratingHtml = ref.rating
+                            ? `<span class="badge bg-primary">${ref.rating}/5</span>`
+                            : '<span class="badge bg-light text-dark">Chưa đánh giá</span>';
+
+                        const statusBadge = ref.status === 3
+                            ? '<span class="badge bg-success">Hoàn thành</span>'
+                            : '<span class="badge bg-warning">Đã gửi</span>';
+
+                        const feedbackHtml = ref.feedback
+                            ? `<p class="mb-0" style="line-height: 1.6;">${ref.feedback}</p>`
+                            : '<span class="text-muted">Không có nhận xét</span>';
+
+                        // Determine group name to display
+                        let groupName = 'N/A';
+                        if (ref.type === 0 && ref.refToGroupName) {
+                            groupName = ref.refToGroupName;
+                        } else if (ref.referredMemberGroupName) {
+                            groupName = ref.referredMemberGroupName;
+                        }
+
+                        // Build recipient/referral info based on type
+                        let recipientSection = '';
+                        if (ref.type === 0) {
+                            // Type 0: Share referral TO member
+                            recipientSection = `
+                                <div class="detail-section">
+                                    <div class="detail-label">Người Nhận (Member)</div>
+                                    <div class="member-card">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                ${ref.toMemberAvatar ? `
+                                                <img src="${ref.toMemberAvatar}" alt="Avatar" 
+                                                    style="width: 50px; height: 50px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+                                                ` : `
+                                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #e9ecef; margin-right: 12px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="ri-user-line" style="font-size: 24px; color: #6c757d;"></i>
+                                                </div>
+                                                `}
+                                                <div class="flex-grow-1">
+                                                    <div class="member-name">${ref.toMemberName || 'N/A'}</div>
+                                                    ${ref.toMemberPhone ? `<div class="member-info">SĐT: ${ref.toMemberPhone}</div>` : ''}
+                                                    ${ref.toMemberCompany ? `<div class="member-info">${ref.toMemberCompany}</div>` : ''}
+                                                    ${ref.toMemberPosition ? `<div class="member-info">${ref.toMemberPosition}</div>` : ''}
+                                                </div>
+                                            </div>
+                                            ${ref.toMemberSlug ? `
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewMemberProfile('${ref.toMemberSlug}', '${ref.refToGroupId || ''}')" 
+                                                style="white-space: nowrap; margin-left: 12px;">
+                                                <i class="ri-eye-line"></i> Xem profile
+                                            </button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                </div>
+                                ${(ref.referredMemberId || ref.referralName || ref.referralPhone) ? `
+                                <div class="detail-section">
+                                    <div class="detail-label">Thông Tin Người Được Giới Thiệu</div>
+                                    <div class="member-card">
+                                        ${ref.referredMemberId ? `
+                                        <!-- Hiển thị profile từ Membership (nếu là member) -->
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                ${ref.referredMemberAvatar ? `
+                                                <img src="${ref.referredMemberAvatar}" alt="Avatar" 
+                                                    style="width: 50px; height: 50px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+                                                ` : `
+                                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #e9ecef; margin-right: 12px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="ri-user-line" style="font-size: 24px; color: #6c757d;"></i>
+                                                </div>
+                                                `}
+                                                <div class="flex-grow-1">
+                                                    <div class="member-name">${ref.referredMemberName || 'N/A'}</div>
+                                                    ${ref.referredMemberPhone ? `<div class="member-info">SĐT: ${ref.referredMemberPhone}</div>` : ''}
+                                                    ${ref.referredMemberCompany ? `<div class="member-info">Công ty: ${ref.referredMemberCompany}</div>` : ''}
+                                                    ${ref.referredMemberPosition ? `<div class="member-info">Chức vụ: ${ref.referredMemberPosition}</div>` : ''}
+                                                    ${ref.referredMemberEmail ? `<div class="member-info">Email: ${ref.referredMemberEmail}</div>` : ''}
+                                                </div>
+                                            </div>
+                                            ${ref.referredMemberSlug ? `
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewMemberProfile('${ref.referredMemberSlug}', '${ref.referredMemberGroupId || ''}')" 
+                                                style="white-space: nowrap; margin-left: 12px;">
+                                                <i class="ri-eye-line"></i> Xem profile
+                                            </button>
+                                            ` : ''}
+                                        </div>
+                                        <div id="customFieldsContainer" style="margin-top: 20px;"></div>
+                                        ` : `
+                                        <!-- Hiển thị text (nếu là người ngoài) -->
+                                        <div class="info-grid" id="referredMemberInfo">
+                                        ${ref.referralName ? `
+                                        <div class="info-item">
+                                            <div class="label">Tên</div>
+                                            <div class="value">${ref.referralName}</div>
+                                        </div>` : ''}
+                                        ${ref.referralPhone ? `
+                                        <div class="info-item">
+                                            <div class="label">Số Điện Thoại</div>
+                                            <div class="value">${ref.referralPhone}</div>
+                                        </div>` : ''}
+                                        ${ref.referralEmail ? `
+                                        <div class="info-item">
+                                            <div class="label">Email</div>
+                                            <div class="value">${ref.referralEmail}</div>
+                                        </div>` : ''}
+                                        ${ref.referralAddress ? `
+                                        <div class="info-item">
+                                            <div class="label">Địa Chỉ</div>
+                                            <div class="value">${ref.referralAddress}</div>
+                                        </div>` : ''}
+                                        </div>
+                                        `}
+                                    </div>
+                                </div>` : ''}
+                            `;
+                        } else if (ref.type === 1) {
+                            // Type 1: Share member TO external
+                            recipientSection = `
+                                <div class="detail-section">
+                                    <div class="detail-label">Người Nhận (External)</div>
+                                    <div class="member-card">
+                                        <div class="member-name text-info"><i class="ri-external-link-line"></i> ${ref.recipientName || 'N/A'}</div>
+                                        <div class="member-info">SĐT: ${ref.recipientPhone || 'N/A'}</div>
+                                    </div>
+                                </div>
+                                ${(ref.referredMemberId || ref.referralName || ref.referralPhone) ? `
+                                <div class="detail-section">
+                                    <div class="detail-label">Thành Viên Được Chia Sẻ</div>
+                                    <div class="member-card">
+                                        ${ref.referredMemberId ? `
+                                        <!-- Hiển thị profile từ Membership (nếu là member) -->
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div class="d-flex align-items-center flex-grow-1">
+                                                ${ref.referredMemberAvatar ? `
+                                                <img src="${ref.referredMemberAvatar}" alt="Avatar" 
+                                                    style="width: 50px; height: 50px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+                                                ` : `
+                                                <div style="width: 50px; height: 50px; border-radius: 50%; background: #e9ecef; margin-right: 12px; display: flex; align-items: center; justify-content: center;">
+                                                    <i class="ri-user-line" style="font-size: 24px; color: #6c757d;"></i>
+                                                </div>
+                                                `}
+                                                <div class="flex-grow-1">
+                                                    <div class="member-name">${ref.referredMemberName || 'N/A'}</div>
+                                                    ${ref.referredMemberPhone ? `<div class="member-info">SĐT: ${ref.referredMemberPhone}</div>` : ''}
+                                                    ${ref.referredMemberCompany ? `<div class="member-info">Công ty: ${ref.referredMemberCompany}</div>` : ''}
+                                                    ${ref.referredMemberPosition ? `<div class="member-info">Chức vụ: ${ref.referredMemberPosition}</div>` : ''}
+                                                    ${ref.referredMemberEmail ? `<div class="member-info">Email: ${ref.referredMemberEmail}</div>` : ''}
+                                                </div>
+                                            </div>
+                                            ${ref.referredMemberSlug ? `
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewMemberProfile('${ref.referredMemberSlug}', '${ref.referredMemberGroupId || ''}')" 
+                                                style="white-space: nowrap; margin-left: 12px;">
+                                                <i class="ri-eye-line"></i> Xem profile
+                                            </button>
+                                            ` : ''}
+                                        </div>
+                                        <div id="customFieldsContainer" style="margin-top: 20px;"></div>
+                                        ` : `
+                                        <!-- Hiển thị text (nếu là người ngoài) -->
+                                        <div class="info-grid" id="referredMemberInfo">
+                                        ${ref.referralName ? `
+                                        <div class="info-item">
+                                            <div class="label">Tên</div>
+                                            <div class="value">${ref.referralName}</div>
+                                        </div>` : ''}
+                                        ${ref.referralPhone ? `
+                                        <div class="info-item">
+                                            <div class="label">Số Điện Thoại</div>
+                                            <div class="value">${ref.referralPhone}</div>
+                                        </div>` : ''}
+                                        ${ref.referralEmail ? `
+                                        <div class="info-item">
+                                            <div class="label">Email</div>
+                                            <div class="value">${ref.referralEmail}</div>
+                                        </div>` : ''}
+                                        ${ref.referralAddress ? `
+                                        <div class="info-item">
+                                            <div class="label">Địa Chỉ</div>
+                                            <div class="value">${ref.referralAddress}</div>
+                                        </div>` : ''}
+                                        </div>
+                                        `}
+                                    </div>
+                                </div>` : ''}
+                            `;
+                        } else {
+                            // Fallback
+                            recipientSection = `
+                                <div class="detail-section">
+                                    <div class="detail-label">Người Nhận</div>
+                                    <div class="member-card">
+                                        <div class="member-name">${ref.toMemberName || 'N/A'}</div>
+                                        <div class="member-info">${ref.toMemberCompany || 'N/A'}</div>
+                                        <div class="member-info">${ref.toMemberPosition || 'N/A'}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        const html = `
+                            <style>
+                                .detail-section { padding: 20px 0; border-bottom: 1px solid #f0f0f0; }
+                                .detail-section:last-child { border-bottom: none; }
+                                .detail-label {
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: #8e8e93;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.8px;
+                                    margin-bottom: 8px;
+                                }
+                                .detail-value {
+                                    font-size: 15px;
+                                    color: #1d1d1f;
+                                    line-height: 1.4;
+                                }
+                                .member-card {
+                                    background: #f8f9fa;
+                                    padding: 16px;
+                                    border-radius: 8px;
+                                    margin-bottom: 0;
+                                    border: 1px solid #e9ecef;
+                                }
+                                .member-name {
+                                    font-weight: 600;
+                                    font-size: 16px;
+                                    color: #1d1d1f;
+                                    margin-bottom: 6px;
+                                }
+                                .member-info {
+                                    font-size: 14px;
+                                    color: #6c757d;
+                                    margin-bottom: 3px;
+                                }
+                                .info-grid {
+                                    display: grid;
+                                    grid-template-columns: 1fr 1fr;
+                                    gap: 20px;
+                                }
+                                .info-item {
+                                    background: #f8f9fa;
+                                    padding: 16px;
+                                    border-radius: 8px;
+                                    border: 1px solid #e9ecef;
+                                }
+                                .info-item .label {
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    color: #8e8e93;
+                                    text-transform: uppercase;
+                                    letter-spacing: 0.8px;
+                                    margin-bottom: 6px;
+                                }
+                                .info-item .value {
+                                    font-size: 15px;
+                                    color: #1d1d1f;
+                                    font-weight: 500;
+                                }
+                                .content-section {
+                                    background: #f8f9fa;
+                                    padding: 16px;
+                                    border-radius: 8px;
+                                    border: 1px solid #e9ecef;
+                                }
+                                .date-info {
+                                    background: #f8f9fa;
+                                    padding: 12px 16px;
+                                    border-radius: 8px;
+                                    border: 1px solid #e9ecef;
+                                    font-size: 13px;
+                                    color: #6c757d;
+                                }
+                                .badge-custom {
+                                    padding: 6px 12px;
+                                    border-radius: 6px;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                }
+                                .badge-success { background: #d4edda; color: #155724; }
+                                .badge-warning { background: #fff3cd; color: #856404; }
+                                .badge-primary { background: #cce7ff; color: #004085; }
+                                .badge-info { background: #d1ecf1; color: #0c5460; }
+                                .badge-light { background: #f8f9fa; color: #6c757d; }
+                            </style>
+
+                            <div class="detail-section">
+                                <div class="detail-label">Loại</div>
+                                <div>
+                                    <span class="badge-custom ${ref.type === 0 ? 'badge-primary' : 'badge-info'}">${ref.typeText || 'N/A'}</span>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <div class="detail-label">Người Gửi</div>
+                                <div class="member-card">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div class="d-flex align-items-center flex-grow-1">
+                                            ${ref.fromMemberAvatar ? `
+                                            <img src="${ref.fromMemberAvatar}" alt="Avatar" 
+                                                style="width: 50px; height: 50px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+                                            ` : `
+                                            <div style="width: 50px; height: 50px; border-radius: 50%; background: #e9ecef; margin-right: 12px; display: flex; align-items: center; justify-content: center;">
+                                                <i class="ri-user-line" style="font-size: 24px; color: #6c757d;"></i>
+                                            </div>
+                                            `}
+                                            <div class="flex-grow-1">
+                                                <div class="member-name">${ref.fromMemberName || 'N/A'}</div>
+                                                ${ref.fromMemberPhone ? `<div class="member-info">SĐT: ${ref.fromMemberPhone}</div>` : ''}
+                                                ${ref.fromMemberCompany ? `<div class="member-info">${ref.fromMemberCompany}</div>` : ''}
+                                                ${ref.fromMemberPosition ? `<div class="member-info">${ref.fromMemberPosition}</div>` : ''}
+                                            </div>
+                                        </div>
+                                        ${ref.fromMemberSlug ? `
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewMemberProfile('${ref.fromMemberSlug}', '')" 
+                                            style="white-space: nowrap; margin-left: 12px;">
+                                            <i class="ri-eye-line"></i> Xem profile
+                                        </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${recipientSection}
+
+                                    <div class="detail-section">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <div class="label">Nhóm</div>
+                                        <div class="value">
+                                            <span class="badge-custom badge-light">${groupName}</span>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="label">Giá Trị</div>
+                                        <div class="value">
+                                            <strong>${ref.value.toLocaleString('vi-VN')} đ</strong>
+                                </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <div class="detail-label">Nội Dung</div>
+                                <div class="content-section">
+                                <div class="detail-value">${ref.content || 'N/A'}</div>
+                                </div>
+                            </div>
+
+                                    <div class="detail-section">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <div class="label">Đánh Giá</div>
+                                        <div class="value">${ratingHtml}</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="label">Trạng Thái</div>
+                                        <div class="value">${statusBadge}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <div class="detail-label">Nhận Xét</div>
+                                <div class="content-section">
+                                <div class="detail-value">${feedbackHtml}</div>
+                                </div>
+                            </div>
+
+                            <div class="detail-section">
+                                <div class="date-info">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <strong>Ngày tạo:</strong><br>
+                                            ${ref.createdDateDisplay || new Date(ref.createdDate).toLocaleString('vi-VN')}
+                                        </div>
+                                        <div class="col-6">
+                                            <strong>Cập nhật:</strong><br>
+                                            ${ref.updatedDateDisplay || new Date(ref.updatedDate).toLocaleString('vi-VN')}
+                                        </div>
+                                </div>
+                                </div>
+                            </div>
+                        `;
+                        $('#detailContent').html(html);
+                        const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                        modal.show();
+                        
+                        // Load custom fields nếu có ReferredMemberId (là member trong hệ thống)
+                        if (ref.referredMemberId) {
+                            loadCustomFieldsByMemberId(ref.referredMemberId, ref);
+                        }
+                    } else {
+                        showAlert('error', response.message);
+                    }
+                },
+                error: function() {
+                    showAlert('error', 'Lỗi khi tải chi tiết');
+                }
+            });
+        }
+
+        function loadCustomFieldsByMemberId(userZaloId, ref) {
+            // List of fields to exclude (already displayed)
+            const excludedFields = ['name', 'tên', 'phone', 'số điện thoại', 'phoneNumber', 'email', 'địa chỉ', 'address'];
+            
+            // Lấy slug từ membership trước
+            $.ajax({
+                url: `/api/memberships/giba/profile/${userZaloId}`,
+                type: 'GET',
+                success: function(memberResponse) {
+                    const memberData = memberResponse?.data?.data || memberResponse?.data || {};
+                    const slug = memberData.slug;
+                    
+                    if (!slug) {
+                        console.warn('Không tìm thấy slug cho member:', userZaloId);
+                        return;
+                    }
+                    
+                    // Sau đó load custom fields bằng slug
+                    $.ajax({
+                        url: `/api/memberships/giba/profile/slug/${slug}`,
+                        type: 'GET',
+                success: function(response) {
+                    console.log('API Response:', response);
+                    const data = response?.data?.data || response?.data || {};
+                    const basicInfo = data.basicInfo || {};
+                    const profileTemplate = data.profileTemplate || {};
+                    const customFields = profileTemplate.customFields || [];
+                    
+                    let additionalInfoHtml = '';
+                    
+                    // Thông tin cơ bản bổ sung (nếu chưa có trong ref)
+                    const additionalBasicInfo = [];
+                    if (basicInfo.profile && basicInfo.profile !== ref.referralName) {
+                        additionalBasicInfo.push({ label: 'Giới thiệu', value: basicInfo.profile });
+                    }
+                    if (basicInfo.dayOfBirth) {
+                        additionalBasicInfo.push({ label: 'Ngày sinh', value: basicInfo.dayOfBirth });
+                    }
+                    if (basicInfo.company && basicInfo.company !== ref.referralName) {
+                        additionalBasicInfo.push({ label: 'Công ty', value: basicInfo.company });
+                    }
+                    if (basicInfo.position && basicInfo.position !== ref.referralName) {
+                        additionalBasicInfo.push({ label: 'Chức vụ', value: basicInfo.position });
+                    }
+                    
+                    if (additionalBasicInfo.length > 0) {
+                        additionalInfoHtml += '<div class="info-grid" style="margin-top: 20px;">';
+                        additionalBasicInfo.forEach(info => {
+                            additionalInfoHtml += `
+                                <div class="info-item">
+                                    <div class="label">${info.label}</div>
+                                    <div class="value">${info.value}</div>
+                                </div>
+                            `;
+                        });
+                        additionalInfoHtml += '</div>';
+                    }
+                    
+                    // Custom fields (filter out duplicates)
+                    if (customFields.length > 0) {
+                        const filteredFields = customFields.filter(field => {
+                            if (!field.isVisible) return false;
+                            
+                            const fieldNameLower = (field.fieldName || '').toLowerCase();
+                            const fieldValue = field.fieldValue || '';
+                            
+                            // Check if field name matches excluded fields
+                            const isExcluded = excludedFields.some(excluded => 
+                                fieldNameLower.includes(excluded.toLowerCase())
+                            );
+                            
+                            // Check if value matches existing referral info
+                            const matchesReferralName = ref.referralName && fieldValue === ref.referralName;
+                            const matchesReferralPhone = ref.referralPhone && fieldValue === ref.referralPhone;
+                            const matchesReferralEmail = ref.referralEmail && fieldValue === ref.referralEmail;
+                            const matchesReferralAddress = ref.referralAddress && fieldValue === ref.referralAddress;
+                            
+                            return !isExcluded && !matchesReferralName && !matchesReferralPhone && 
+                                   !matchesReferralEmail && !matchesReferralAddress && fieldValue.trim() !== '';
+                        });
+                        
+                        if (filteredFields.length > 0) {
+                            // Sort by displayOrder
+                            filteredFields.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+                            
+                            additionalInfoHtml += '<div class="detail-label" style="margin-top: 20px; margin-bottom: 12px;">Thông Tin Bổ Sung</div>';
+                            additionalInfoHtml += '<div class="info-grid">';
+                            
+                            filteredFields.forEach(field => {
+                                additionalInfoHtml += `
+                                    <div class="info-item">
+                                        <div class="label">${field.fieldName || 'N/A'}</div>
+                                        <div class="value">${field.fieldValue || 'N/A'}</div>
+                                    </div>
+                                `;
+                            });
+                            
+                            additionalInfoHtml += '</div>';
+                        }
+                    }
+                    
+                    // Hiển thị tất cả thông tin bổ sung
+                    if (additionalInfoHtml) {
+                        $('#customFieldsContainer').html(additionalInfoHtml);
+                        console.log('Additional info displayed');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Could not load additional fields:', error, xhr);
+                    // Silently fail - additional fields are optional
+                }
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error('Could not load member profile:', error, xhr);
+                }
+            });
+        }
+
+        function showAlert(type, message) {
+            const alertClass = type === 'error' ? 'alert-danger' : 'alert-success';
+            const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            $('body').prepend(alertHtml);
+            setTimeout(() => $('.alert').fadeOut(), 3000);
+        }
+
+        function viewMemberProfile(slug, groupId) {
+            // Lưu trạng thái scroll của detail modal
+            const detailModal = document.getElementById('detailModal');
+            const detailModalBody = detailModal ? detailModal.querySelector('.modal-body') : null;
+            const savedScrollTop = detailModalBody ? detailModalBody.scrollTop : 0;
+            
+            const profileContent = $('#profileContent');
+            profileContent.html(`
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Đang tải thông tin...</p>
+                </div>
+            `);
+
+            const profileModal = document.getElementById('profileModal');
+            const modal = new bootstrap.Modal(profileModal);
+            
+            // Lưu scroll position vào data attribute
+            if (profileModal) {
+                profileModal.setAttribute('data-saved-scroll', savedScrollTop);
+            }
+            
+            // Xử lý khi modal profile đóng - sử dụng one-time event listener
+            const handleModalClose = function() {
+                setTimeout(() => {
+                    restoreDetailModalScroll();
+                }, 100);
+                profileModal.removeEventListener('hidden.bs.modal', handleModalClose);
+            };
+            
+            profileModal.addEventListener('hidden.bs.modal', handleModalClose);
+            
+            modal.show();
+
+            const url = `/api/memberships/giba/profile/slug/${slug}${groupId ? '?groupId=' + groupId : ''}`;
+            
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(response) {
+                    if (response.success && response.data && response.data.data) {
+                        const profileData = response.data.data;
+                        const basicInfo = profileData.basicInfo || {};
+                        const ratingInfo = profileData.ratingInfo || {};
+                        const companyInfo = profileData.companyInfo || {};
+                        const groupInfo = profileData.groupInfo || [];
+                        const profileTemplate = profileData.profileTemplate || {};
+                        const customFields = profileTemplate.customFields || [];
+
+                        let html = `
+                            <style>
+                                .profile-header {
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white;
+                                    padding: 30px;
+                                    border-radius: 10px;
+                                    margin-bottom: 20px;
+                                }
+                                .profile-avatar {
+                                    width: 120px;
+                                    height: 120px;
+                                    border-radius: 50%;
+                                    border: 4px solid white;
+                                    object-fit: cover;
+                                    margin-bottom: 15px;
+                                }
+                                .profile-section {
+                                    background: #f8f9fa;
+                                    padding: 20px;
+                                    border-radius: 8px;
+                                    margin-bottom: 20px;
+                                    border: 1px solid #e9ecef;
+                                }
+                                .profile-section-title {
+                                    font-size: 16px;
+                                    font-weight: 600;
+                                    color: #1d1d1f;
+                                    margin-bottom: 15px;
+                                    padding-bottom: 10px;
+                                    border-bottom: 2px solid #667eea;
+                                }
+                                .profile-info-item {
+                                    display: flex;
+                                    justify-content: space-between;
+                                    padding: 10px 0;
+                                    border-bottom: 1px solid #e9ecef;
+                                }
+                                .profile-info-item:last-child {
+                                    border-bottom: none;
+                                }
+                                .profile-info-label {
+                                    font-weight: 600;
+                                    color: #6c757d;
+                                    min-width: 150px;
+                                }
+                                .profile-info-value {
+                                    color: #1d1d1f;
+                                    text-align: right;
+                                    flex: 1;
+                                }
+                                .badge-rating {
+                                    background: #ffc107;
+                                    color: #000;
+                                    padding: 5px 10px;
+                                    border-radius: 20px;
+                                    font-weight: 600;
+                                }
+                            </style>
+
+                            <div class="profile-header text-center">
+                                ${basicInfo.zaloAvatar ? `
+                                <img src="${basicInfo.zaloAvatar}" alt="Avatar" class="profile-avatar">
+                                ` : `
+                                <div class="profile-avatar mx-auto d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.2);">
+                                    <i class="ri-user-line" style="font-size: 60px;"></i>
+                                </div>
+                                `}
+                                <h3 class="mb-2">${basicInfo.fullname || 'N/A'}</h3>
+                                ${basicInfo.position ? `<p class="mb-0"><i class="ri-briefcase-line"></i> ${basicInfo.position}</p>` : ''}
+                                ${basicInfo.company ? `<p class="mb-0"><i class="ri-building-line"></i> ${basicInfo.company}</p>` : ''}
+                            </div>
+
+                            <div class="profile-section">
+                                <div class="profile-section-title">Thông Tin Cơ Bản</div>
+                                ${basicInfo.phoneNumber ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label"><i class="ri-phone-line"></i> Số Điện Thoại</span>
+                                    <span class="profile-info-value">${basicInfo.phoneNumber}</span>
+                                </div>
+                                ` : ''}
+                                ${basicInfo.email ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label"><i class="ri-mail-line"></i> Email</span>
+                                    <span class="profile-info-value">${basicInfo.email}</span>
+                                </div>
+                                ` : ''}
+                                ${basicInfo.dayOfBirth ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label"><i class="ri-calendar-line"></i> Ngày Sinh</span>
+                                    <span class="profile-info-value">${basicInfo.dayOfBirth}</span>
+                                </div>
+                                ` : ''}
+                                ${basicInfo.address ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label"><i class="ri-map-pin-line"></i> Địa Chỉ</span>
+                                    <span class="profile-info-value">${basicInfo.address}</span>
+                                </div>
+                                ` : ''}
+                                ${basicInfo.profile ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label"><i class="ri-file-text-line"></i> Giới Thiệu</span>
+                                    <span class="profile-info-value">${basicInfo.profile}</span>
+                                </div>
+                                ` : ''}
+                                @* ${basicInfo.code ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label"><i class="ri-barcode-line"></i> Mã Thành Viên</span>
+                                    <span class="profile-info-value">${basicInfo.code}</span>
+                                </div>
+                                ` : ''} *@
+                            </div>
+
+                            ${ratingInfo.averageRating ? `
+                            <div class="profile-section">
+                                <div class="profile-section-title">Đánh Giá</div>
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Điểm Trung Bình</span>
+                                    <span class="profile-info-value">
+                                        <span class="badge-rating">${ratingInfo.averageRating}/5</span>
+                                        <small class="text-muted ms-2">(${ratingInfo.totalRatings || 0} đánh giá)</small>
+                                    </span>
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            ${Object.keys(companyInfo).length > 0 ? `
+                            <div class="profile-section">
+                                <div class="profile-section-title">Thông Tin Công Ty</div>
+                                ${companyInfo.companyFullName ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Tên Công Ty</span>
+                                    <span class="profile-info-value">${companyInfo.companyFullName}</span>
+                                </div>
+                                ` : ''}
+                                ${companyInfo.companyBrandName ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Thương Hiệu</span>
+                                    <span class="profile-info-value">${companyInfo.companyBrandName}</span>
+                                </div>
+                                ` : ''}
+                                ${companyInfo.taxCode ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Mã Số Thuế</span>
+                                    <span class="profile-info-value">${companyInfo.taxCode}</span>
+                                </div>
+                                ` : ''}
+                                ${companyInfo.businessField ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Lĩnh Vực</span>
+                                    <span class="profile-info-value">${companyInfo.businessField}</span>
+                                </div>
+                                ` : ''}
+                                ${companyInfo.businessType ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Loại Hình</span>
+                                    <span class="profile-info-value">${companyInfo.businessType}</span>
+                                </div>
+                                ` : ''}
+                                ${companyInfo.headquartersAddress ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Địa Chỉ Trụ Sở</span>
+                                    <span class="profile-info-value">${companyInfo.headquartersAddress}</span>
+                                </div>
+                                ` : ''}
+                                ${companyInfo.companyPhoneNumber ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Điện Thoại</span>
+                                    <span class="profile-info-value">${companyInfo.companyPhoneNumber}</span>
+                                </div>
+                                ` : ''}
+                                ${companyInfo.companyEmail ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Email</span>
+                                    <span class="profile-info-value">${companyInfo.companyEmail}</span>
+                                </div>
+                                ` : ''}
+                                ${companyInfo.companyWebsite ? `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">Website</span>
+                                    <span class="profile-info-value"><a href="${companyInfo.companyWebsite}" target="_blank">${companyInfo.companyWebsite}</a></span>
+                                </div>
+                                ` : ''}
+                            </div>
+                            ` : ''}
+
+                            ${groupInfo.length > 0 ? `
+                            <div class="profile-section">
+                                <div class="profile-section-title">Hội Nhóm</div>
+                                ${groupInfo.map(group => `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">${group.groupName || 'N/A'}</span>
+                                    <span class="profile-info-value">
+                                        ${group.groupPosition ? `<span class="badge bg-primary">${group.groupPosition}</span>` : ''}
+                                    </span>
+                                </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
+
+                            ${customFields.length > 0 ? `
+                            <div class="profile-section">
+                                <div class="profile-section-title">Thông Tin Bổ Sung</div>
+                                ${customFields.filter(field => field.isVisible).map(field => `
+                                <div class="profile-info-item">
+                                    <span class="profile-info-label">${field.fieldName || 'N/A'}</span>
+                                    <span class="profile-info-value">${field.fieldValue || 'N/A'}</span>
+                                </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
+                        `;
+
+                        profileContent.html(html);
+                    } else {
+                        profileContent.html(`
+                            <div class="alert alert-warning">
+                                <i class="ri-alert-line"></i> Không tìm thấy thông tin profile
+                            </div>
+                        `);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading profile:', error, xhr);
+                    profileContent.html(`
+                        <div class="alert alert-danger">
+                            <i class="ri-error-warning-line"></i> Lỗi khi tải thông tin profile: ${error || 'Unknown error'}
+                        </div>
+                    `);
+                }
+            });
+        }
+
+        function restoreDetailModalScroll() {
+            // Khôi phục scroll của detail modal
+            const detailModal = document.getElementById('detailModal');
+            if (!detailModal) return;
+            
+            const detailModalBody = detailModal.querySelector('.modal-body');
+            const profileModal = document.getElementById('profileModal');
+            const savedScroll = profileModal ? profileModal.getAttribute('data-saved-scroll') : null;
+            
+            // Khôi phục scroll position
+            if (detailModalBody && savedScroll !== null) {
+                // Force enable scroll
+                detailModalBody.style.overflowY = 'auto';
+                detailModalBody.style.overflowX = 'hidden';
+                
+                setTimeout(() => {
+                    detailModalBody.scrollTop = parseInt(savedScroll);
+                    // Đảm bảo scroll được enable
+                    detailModalBody.style.pointerEvents = 'auto';
+                    detailModalBody.style.touchAction = 'pan-y';
+                }, 150);
+            }
+            
+            // Đảm bảo detail modal vẫn có thể scroll
+            if (detailModal.classList.contains('show')) {
+                const detailModalBody = detailModal.querySelector('.modal-body');
+                if (detailModalBody) {
+                    detailModalBody.style.overflowY = 'auto';
+                    detailModalBody.style.overflowX = 'hidden';
+                    detailModalBody.style.maxHeight = 'calc(100vh - 200px)';
+                }
+            }
+            
+            // Xử lý body scroll - chỉ remove nếu không còn modal nào mở
+            setTimeout(() => {
+                const openModals = document.querySelectorAll('.modal.show');
+                if (openModals.length === 0) {
+                    // Không còn modal nào mở, restore body
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                } else {
+                    // Vẫn còn modal mở (detail modal), đảm bảo body có thể scroll
+                    document.body.style.overflow = 'hidden';
+                }
+            }, 200);
+        }
+    </script>
+}
+

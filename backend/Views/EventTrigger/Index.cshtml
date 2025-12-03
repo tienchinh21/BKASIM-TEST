@@ -1,0 +1,120 @@
+﻿@{
+    ViewData["Title"] = "Quản lý cài đặt template gửi tin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Header Section -->
+<div class="row">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <div>
+                    <h3 class="mb-2">
+                        <i class="ri-notification-line me-2"></i>
+                        Danh sách cài đặt template gửi tin
+                    </h3>
+                    <p class="text-muted mb-0">Quản lý các template và cài đặt gửi thông báo trong hệ thống</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-primary" onclick="loadForm('')">
+                        <i class="ri-add-line me-1"></i>
+                        Thêm cài đặt mới
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <!-- Search Input -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="searchInput" class="form-label fw-medium">
+                        <i class="bi bi-search me-1"></i>Tìm kiếm
+                    </label>
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control border-end-0" placeholder="Nhập tên sự kiện..." autocomplete="off">
+                        <button class="input-group-text border-start-0" onclick="applyFilters()">
+                            <i class="ri-search-line me-1 text-muted"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Type Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="typeFilter" class="form-label fw-medium">
+                        <i class="bi bi-filter me-1"></i>Loại template
+                    </label>
+                    <select class="form-select" id="typeFilter">
+                        <option value="" selected>Tất cả loại</option>
+                        @* <option value="1">Zalo UID</option> *@
+                        <option value="2">Omni ZNS</option>
+                        @* <option value="3">Email</option> *@
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="statusFilter" class="form-label fw-medium">
+                        <i class="bi bi-funnel me-1"></i>Trạng thái
+                    </label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="" selected>Tất cả trạng thái</option>
+                        <option value="true">Đang hoạt động</option>
+                        <option value="false">Tạm dừng</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="col-lg-3 col-md-12">
+                    <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                        <button type="button" class="btn btn-primary" onclick="applyFilters()">
+                            <i class="ri-search-line me-1"></i>Lọc
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                            <i class="ri-refresh-line me-1"></i>Đặt lại
+                        </button>
+                        <button type="button" class="btn btn-success d-none" data-bs-toggle="modal" data-bs-target="#exportModal">
+                            <i class="ri-download-line me-1"></i>Xuất Excel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div id="spinner" style="margin: 20px 0; z-index: -1;"></div>
+            <div class="table-responsive rounded mb-3">
+                <table id="eventTriggerTable" class="data-table table mb-0 tbl-server-info">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STT</th>
+                            <th>ID</th>
+                            <th>Tên sự kiện</th>
+                            <th>Loại template</th>
+                            <th>Mã tham chiếu</th>
+                            <th>Danh sách nhận</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tạo</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eventTriggerModal" tabindex="-1" aria-labelledby="eventTriggerModalLabel" aria-hidden="true" data-bs-backdrop="static">
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("Scripts/_CrudScripts")
+}

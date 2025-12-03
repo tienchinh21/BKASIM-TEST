@@ -1,0 +1,211 @@
+@model MiniAppGIBA.Models.Request.Events.CreateEventGiftRequest
+
+<style>
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+    
+    .image-preview {
+        position: relative;
+        display: inline-block;
+        margin: 5px;
+    }
+    
+    .btn-preview-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .preview-container img {
+        max-width: 150px;
+        max-height: 100px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+</style>
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <form id="giftForm" onsubmit="handleGiftSubmit(event)">
+            @if (ViewBag.IsEdit)
+            {
+                <input type="hidden" id="giftId" value="@ViewBag.GiftId" />
+            }
+            
+            <div class="row">
+                <!-- Sự kiện -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Sự kiện <span class="text-danger">*</span></label>
+                        <select id="eventId" class="form-select" required>
+                            <option value="">Chọn sự kiện</option>
+                            @if (ViewBag.Events != null)
+                            {
+                                @foreach (var eventItem in ViewBag.Events)
+                                {
+                                    <option value="@eventItem.Id" @(Model?.EventId == eventItem.Id ? "selected" : "")>@eventItem.Title</option>
+                                }
+                            }
+                        </select>
+                        <span class="error-message" id="error-eventId"></span>
+                    </div>
+                </div>
+                
+                <!-- Tên phần quà -->
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Tên phần quà <span class="text-danger">*</span></label>
+                        <input id="giftName" type="text" class="form-control" value="@Model?.GiftName"
+                            placeholder="Nhập tên phần quà..." required>
+                        <span class="error-message" id="error-giftName"></span>
+                    </div>
+                </div>
+                
+                <!-- Số lượng -->
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Số lượng <span class="text-danger">*</span></label>
+                        <input id="quantity" type="number" class="form-control" value="@(Model?.Quantity ?? 1)"
+                            min="1" required>
+                        <span class="error-message" id="error-quantity"></span>
+                    </div>
+                </div>
+                
+                <!-- Hình ảnh phần quà -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Hình ảnh phần quà</label>
+                        <input id="imageFiles" type="file" accept="image/*" class="form-control" multiple
+                            onchange="previewGiftImages(this)" />
+                        <small class="text-muted">Có thể chọn nhiều ảnh</small>
+                        <div id="images-preview" class="mt-2 preview-container d-flex flex-wrap">
+                            @if (ViewBag.Images != null)
+                            {
+                                @foreach (var image in ViewBag.Images)
+                                {
+                                    <div class="image-preview">
+                                        <img src="@image" alt="Gift Image" />
+                                        <button type="button" class="btn-preview-remove" onclick="removeImagePreview(this)">×</button>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trạng thái hoạt động -->
+                <div class="col-md-12">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="isActive" @(Model?.IsActive != false ? "checked" : "")>
+                        <label class="form-check-label" for="isActive">
+                            Kích hoạt phần quà
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-arrow-left-line me-1"></i>
+            Đóng
+        </button>
+        <button type="submit" form="giftForm" class="btn btn-primary">
+            <i class="ri-save-line me-1"></i>
+            @ViewBag.Button
+        </button>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    function handleGiftSubmit(event) {
+        event.preventDefault();
+        
+        const isEdit = @(ViewBag.IsEdit ? "true" : "false");
+        const giftId = isEdit ? $('#giftId').val() : null;
+        
+        // Validate form
+        if (!validateGiftForm()) {
+            return;
+        }
+        
+        // Call global function from Index.cshtml
+        submitGiftForm(isEdit, giftId);
+    }
+    
+    function validateGiftForm() {
+        let isValid = true;
+        
+        // Clear previous errors
+        $('.error-message').text('').hide();
+        
+        // Validate required fields
+        const requiredFields = [
+            { id: 'eventId', name: 'Sự kiện' },
+            { id: 'giftName', name: 'Tên phần quà' },
+            { id: 'quantity', name: 'Số lượng' }
+        ];
+        
+        requiredFields.forEach(field => {
+            const value = $(`#${field.id}`).val();
+            if (!value || value.trim() === '') {
+                $(`#error-${field.id}`).text(`${field.name} là bắt buộc`).show();
+                isValid = false;
+            }
+        });
+        
+        // Validate quantity
+        const quantity = parseInt($('#quantity').val());
+        if (quantity < 1) {
+            $('#error-quantity').text('Số lượng phải lớn hơn 0').show();
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+    
+    function previewGiftImages(input) {
+        const preview = $('#images-preview');
+        preview.empty();
+        
+        if (input.files) {
+            Array.from(input.files).forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageHtml = `
+                        <div class="image-preview">
+                            <img src="${e.target.result}" alt="Gift Image Preview ${index + 1}" />
+                            <button type="button" class="btn-preview-remove" onclick="removeImagePreview(this)">×</button>
+                        </div>
+                    `;
+                    preview.append(imageHtml);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+    
+    function removeImagePreview(button) {
+        $(button).closest('.image-preview').remove();
+    }
+</script>

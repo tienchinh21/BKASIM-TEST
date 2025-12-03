@@ -1,0 +1,396 @@
+﻿@using MiniAppGIBA.Base.Dependencies.Extensions
+@using MiniAppGIBA.Entities.Articles
+@using MiniAppGIBA.Constants
+@{
+    var canEdit = User.IsEditable();
+    ViewData["Title"] = "Danh mục tin tức";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Danh mục tin tức</h4>
+                @* <p class="mb-0"> *@
+                @*     Danh sách tin tức quyết định cách trình bày sản phẩm một cách hiệu quả và cung cấp không gian<br /> *@
+                @*     để liệt kê các sản phẩm và ưu đãi của bạn theo cách hấp dẫn nhất. *@
+                @* </p> *@
+            </div>
+            @if (canEdit)
+            {
+                <button type="button" class="btn btn-primary mt-2" onclick="GetFormArticleCategory()">
+                    <i class="ri-add-line mr-3"></i>Thêm mới
+                </button>
+            }
+        </div>
+    </div>
+
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo tên">
+                            <span class="search-icon position-absolute user-select-auto"
+                                style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer"
+                                onclick="table.ajax.reload()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (canEdit)
+    {
+        <div class="col-lg-12">
+            <div id="bulk-actions" class="mb-3 d-none">
+                <button type="button" id="btn-bulk-delete" class="btn btn-danger">
+                    <i class="ri-delete-bin-line mr-1"></i> Xóa danh mục đã chọn
+                </button>
+            </div>
+        </div>
+    }
+
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div id="articleCategory-table" class="table-responsive rounded mb-3">
+            <table id="list-articleCategory" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-articleCategory" data-bs-backdrop="static" data-bs-keyboard="false" class="modal fade">
+    <div id="modal-content" class="modal-dialog modal-dialog-centered"></div>
+</div>
+
+@section Scripts {
+    <script>
+        const CAN_EDIT = @(canEdit.ToString().ToLower());
+        const selectedIds = new Set();
+
+        $(document).ready(function () {
+            GetListArticleCategory();
+            $('#search').on('input', search);
+
+            $('#btn-bulk-delete').on('click', handleBulkDelete);
+        });
+
+        function GetFormArticleCategory(id) {
+            const url = id ? `@Url.Action("Detail", "ArticleCategory")/${id}` : "@Url.Action("Create", "ArticleCategory")"
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (data) {
+                    $("#modal-content").html(data);
+                    $("#modal-articleCategory").modal("toggle");
+                }
+            })
+        }
+
+        function renderRowCheckbox(id) {
+            if (!CAN_EDIT) return '';
+            const checked = selectedIds.has(id) ? 'checked' : '';
+            return `<input type="checkbox" class="row-select" value="${id}" ${checked} />`;
+        }
+
+        function updateBulkButtonVisibility() {
+            if (!CAN_EDIT) return;
+            if (selectedIds.size > 0) $('#bulk-actions').removeClass('d-none');
+            else $('#bulk-actions').addClass('d-none');
+        }
+
+        function syncHeaderCheckbox() {
+            if (!CAN_EDIT) return;
+            const $rows = $('#list-articleCategory tbody input.row-select');
+            const total = $rows.length;
+            const checked = $rows.filter(':checked').length;
+            const $header = $('#list-articleCategory thead input#select-all');
+
+            if (total === 0) {
+                $header.prop({ checked: false, indeterminate: false });
+                return;
+            }
+            if (checked === 0) $header.prop({ checked: false, indeterminate: false });
+            else if (checked === total) $header.prop({ checked: true, indeterminate: false });
+            else $header.prop({ checked: false, indeterminate: true });
+        }
+
+        function GetListArticleCategory() {
+            table = new DataTable("#list-articleCategory", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const keyword = $("#search").val();
+                    const status = $("#filter-status").val()
+
+                    $.ajax({
+                        url: '@Url.Action("GetPage", "ArticleCategories")',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pagesize: data.length,
+                            keyword: keyword,
+                            status: status
+                        },
+                        success: function (response) {
+                            const formattedData = response.data.map((item, index) => ({
+                                0: renderRowCheckbox(item.id),
+                                1: data.start + index + 1,
+                                2: item.name,
+                                3: item.displayOrder,
+                                4: `<div class="d-flex align-items-center justify-content-center list-action">
+                                            <a onclick="GetFormArticleCategory('${item.id}')" class="badge badge-info mx-1" data-toggle="tooltip" data-placement="top" title="Xem chi tiết">
+                                                <i class="ri-edit-line fs-6 mr-0"></i>
+                                            </a>
+
+                                            <a onclick="DeleteArticleCategory('${item.id}')" class="badge bg-warning mx-1 @(canEdit ? "" : "d-none")" data-toggle="tooltip" data-placement="top" title="Xóa">
+                                                <i class="ri-delete-bin-line fs-6 mr-0"></i>
+                                            </a>
+                                        </div>`,
+                            }));
+
+                            setTimeout(() => {
+                                const totalCount = response.totalCount || 0;
+                                callback({
+                                    draw: data.draw,
+                                    recordsTotal: totalCount,
+                                    recordsFiltered: totalCount,
+                                    data: formattedData
+                                });
+                            }, 400);
+                        }
+                    });
+                },
+                columns: [
+                    {
+                        title: CAN_EDIT ? '<input type="checkbox" id="select-all" />' : '',
+                        data: 0,
+                        className: 'text-center',
+                        orderable: false
+                    },
+                    { title: "STT", data: 1, className: 'text-center' },
+                    { title: "Tên danh mục", data: 2 },
+                    { title: "Thứ tự hiển thị", data: 3 },
+                    { title: "Thao tác", data: 4, className: 'text-center' }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng dữ liệu",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": ""
+                }
+            });
+
+            // Sau mỗi lần draw: đồng bộ checkbox & header
+            table.on('draw', function () {
+                $('#list-articleCategory tbody input.row-select').each(function () {
+                    this.checked = selectedIds.has(this.value);
+                });
+                syncHeaderCheckbox();
+                updateBulkButtonVisibility();
+            });
+
+            // Row checkbox toggle
+            $('#list-articleCategory').on('change', 'tbody input.row-select', function () {
+                const id = this.value;
+                if (this.checked) selectedIds.add(id);
+                else selectedIds.delete(id);
+
+                updateBulkButtonVisibility();
+                syncHeaderCheckbox();
+            });
+
+            // Header chọn tất cả
+            $('#list-articleCategory').on('change', 'thead #select-all', function () {
+                const checked = this.checked;
+                $('#list-articleCategory tbody input.row-select').each(function () {
+                    this.checked = checked;
+                    const id = this.value;
+                    if (checked) selectedIds.add(id);
+                    else selectedIds.delete(id);
+                });
+                updateBulkButtonVisibility();
+                syncHeaderCheckbox();
+            });
+
+            $(table.table().header()).addClass('ligth ligth-data');
+        }
+
+        function DeleteArticleCategory(id) {
+            if (id === '') return;
+            const url = `/api/ArticleCategories/${id}`;
+            $("#modal-articleCategory").modal("hide");
+            
+            // Sử dụng swal trực tiếp để tránh lỗi DeleteItem không được định nghĩa
+            if (typeof swal !== 'undefined') {
+                swal({
+                    title: "Cảnh báo",
+                    text: "Dữ liệu sẽ không được phục hồi với thao tác này!",
+                    icon: "warning",
+                    buttons: {
+                        cancel: {
+                            text: "Hủy",
+                            value: null,
+                            visible: true,
+                            className: "",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Xác nhận",
+                            value: true,
+                            visible: true,
+                            className: "",
+                            closeModal: true,
+                        },
+                    },
+                }).then((result) => {
+                    if (result) {
+                        $.ajax({
+                            url: url,
+                            method: "DELETE",
+                            success: function (response) {
+                                if (response.code === 0 || response.code === 200) {
+                                    if (typeof AlertResponse !== 'undefined') {
+                                        AlertResponse(response.message ?? "Xóa thành công!", "success");
+                                    } else if (typeof swal !== 'undefined') {
+                                        swal({
+                                            title: "Thành công!",
+                                            text: response.message ?? "Xóa thành công!",
+                                            icon: "success",
+                                            timer: 2000,
+                                            buttons: false
+                                        });
+                                    }
+                                    if (typeof table !== 'undefined') {
+                                        table.ajax.reload(null, false);
+                                    }
+                                } else {
+                                    if (typeof AlertResponse !== 'undefined') {
+                                        AlertResponse(response.message ?? "Đã xảy ra lỗi!", "error");
+                                    } else if (typeof swal !== 'undefined') {
+                                        swal({
+                                            title: "Lỗi!",
+                                            text: response.message ?? "Đã xảy ra lỗi!",
+                                            icon: "error",
+                                            button: "Đóng"
+                                        });
+                                    }
+                                }
+                            },
+                            error: function (xhr, status, error) {
+                                const errorMsg = xhr.responseJSON?.message || "Lỗi khi thực hiện yêu cầu!";
+                                if (typeof AlertResponse !== 'undefined') {
+                                    AlertResponse(errorMsg, "error");
+                                } else if (typeof swal !== 'undefined') {
+                                    swal({
+                                        title: "Lỗi!",
+                                        text: errorMsg,
+                                        icon: "error",
+                                        button: "Đóng"
+                                    });
+                                }
+                            },
+                        });
+                    }
+                });
+            } else {
+                // Fallback nếu swal không có, dùng confirm
+                if (confirm("Bạn có chắc muốn xóa danh mục này?")) {
+                    $.ajax({
+                        url: url,
+                        method: "DELETE",
+                        success: function (response) {
+                            if (response.code === 0 || response.code === 200) {
+                                alert(response.message ?? "Xóa thành công!");
+                                if (typeof table !== 'undefined') {
+                                    table.ajax.reload(null, false);
+                                }
+                            } else {
+                                alert(response.message ?? "Đã xảy ra lỗi!");
+                            }
+                        },
+                        error: function () {
+                            alert("Lỗi khi thực hiện yêu cầu!");
+                        },
+                    });
+                }
+            }
+        }
+
+        async function HandleSaveOrUpdate(id) {
+            if (!$("#name").val().trim()) {
+                AlertResponse("Tên danh mục đang trống, vui lòng nhập tên danh mục!", 'warning');
+                return;
+            }
+
+            const displayOrder = InputValidator.parseCurrency($("#displayOrder").val());
+
+            const url = id === "" ? "/api/ArticleCategories" : "/api/ArticleCategories/" + id;
+            const method = id === "" ? "POST" : "PUT";
+            $.ajax({
+                url: url,
+                type: method,
+                contentType: "application/json",
+                data: JSON.stringify({
+                    Name: $("#name").val().trim(),
+                    DisplayOrder: displayOrder
+                }),
+                success: function (response) {
+                    if (response.code === 200) {
+                        AlertResponse(response.message, 'success')
+                        table.ajax.reload();
+                    }
+                    $("#modal-articleCategory").modal("toggle");
+                },
+                error: function (err) {
+                    AlertResponse("Đã xảy ra lỗi, vui lòng thử lại sau!", 'error')
+                }
+            });
+        }
+
+        // Xóa hàng loạt
+        function handleBulkDelete() {
+            if (selectedIds.size === 0) return;
+
+            const ids = Array.from(selectedIds);
+            showDeleteConfirm('Xóa danh mục đã chọn', `Bạn có chắc muốn xóa ${ids.length} danh mục?`,
+                function onConfirm() {
+                    $.ajax({
+                        url: '/api/ArticleCategories/QuickDelete',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(ids),
+                        success: function (res) {
+                            if (res && res.code === 0) {
+                                AlertResponse(res.message || 'Xóa thành công', 'success');
+                                selectedIds.clear();
+                                $('#bulk-actions').addClass('d-none');
+                                const $header = $('#list-articleCategory thead #select-all');
+                                $header.prop({ checked: false, indeterminate: false });
+                                table.ajax.reload(null, false);
+                            } else {
+                                AlertResponse((res && res.message) || 'Xóa thất bại', 'warning');
+                            }
+                        },
+                        error: function () {
+                            AlertResponse('Đã xảy ra lỗi, vui lòng thử lại sau!', 'error');
+                        }
+                    });
+                }
+            );
+        }
+    </script>
+}

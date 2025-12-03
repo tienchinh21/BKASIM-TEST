@@ -1,0 +1,456 @@
+﻿@{
+    ViewData["Title"] = "Dữ liệu ETM";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-3">Danh sách dữ liệu ETM</h4>
+                @* <p class="mb-0"> *@
+                @*     Danh sách mã giảm giá trình bày một cách hiệu quả và cung cấp không gian<br /> *@
+                @*     liệt kê các ưu đãi của bạn dành cho khách hàng theo cách hấp dẫn nhất. *@
+                @* </p> *@
+            </div>
+            <div>
+                <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" onclick="HandleExportData()"><i class="ri-file-excel-line"></i>Xuất Excel</button>
+
+                <button type="button" class="btn btn-success mt-2" data-bs-toggle="modal" data-bs-target="#importDatasourceModal">
+                    <i class="ri-add-line mr-2"></i>Nhập Excel
+                </button>
+                <button type="button" class="btn btn-primary mt-2" onclick="GetFormDataSource()">
+                    <i class="ri-add-line mr-2"></i>Thêm mới
+                </button>
+            </div>
+        </div>
+    </div>
+    <!--Bộ lọc-->
+    <div class="col-lg-12">
+        <div class="card mb-3">
+            <div class="card-body pb-0">
+                <h6 class="mb-3"><i class="ri-filter-3-line mr-2"></i>Bộ lọc</h6>
+                <div class="row align-items-end pb-4">
+                    <div class="col-md-3">
+                        <label for="search" class="form-label">Tìm kiếm</label>
+                        <div class="search-input-group position-relative">
+                            <input id="search" type="text" class="form-control" placeholder="Tìm theo tên">
+                            <span class="search-icon position-absolute user-select-auto" style="right: 10px; top: 50%; transform: translateY(-50%); cursor:pointer" onclick="table.ajax.reload()">
+                                <i class="ri-search-line"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filter-isActive" class="form-label">Trạng thái</label>
+                        <select id="filter-isActive" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option value="false">Đang hoạt động</option>
+                            <option value="true">Không hoạt động</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Thống kê-->
+    <div class="col-lg-12">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5>Tổng số</h5>
+                        <h3 id="total-count">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5>Không hoạt động</h5>
+                        <h3 id="inactive-count">0</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5>Đang hoạt động</h5>
+                        <h3 id="active-count">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-12">
+        <div id="spinner" style="margin: 20px 0"></div>
+        <div id="voucher-table" class="table-responsive rounded mb-3">
+            <table id="list-voucher" class="data-table table mb-0 tbl-server-info"></table>
+        </div>
+    </div>
+</div>
+
+<div id="modal-voucher" class="modal fade" tabindex="-1" aria-modal="true" role="dialog" data-bs-backdrop="static">
+    <div id="modal-content" class="modal-dialog modal-xl"></div>
+</div>
+
+<div id="modal-giftVoucher" class="modal fade" tabindex="-1" aria-modal="true" role="dialog">
+    <div id="modal-content" class="modal-dialog modal-dialog-centered modal-xl"></div>
+</div>
+
+@await Html.PartialAsync("Partials/_DatasourceETMImportModal")
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            GetListVoucher();
+            GetStats();
+
+            $('#filter-isActive').on('change', function () {
+                table.ajax.reload(null, false);
+                GetStats();
+            });
+
+            $('#search').on('input', search);
+
+            $("#dataSourceFile").change(function () {
+                const file = this.files[0];
+                if (file) {
+                    // Hiển thị tên file
+                    $("#fileName").text(file.name);
+                    $("#fileInfo").removeClass("d-none");
+
+                    // Enable nút import
+                    $("#importBtn").prop("disabled", false);
+                } else {
+                    $("#fileInfo").addClass("d-none");
+                    $("#importBtn").prop("disabled", true);
+                }
+            });
+
+            $("#importBtn").click(function () {
+                const fileInput = $("#dataSourceFile")[0];
+                if (fileInput.files.length > 0) {
+                    const formData = new FormData();
+                    formData.append("file", fileInput.files[0]);
+
+                    // Hiển thị loading
+                    $(this).html('<span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...');
+                    $(this).prop("disabled", true);
+
+                    const importBtn = $(this);
+                    const originalText = importBtn.html();
+
+                    // Gửi request import
+                    $.ajax({
+                        url: '@Url.Action("ImportDatasourceETMExcel", "EventTrigger")',
+                        type: "POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            // if (response.code === 0) {
+                            //     AlertResponse("Import voucher thành công!", "success");
+                            // } else {
+                            //     AlertResponse(response.message || "Có lỗi xảy ra khi import!", "error");
+                            // }
+
+                            // Reset button state
+                            importBtn.html(originalText);
+                            importBtn.prop('disabled', false);
+
+                            // Show results section
+                            $('#importResultSection').removeClass('d-none');
+
+                            // Handle error messages if any
+                            const errors = response.errors || [];
+                            $('#errorCount').text(errors.length);
+
+                            const errorsList = $('#errorMessagesList');
+                            errorsList.empty();
+
+                            if (errors.length > 0) {
+                                errors.forEach(error => {
+                                    const [row, message] = error.split(':').map(part => part.trim());
+                                    errorsList.append(`
+                                                            <tr>
+                                                                <td class="ps-3">${row || 'N/A'}</td>
+                                                                <td>${message || error}</td>
+                                                            </tr>
+                                                        `);
+                                });
+                            } else {
+                                errorsList.append(`
+                                                        <tr>
+                                                            <td colspan="2" class="text-center py-3">Không có lỗi</td>
+                                                        </tr>
+                                                    `);
+                            }
+
+                            // Show import count
+                            $('#importSuccessMsg').html(
+                                `<i class="bi bi-check-circle me-2"></i>
+                                                   <pre> Đã import thành công <span id="importCount">${response.count || 0}</span>  </pre>`
+                            );
+
+                            // If no errors, hide error card
+                            if (errors.length === 0) {
+                                $("#importDatasourceModal").modal("toggle");
+                                AlertResponse("Import dữ liệu ETM thành công!", "success");
+                                table.ajax.reload();
+                                GetStats();
+                            } else {
+                                $('#importSuccessMsg').addClass('d-none');
+                                $('.card.border-warning').removeClass('d-none');
+                            }
+                        },
+                        error: function () {
+                            AlertResponse("Có lỗi xảy ra khi kết nối đến máy chủ!", "error");
+                        },
+                        complete: function () {
+                            // Reset button
+                            $("#importBtn").html('<i class="bi bi-upload me-1"></i>Import');
+                            $("#importBtn").prop("disabled", false);
+                        }
+                    });
+                }
+            });
+
+
+        });
+
+        function GetListVoucher() {
+            table = new DataTable("#list-voucher", {
+                searching: false,
+                sort: false,
+                responsive: true,
+                pageLength: 10,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const type = $("#filter-type").val();
+                    const isUsed = $("#filter-isActive").val();
+                    const keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '@Url.Action("GetPageDataSource", "EventTrigger")',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pagesize: data.length,
+                            keyword: keyword,
+                            isUsed: isUsed
+                        },
+                        success: function (response) {
+                            const formattedData = response.data.map((item, index) => ({
+                                index: data.start + index + 1,
+                                code: item.code,
+                                key: item.key,
+
+
+                                value: item.value,
+
+                                isActive: item.isUsed ?
+                                    `<div class="m-auto circle-inactive" title="Không hoạt động"> </div>` :
+                                    `<div class="m-auto bg-success circle-active" title="Đang hoạt động"> </div>`,
+                                action: `
+                                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                                <button class="btn btn-icon btn-primary" title="Chỉnh sửa" onclick="GetFormDataSource('${item.id}')">
+                                                    <i class="ri-edit-line"></i>
+                                                </button>
+                                                <button class="btn btn-icon btn-danger" title="Xoá" onclick="DeleteDataSource('${item.id}')">
+                                                    <i class="ri-delete-bin-5-line"></i>
+                                                </button>
+
+                                            </div>
+                                        `
+                            }));
+
+                              setTimeout(() => {
+                                const totalCount = response.totalCount  || 0;
+                                callback({
+                                    draw: data.draw,
+                                    recordsTotal: totalCount,
+                                    recordsFiltered: totalCount,
+                                    data: formattedData
+                                });
+                            }, 400);
+                        },
+                        error: function (error) {
+                            $("#spinner").hide();
+                            AlertResponse("Đã xảy ra lỗi khi tải dữ liệu!", "error");
+                        }
+                    });
+                },
+                columns: [
+                    { title: "STT", data: "index", className: 'text-center' },
+                    { title: "Mã chiến dịch", data: "code", className: 'text-center' },
+                    { title: "Tên biến", data: "key", className: 'text-center' },
+                    { title: "Giá trị biến", data: "value", className: 'text-center' },
+                    { title: "Trạng thái", data: "isActive", className: 'text-center' },
+                    { title: "Thao tác", data: "action", className: 'text-center' },
+
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                     "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng dữ liệu",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": ""
+                }
+            });
+
+            $(table.table().header()).addClass('ligth ligth-data text-header-sm');
+        }
+
+        function GetStats() {
+            $.ajax({
+                url: '@Url.Action("GetDataSourceStats", "EventTrigger")',
+                type: 'GET',
+                success: function (response) {
+                    $('#total-count').text(response.total || 0);
+                    $('#inactive-count').text(response.used || 0);
+                    $('#active-count').text(response.unused || 0);
+                },
+                error: function () {
+                    console.log('Error fetching stats');
+                }
+            });
+        }
+
+        function GetFormDataSource(id) {
+            var url = id ? '@Url.Action("CreateDTSForm", "EventTrigger")' : '@Url.Action("CreateDTSForm", "EventTrigger")';
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                data: { id: id },
+                success: function (data) {
+                    $("#modal-content").html(data);
+                    $("#modal-voucher").modal("toggle");
+                }
+            })
+        }
+
+        function HandleSaveOrUpdate(id) {
+            const code = $("#code").val()?.trim();
+            const key = $("#key").val()?.trim();
+            const value = $("#value").val()?.trim();
+
+            if (code == "") {
+                AlertResponse("Vui lòng nhập tên chiến dịch", 'error');
+                return;
+            } else if (code.length > 50) {
+                AlertResponse("Tên chiến dịch phải nhỏ hơn 50 ký tự ", 'error');
+                return;
+            }
+
+            if (key == "") {
+                AlertResponse("Vui lòng nhập tên biến", 'error');
+                return;
+            } else if (key.length > 50) {
+                AlertResponse("Tên biến phải nhỏ hơn 50 ký tự ", 'error');
+                return;
+            }
+
+            if (value == "") {
+                AlertResponse("Vui lòng nhập giá trị của biến", 'error');
+                return;
+            } else if (value.length > 200) {
+                AlertResponse("Giá trị của biến nhỏ hơn 200 ký tự ", 'error');
+                return;
+            }
+
+            // 📌 Tạo object dữ liệu
+            const data = {
+                code: code,
+                key: key,
+                value: value,
+                isUsed: $("#isUsed").val() === "true"
+            };
+
+            const url = id ? '@Url.Action("UpdateDataSource", "EventTrigger")' : '@Url.Action("CreateDataSource", "EventTrigger")';
+            const method = id ? 'PUT' : 'POST';
+            if(id){
+                data.id = id;
+            }
+            // 🚀 Gửi AJAX request
+            $.ajax({
+                url: url,
+                type: method,
+                data: data,
+                success: function (response) {
+                    if (response.code === 0) {
+                        AlertResponse(response.message, 'success');
+                        table.ajax.reload(null, false);
+                        GetStats();
+                    } else {
+                        AlertResponse(response.message, 'error');
+                    }
+                    $("#modal-voucher").modal("toggle");
+                },
+                error: function () {
+                    AlertResponse("❌ Có lỗi xảy ra khi kết nối đến máy chủ!", "error");
+                }
+            });
+        }
+
+        function DeleteDataSource(id) {
+            const url = `DeleteDataSource/${id}`
+            DeleteItem(url);
+        }
+
+        function format(state) {
+            if (!state.id) return state.text;
+
+            var imageUrl = window.location.origin + "/images/products/" + $(state.element).data('image').split(',')[0];
+
+            var $container = $(`<span>
+                                        <img src="${imageUrl}" style="width: 35px; max-width: 100%; height: auto; margin-right: 10px; margin-top: 2px; margin-bottom: 2px; border-radius: 5px;" alt="${state.text}" />
+                                        <span>${state.text}</span>
+                                    </span>`);
+
+            return $container;
+        }
+
+        function HandleExportData() {
+            const apiUrl = '@Url.Action("ExportDatasource", "EventTrigger")';
+            const isUsed = $("#filter-isActive").val();
+            const keyword = $("#search").val();
+            $.ajax({
+                url: apiUrl,
+                data: {
+                    keyword: keyword,
+                    isUsed: isUsed
+                },
+                type: 'GET',
+                xhrFields: {
+                    responseType: 'blob' // Để nhận file từ server
+                },
+                success: function (response, status, xhr) {
+                    // Lấy tên file từ header response
+                    const timestamp = moment().format("YYYYMMDD_HHmmss");
+                    const fileName = `Export_DatasourceETM_${timestamp}.xlsx`;
+                    // Tạo đường dẫn tải file
+                    const url = window.URL.createObjectURL(new Blob([response]));
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                    AlertResponse("Xuất file thành công!", "success");
+                },
+                error: function (xhr) {
+                    console.log(xhr)
+                    AlertResponse(xhr.responseJSON?.message || "Đã xảy ra lỗi. Vui lòng thử lại sau.", "error");
+                },
+                complete: function () {
+                    $("#modal-export").modal("toggle");
+                }
+            });
+        }
+    </script>
+}

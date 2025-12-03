@@ -1,0 +1,924 @@
+@model MiniAppGIBA.Models.DTOs.Events.EventDetailDTO
+
+@{
+    ViewData["Title"] = "Check-In Sự Kiện";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string eventId = Model.Id;
+}
+
+<style>
+    .description {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 180px;
+    }
+</style>
+
+<div class="mb-3">
+    <a href="@Url.Action("Index", "Event")" class="btn btn-outline-secondary">
+        <i class="ri-arrow-left-line me-1"></i> Quay lại danh sách
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body row">
+                <div class="col-md-6">
+                    <h5 class="fw-semibold text-primary">Sự kiện: @Model.Title</h5>
+                    <p class="mb-1"><strong>Thời gian:</strong> @Model.StartTime.ToString("dd/MM/yyyy HH:mm") - @Model.EndTime.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p class="mb-0"><strong>Trạng thái:</strong> @(Model.IsActive ? "Đang hoạt động" : "Ngừng hoạt động")</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    @if (!string.IsNullOrEmpty(ViewBag.Banner))
+                    {
+                        <img src="@ViewBag.Banner" alt="Banner" style="height: 100px; object-fit: cover; border-radius: 6px;" />
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capacity Info Card -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Tổng người tham dự</h6>
+                            <h4 class="text-primary mb-0" id="registered-count">-</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Số người tối đa</h6>
+                            <h4 class="text-info mb-0" id="max-participants">-</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Slot còn lại</h6>
+                            <h4 class="text-success mb-0" id="remaining-slots">-</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Trạng thái</h6>
+                            <span class="badge" id="capacity-status">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="col-3 pl-0">
+                <div class="position-relative">
+                    <input id="search" type="text" class="form-control ps-5" placeholder="Nhập từ khóa..." />
+                    <i class="ri-search-line position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                <button id="btn-checkin-range" class="btn btn-outline-dark d-none" onclick="CheckInRange()">
+                    <i class="ri-checkbox-multiple-line"></i> Check-In hàng loạt
+                </button>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="ri-file-download-line me-1"></i> Xuất Excel
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" onclick="exportParticipantList('@eventId'); return false;">
+                            <i class="ri-list-check-line me-2"></i>Danh sách người tham gia
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportEventStatistics('@eventId'); return false;">
+                            <i class="ri-bar-chart-line me-2"></i>Báo cáo thống kê (sau khi kết thúc)
+                        </a></li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="CheckIn()">
+                    <i class="ri-checkbox-circle-line me-1"></i> Check-In
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="col-lg-12">
+        <ul class="nav nav-tabs mb-4" id="eventTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="checkin-tab" data-bs-toggle="tab" data-bs-target="#checkin-content" type="button" role="tab" aria-controls="checkin-content" aria-selected="true">
+                    <i class="ri-checkbox-circle-line me-2"></i>Check-In
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="statistics-tab" data-bs-toggle="tab" data-bs-target="#statistics-content" type="button" role="tab" aria-controls="statistics-content" aria-selected="false">
+                    <i class="ri-bar-chart-line me-2"></i>Thống Kê
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="col-lg-12">
+        <div class="tab-content" id="eventTabContent">
+            <!-- Check-In Tab -->
+            <div class="tab-pane fade show active" id="checkin-content" role="tabpanel" aria-labelledby="checkin-tab">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="ri-group-line me-2"></i>Danh sách Người đăng ký
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="guest-spinner" style="margin: 20px 0"></div>
+                        <div id="guest-table" class="table-responsive rounded mb-3">
+                            <table id="list-participant" class="table mb-0 tbl-server-info"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div class="tab-pane fade" id="statistics-content" role="tabpanel" aria-labelledby="statistics-tab">
+                <div id="statistics-container">
+                    <!-- Statistics will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Check-In QR -->
+<div class="modal fade" id="modal-checkin-qr" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Check-In</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-4 align-items-start">
+                    <!-- Camera -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-2 position-relative" style="min-height: 300px;">
+                            <!-- Vùng camera sẽ gắn vào đây -->
+                            <div id="qr-reader" style="width: 100%;"></div>
+
+                            <!-- Loading khi chưa sẵn sàng -->
+                            <div id="camera-loading" class="position-absolute top-50 start-50 translate-middle text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Đang mở camera...</span>
+                                </div>
+                                <div class="mt-2 small text-muted">Đang mở camera...</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Manual Code Input -->
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold">Nhập mã Check-In thủ công</label>
+                            <div class="input-group">
+                                <input type="text" id="manual-checkin-code" class="form-control" 
+                                       placeholder="VD: GUEST_AP9N30EI" 
+                                       onkeypress="if(event.key === 'Enter') { manualCodeCheckIn(); }">
+                                <button class="btn btn-primary" type="button" onclick="manualCodeCheckIn()">
+                                    <i class="ri-checkbox-circle-line me-1"></i>Check-In
+                                </button>
+                            </div>
+                            <div id="manual-checkin-feedback" class="mt-1 small"></div>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách đã check-in -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3">
+                            <h6 class="mb-3 fw-semibold text-primary">Kết quả Check-In</h6>
+                            <div id="checkin-message" class="text-success mb-2"></div>
+                            <table class="table table-bordered table-sm table-striped mb-0" id="checkin-list">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Họ tên</th>
+                                        <th>SĐT</th>
+                                        <th>Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- sẽ thêm dòng tại đây -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<audio id="beep" src="~/audios/scanner-beep.mp3" preload="auto"></audio>
+
+<!-- Overlay loading -->
+<div id="excel-loading-backdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:1050;">
+    <div class="d-flex justify-content-center align-items-center" style="height:100%;">
+        <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Đang tải...</span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- QR Scanner JS -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>
+        (function() {
+            let qrScanner;
+            let table;
+            const recentlyScanned = new Set();
+            let checkInCount = 0;
+
+            const STATUS = {
+                NotCheckIn: 1,
+                CheckIn: 2,
+                Cancel: 3
+            };
+
+            $(document).ready(function () {
+                $('#search').on('input', search);
+                GetListParticipant();
+                loadCapacityInfo();
+
+                // Load statistics when tab is clicked
+                $('#statistics-tab').on('click', function () {
+                    loadEventStatistics();
+                });
+            });
+
+        function loadCapacityInfo() {
+            const eventId = '@eventId';
+            $.ajax({
+                url: `/EventRegistrations/GetCapacityInfo/${eventId}`,
+                method: 'GET',
+                success: function (data) {
+                    if (data.error) {
+                        console.error('Error loading capacity info:', data.error);
+                        return;
+                    }
+
+                    // Update UI with capacity info
+                    // totalParticipants = đăng ký trực tiếp + khách mời đã duyệt
+                    $('#registered-count').text(data.totalParticipants);
+
+                    if (data.isUnlimited) {
+                        $('#max-participants').text('Không giới hạn');
+                        $('#remaining-slots').text('∞');
+                        $('#capacity-status').removeClass().addClass('badge bg-info').text('Không giới hạn');
+                    } else {
+                        $('#max-participants').text(data.maxParticipants);
+                        $('#remaining-slots').text(data.remainingSlots);
+
+                        if (data.isFull) {
+                            $('#capacity-status').removeClass().addClass('badge bg-danger').text('Đã đầy');
+                        } else if (data.remainingSlots <= 5) {
+                            $('#capacity-status').removeClass().addClass('badge bg-warning').text('Sắp đầy');
+                        } else {
+                            $('#capacity-status').removeClass().addClass('badge bg-success').text('Còn chỗ');
+                        }
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading capacity info:', error);
+                }
+            });
+        }
+
+        $(document).on('change', '#select-all', function () {
+            $('.row-select').prop('checked', $(this).is(':checked'));
+        });
+
+        $(document).on('change', '.row-select, #select-all', function () {
+            const anyChecked = $('.row-select:checked').length > 0;
+            $('#btn-checkin-range').toggleClass('d-none', !anyChecked);
+        });
+
+        $('#modal-checkin-qr').on('hidden.bs.modal', function () {
+            if (qrScanner) {
+                qrScanner.stop().then(() => qrScanner.clear());
+                qrScanner = null;
+            }
+            checkInCount = 0;
+            $('#checkin-message').html('');
+            $('#checkin-list tbody').empty();
+            // Reset manual input
+            $('#manual-checkin-code').val('').removeClass('is-valid is-invalid');
+            $('#manual-checkin-feedback').html('').removeClass('text-success text-danger');
+        });
+
+        // Manual code check-in function
+        function manualCodeCheckIn() {
+            const code = $('#manual-checkin-code').val().trim();
+            const eventId = '@eventId';
+            const inputEl = $('#manual-checkin-code');
+            const feedbackEl = $('#manual-checkin-feedback');
+            
+            // Reset previous state
+            inputEl.removeClass('is-valid is-invalid');
+            feedbackEl.html('').removeClass('text-success text-danger');
+            
+            if (!code) {
+                inputEl.addClass('is-invalid');
+                feedbackEl.addClass('text-danger').html('Vui lòng nhập mã Check-In');
+                return;
+            }
+            
+            // Show loading state
+            feedbackEl.removeClass('text-success text-danger').html('<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...');
+            
+            $.ajax({
+                url: `/api/EventRegistrations/CheckIn/${eventId}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ code: code }),
+                success: function (res) {
+                    if (res.code === 0) {
+                        const data = res.data;
+                        checkInCount++;
+                        
+                        // Success feedback on input
+                        inputEl.addClass('is-valid').removeClass('is-invalid');
+                        feedbackEl.removeClass('text-danger').addClass('text-success')
+                            .html(`<i class="ri-check-line"></i> ${data.name} đã check-in thành công!`);
+                        
+                        // Update checkin message and list
+                        $('#checkin-message').html(`<i class="ri-check-line text-success"></i> <strong>${data.name}</strong> đã check-in!`);
+                        $('#checkin-list tbody').prepend(`
+                            <tr>
+                                <td>${checkInCount}</td>
+                                <td>${data.name || "-"}</td>
+                                <td>${data.phone || "-"}</td>
+                                <td>${data.email || "-"}</td>
+                            </tr>
+                        `);
+                        
+                        // Clear input after success
+                        inputEl.val('');
+                        
+                        // Reload table
+                        table.ajax.reload(null, false);
+                        
+                        // Reset input state after 3 seconds
+                        setTimeout(() => {
+                            inputEl.removeClass('is-valid');
+                            feedbackEl.html('');
+                        }, 3000);
+                    } else {
+                        // Error feedback on input
+                        inputEl.addClass('is-invalid').removeClass('is-valid');
+                        feedbackEl.removeClass('text-success').addClass('text-danger')
+                            .html(`<i class="ri-close-line"></i> ${res.message}`);
+                    }
+                },
+                error: function (xhr) {
+                    let errorMsg = 'Lỗi khi check-in';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    inputEl.addClass('is-invalid').removeClass('is-valid');
+                    feedbackEl.removeClass('text-success').addClass('text-danger')
+                        .html(`<i class="ri-close-line"></i> ${errorMsg}`);
+                }
+            });
+        }
+        window.manualCodeCheckIn = manualCodeCheckIn;
+
+
+        function GetListParticipant() {
+            table = new DataTable("#list-participant", {
+                searching: false,
+                sort: false,
+                pageLength: 10,
+                responsive: true,
+                serverSide: true,
+                ajax: function (data, callback, settings) {
+                    const page = (data.start / data.length) + 1;
+                    const keyword = $("#search").val();
+
+                    $.ajax({
+                        url: '@Url.Action("GetAllParticipants", "EventRegistrations", new { eventId = eventId })',
+                        type: 'GET',
+                        data: {
+                            page: page,
+                            pagesize: data.length,
+                            keyword: keyword,
+                        },
+                        success: function (response) {
+                            if (!response || !response.data) {
+                                console.error('Invalid response structure:', response);
+                                callback({
+                                    draw: data.draw,
+                                    recordsTotal: 0,
+                                    recordsFiltered: 0,
+                                    data: []
+                                });
+                                return;
+                            }
+
+                            const formattedData = response.data.map((item, index) => {
+                                // Xác định statusCode và status text
+                                let statusCode;
+                                let statusHtml;
+                                
+                                // Nếu là khách mời, sử dụng checkInStatus
+                                if (item.type === 'Khách mời') {
+                                    if (item.checkInStatus === true) {
+                                        statusCode = 2; // CheckIn
+                                        statusHtml = '<span class="badge bg-success">Đã Check-In</span>';
+                                    } else {
+                                        statusCode = 1; // NotCheckIn
+                                        statusHtml = '<span class="badge bg-secondary">Chưa Check-In</span>';
+                                    }
+                                } else {
+                                    // Đối với đăng ký trực tiếp, sử dụng status
+                                    statusCode = item.status;
+                                    statusHtml = item.status === 2
+                                        ? '<span class="badge bg-success">Đã Check-In</span>'
+                                        : item.status === 3
+                                            ? '<span class="badge bg-danger">Đã hủy</span>'
+                                            : '<span class="badge bg-secondary">Chưa Check-In</span>';
+                                }
+                                
+                                return {
+                                    rowNum: data.start + index + 1,
+                                    name: item.name || '-',
+                                    phone: item.phoneNumber || '-',
+                                    email: item.email || '-',
+                                    code: item.checkInCode,
+                                    type: item.type || 'N/A',
+                                    status: statusHtml,
+                                    statusCode: statusCode
+                                };
+                            });
+
+
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: response.totalItems || response.data.length,
+                                recordsFiltered: response.totalItems || response.data.length,
+                                data: formattedData
+                            });
+
+                            $('#select-all').prop('checked', false);
+                            $('#btn-checkin-range').addClass('d-none');
+
+                            // Reload capacity info after data update
+                            loadCapacityInfo();
+                        },
+                        error: function (xhr, status, error) {
+
+                            callback({
+                                draw: data.draw,
+                                recordsTotal: 0,
+                                recordsFiltered: 0,
+                                data: []
+                            });
+                        }
+                    });
+                },
+                columns: [
+                    {
+                        title: '<div class="form-check"><input type="checkbox" id="select-all" class="form-check-input"></div>',
+                        data: null,
+                        orderable: false,
+                        className: 'text-center',
+                        render: function (data, type, row, meta) {
+                            return `<div class="form-check">
+                                <input type="checkbox" class="form-check-input row-select" data-code="${row.code}" />
+                            </div>`;
+                        }
+                    },
+                    { title: "STT", data: "rowNum", className: 'text-center' },
+                    { title: "Họ và Tên", data: "name" },
+                    { title: "Số điện thoại", data: "phone" },
+                    { title: "Email", data: "email" },
+                    { title: "Loại", data: "type", className: 'text-center' },
+                    { title: "Mã tham dự", data: "code", className: 'text-center' },
+                    { title: "Trạng thái", data: "status", className: 'text-center' },
+                    {
+                        title: "Thao tác",
+                        data: null,
+                        className: 'text-center',
+                        render: function (data, type, row) {
+                            const disabledCheck = row.statusCode === STATUS.CheckIn || row.statusCode === STATUS.Cancel;
+                            const disabledCancel = row.statusCode === STATUS.CheckIn || row.statusCode === STATUS.Cancel;
+
+                            return `
+                                <a class="badge badge-success me-1 ${disabledCheck ? 'disabled' : ''}"
+                                   ${disabledCheck ? 'tabindex="-1" style="pointer-events:none;opacity:0.6;cursor:not-allowed;"' : ''}
+                                   ${disabledCheck ? '' : `onclick="ManualCheckIn('${row.code}')"`}>
+                                    <i class="ri-check-line fs-6"></i>
+                                </a>
+                                <a class="badge badge-danger ${disabledCancel ? 'disabled' : ''}"
+                                   ${disabledCancel ? 'tabindex="-1" style="pointer-events:none;opacity:0.6;cursor:not-allowed;"' : ''}
+                                   ${disabledCancel ? '' : `onclick="ManualCancel('${row.code}')"`}>
+                                    <i class="ri-close-line fs-6"></i>
+                                </a>
+                            `;
+                        }
+                    }
+                ],
+                language: {
+                    "lengthMenu": "Hiển thị _MENU_ dòng mỗi trang",
+                    "zeroRecords": "Không tìm thấy kết quả",
+                    "info": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "infoEmpty": "Không có dữ liệu",
+                    "infoFiltered": "(lọc từ tổng số _MAX_ dòng)"
+                }
+            });
+        }
+
+        function search() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                table.ajax.reload();
+            }, 500);
+        }
+
+        function ExportExcel(eventId) {
+            if (!eventId) return;
+
+            $('#excel-loading-backdrop').show();
+
+            $.ajax({
+                url: '/api/EventRegistrations/Participants/Export',
+                method: 'POST',
+                data: JSON.stringify(eventId),
+                contentType: 'application/json',
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: async function (blob, status, xhr) {
+                    const disposition = xhr.getResponseHeader('Content-Disposition');
+                    let filename = 'event_export.xlsx';
+
+                    if (disposition) {
+                        const match = disposition.match(/filename\*\=UTF-8''(.+)/);
+                        if (match && match[1]) {
+                            filename = decodeURIComponent(match[1].trim());
+                        }
+                    }
+
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(downloadUrl);
+                },
+                error: function (xhr) {
+                    showError('Lỗi', 'Xuất Excel thất bại. Vui lòng thử lại.');
+                },
+                complete: function () {
+                    $('#excel-loading-backdrop').hide();
+                }
+            });
+        }
+
+        function CheckIn() {
+            $('#checkin-message').html('');
+            $('#camera-loading').show();
+            const modal = new bootstrap.Modal(document.getElementById("modal-checkin-qr"));
+            modal.show();
+
+            if (qrScanner) {
+                qrScanner.clear();
+            }
+
+            qrScanner = new Html5Qrcode("qr-reader");
+
+            Html5Qrcode.getCameras().then(cameras => {
+                if (!cameras || cameras.length === 0) {
+                    showError('Lỗi', 'Không tìm thấy camera.');
+                    return;
+                }
+
+                // Ưu tiên camera sau (back camera) cho cả iOS và Android
+                const backCam = cameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('rear')) || cameras[cameras.length - 1];
+
+                // Cấu hình tối ưu cho cả iOS và Android
+                const config = {
+                    fps: 10, // Giảm FPS cho iOS để tránh lag
+                    qrbox: function(viewfinderWidth, viewfinderHeight) {
+                        // Tính toán kích thước qrbox responsive
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const qrboxSize = Math.floor(minEdge * 0.7);
+                        return {
+                            width: qrboxSize,
+                            height: qrboxSize
+                        };
+                    },
+                    aspectRatio: 1.0,
+                    disableFlip: false,
+                    // Thêm cấu hình video constraints cho iOS
+                    videoConstraints: {
+                        facingMode: { ideal: "environment" }, // Ưu tiên camera sau
+                        focusMode: "continuous", // Auto focus liên tục
+                        advanced: [{ zoom: 1.0 }]
+                    },
+                    // Cải thiện khả năng đọc QR
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true
+                    }
+                };
+
+                qrScanner.start(
+                    backCam.id,
+                    config,
+                    onQrScanned,
+                    (errorMessage) => {
+                        // console.warn("Lỗi khi quét:", errorMessage);
+                    }
+                ).then(() => {
+                    $("#camera-loading").hide();
+                }).catch(err => {
+                    $("#camera-loading").hide();
+                    showError('Lỗi', 'Không thể mở camera: ' + (err?.message || err));
+                });
+            }).catch(err => {
+                $("#camera-loading").hide();
+                showError('Lỗi', 'Không thể truy cập danh sách camera: ' + (err?.message || err));
+            });
+        }
+
+        async function onQrScanned(decodedText, result) {
+            const code = decodedText?.trim();
+            if (!code) {
+                showWarning('Cảnh báo', 'QR không chứa mã Check-In hợp lệ.');
+                return;
+            }
+
+            if (recentlyScanned.has(code)) return;
+
+            recentlyScanned.add(code);
+
+            // Bật tiếng beep
+            document.getElementById("beep").play();
+
+            try {
+                await PerformCheckIn(code);
+            } catch (err) {
+                console.error("Lỗi khi xử lý check-in:", err);
+                showError('Lỗi', 'Lỗi khi check-in.');
+            } finally {
+                setTimeout(() => {
+                    recentlyScanned.delete(code);
+                }, 2000);
+            }
+        }
+
+        async function PerformCheckIn(code) {
+            const eventId = '@eventId';
+
+            try {
+                const res = await $.ajax({
+                    url: `/api/EventRegistrations/CheckIn/${eventId}`,
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ code })
+                });
+
+                if (res.code === 0) {
+                    const data = res.data;
+                    checkInCount++;
+
+                    // Cập nhật thông báo và danh sách
+                    $('#checkin-message').html(`<i class="ri-check-line text-success"></i> <strong>${data.name}</strong> đã check-in!`);
+
+                    $('#checkin-list tbody').prepend(`
+                        <tr>
+                            <td>${checkInCount}</td>
+                            <td>${data.name || "-"}</td>
+                            <td>${data.phone || "-"}</td>
+                            <td>${data.email || "-"}</td>
+                        </tr>
+                    `);
+
+                    // Reload bảng chính
+                    table.ajax.reload(null, false);
+                } else {
+                    $('#checkin-message').html(`<span class="text-danger">${res.message}</span>`);
+                }
+            } catch (err) {
+                $('#checkin-message').html(`<span class="text-danger">Lỗi khi check-in.</span>`);
+            }
+        }
+
+        function CheckInRange() {
+            const eventId = '@eventId';
+            const codes = $('.row-select:checked').map(function () {
+                return $(this).data('code');
+            }).get();
+
+            if (codes.length === 0) {
+                showWarning('Cảnh báo', 'Vui lòng chọn ít nhất một người để check-in');
+                return;
+            }
+
+            $.ajax({
+                url: `/api/EventRegistrations/CheckInRange/${eventId}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ code: codes }),
+                success: function (res) {
+                    if (res.code === 0) {
+                        showSuccess('Thành công', `Đã check-in ${res.data.length} người`);
+                        table.ajax.reload(null, false);
+                    } else {
+                        showError('Lỗi', res.message);
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Lỗi khi check-in hàng loạt');
+                }
+            });
+        }
+
+        function ManualCheckIn(code) {
+            const eventId = '@eventId';
+            $.ajax({
+                url: `/api/EventRegistrations/CheckIn/${eventId}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ code }),
+                success: function (res) {
+                    if (res.code === 0) {
+                        showSuccess('Thành công', `${res.data.name} đã được check-in`);
+                        table.ajax.reload(null, false);
+                    } else {
+                        showError('Lỗi', res.message);
+                    }
+                },
+                error: function () {
+                    showError('Lỗi', 'Lỗi khi check-in');
+                }
+            });
+        }
+
+        function ManualCancel(code) {
+            const eventId = '@eventId';
+            $.ajax({
+                url: `/api/EventRegistrations/CancelByCode/${eventId}`,
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ code }),
+                success: function (res) {
+                    showSuccess("Thành công", "Đã hủy tham dự");
+                    table.ajax.reload(null, false);
+                },
+                error: function () {
+                    showError('Lỗi', 'Lỗi khi hủy tham dự');
+                }
+            });
+        }
+
+        function loadEventStatistics() {
+            const eventId = '@eventId';
+            const container = $('#statistics-container');
+
+            container.html('<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Đang tải...</span></div></div>');
+
+            $.ajax({
+                url: `/EventRegistrations/GetStatistics/${eventId}`,
+                method: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        renderStatistics(response.data);
+                    } else {
+                        container.html(`<div class="alert alert-danger">${response.message}</div>`);
+                    }
+                },
+                error: function () {
+                    container.html('<div class="alert alert-danger">Có lỗi xảy ra khi tải thống kê</div>');
+                }
+            });
+        }
+
+        function renderStatistics(stats) {
+            const container = $('#statistics-container');
+
+            let html = `
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="ri-info-circle-line me-2"></i>Thông Tin Sự Kiện</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Tên Sự Kiện:</strong> ${stats.eventTitle}</p>
+                                        <p><strong>Hội Nhóm:</strong> ${stats.groupName}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Thời Gian:</strong> ${new Date(stats.startTime).toLocaleString('vi-VN')} - ${new Date(stats.endTime).toLocaleString('vi-VN')}</p>
+                                        <p><strong>Địa Điểm:</strong> ${stats.address || 'N/A'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-primary">${stats.totalRegistrations}</h3>
+                                <p class="mb-0">Tổng người tham dự</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-success">${stats.totalCheckedIn}</h3>
+                                <p class="mb-0">Đã Tham Dự</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-warning">${stats.totalNotCheckedIn}</h3>
+                                <p class="mb-0">Chưa Tham Dự</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-center">
+                            <div class="card-body">
+                                <h3 class="text-info">${stats.attendanceRate}%</h3>
+                                <p class="mb-0">Tỷ Lệ Tham Dự</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.html(html);
+        }
+
+        function exportParticipantList(eventId) {
+            $.ajax({
+                url: '/api/EventRegistrations/Participants/Export',
+                method: 'POST',
+                data: JSON.stringify(eventId),
+                contentType: 'application/json',
+                xhrFields: {
+                    responseType: 'blob'
+                },
+                success: function (blob, status, xhr) {
+                    const disposition = xhr.getResponseHeader('Content-Disposition');
+                    let filename = `danh_sach_tham_gia_${eventId}.xlsx`;
+
+                    if (disposition) {
+                        const match = disposition.match(/filename\*\=UTF-8''(.+)/);
+                        if (match && match[1]) {
+                            filename = decodeURIComponent(match[1].trim());
+                        }
+                    }
+
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(downloadUrl);
+                },
+                error: function () {
+                    showError('Lỗi', 'Có lỗi xảy ra khi xuất danh sách người tham gia');
+                }
+            });
+        }
+
+        function exportEventStatistics(eventId) {
+            window.location.href = `/Event/ExportStatistics/${eventId}`;
+        }
+
+        // Expose functions to global scope for onclick handlers
+        window.CheckIn = CheckIn;
+        window.CheckInRange = CheckInRange;
+        window.ManualCheckIn = ManualCheckIn;
+        window.ExportExcel = ExportExcel;
+        window.exportParticipantList = exportParticipantList;
+        window.exportEventStatistics = exportEventStatistics;
+        })(); // End of IIFE
+    </script>
+}

@@ -1,0 +1,617 @@
+@model MiniAppGIBA.Models.Request.Groups.CreateGroupRequest
+
+<div class="modal-content border-0">
+    <!-- Simple Header -->
+    <div class="modal-header border-0 bg-white">
+        <h5 class="modal-title fw-semibold">
+            <i class="@(ViewBag.IsEdit ? "ri-edit-line" : "ri-add-line") me-2"></i>
+            @(ViewBag.IsEdit ? "Chỉnh sửa hội nhóm" : "Tạo hội nhóm mới")
+        </h5>
+    </div>
+
+    <!-- Clean Form Body -->
+    <div class="modal-body p-4">
+        <form id="groupForm" onsubmit="submitGroupForm(event)">
+            @if (ViewBag.IsEdit)
+            {
+                <input type="hidden" name="Id" value="@ViewBag.GroupId" />
+                <input type="hidden" name="IsActive" id="hiddenIsActive" />
+            }
+
+            <div class="row g-3">
+                <!-- Group Name and Status on same row -->
+                <div class="col-md-8">
+                    <label asp-for="GroupName" class="form-label fw-medium">
+                        Tên Hội Nhóm <span class="text-danger">*</span>
+                    </label>
+                    <input asp-for="GroupName" name="GroupName" class="form-control" placeholder="Nhập tên hội nhóm" />
+                    <span asp-validation-for="GroupName" class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-medium">Trạng thái hoạt động</label>
+                    <select class="form-select" id="IsActive" name="IsActive">
+                        <option value="true" @(ViewBag.IsActive == true ? "selected" : "")>Hoạt động</option>
+                        <option value="false" @(ViewBag.IsActive == false ? "selected" : "")>Không hoạt động</option>
+                    </select>
+                    <small class="text-muted">Chọn trạng thái hoạt động của hội nhóm</small>
+                </div>
+
+                <!-- Logo Upload -->
+                <div class="col-12">
+                    <label class="form-label fw-medium">Logo Hội Nhóm</label>
+                    <div class="flex-grow-1">
+                        <input type="file" id="logoFileInput" name="Logo" accept="image/*" class="form-control" />
+                        <small class="text-muted">Chọn file ảnh logo (JPG, PNG, GIF - tối đa 5MB)</small>
+                    </div>
+                    @if (ViewBag.IsEdit && ViewBag.GroupLogo != null)
+                    {
+                        <div id="currentLogoSection" class="mt-2">
+                            <small class="text-muted">Logo hiện tại: </small>
+                            <img id="currentLogoImg" src="@ViewBag.GroupLogo" alt="Current logo" style="max-width: 100px; max-height: 100px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 4px; margin-left: 8px;" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div id="currentLogoSection" class="mt-2" style="display: none;">
+                            <small class="text-muted">Logo hiện tại: </small>
+                            <img id="currentLogoImg" src="" alt="Current logo" style="max-width: 100px; max-height: 100px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px; padding: 4px; margin-left: 8px;" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Description - HTML Editor -->
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label fw-medium">Mô Tả</label>
+                    <div id="descriptionEditor" class="rounded-bottom" style="height: 200px" data-type="description">
+                        @Html.Raw(Model?.Description)
+                    </div>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                    <small class="text-muted">Nhập mô tả về hội nhóm</small>
+                </div>
+
+                <!-- Rules - Hidden but keep logic -->
+                <div class="col-12" style="display: none;">
+                    <label asp-for="Rule" class="form-label fw-medium">Quy Định</label>
+                    <textarea asp-for="Rule" name="Rule" class="form-control" rows="3"
+                        placeholder="Nhập quy định của hội nhóm"></textarea>
+                    <span asp-validation-for="Rule" class="text-danger small"></span>
+                </div>
+
+                <!-- Main Activities -->
+                <div class="col-12">
+                    <label asp-for="MainActivities" class="form-label fw-medium">Các Hoạt Động Chính</label>
+                    <div id="mainActivities" class="rounded-bottom" style="height: 200px" data-type="mainActivities">
+                        @Html.Raw(Model?.MainActivities)
+                    </div>
+                    <span asp-validation-for="MainActivities" class="text-danger small"></span>
+                    <small class="text-muted">Mô tả các hoạt động chính mà hội nhóm thường tổ chức</small>
+                </div>
+
+                <!-- Behavior Rules Section -->
+                    @* <div class="col-12">
+                        <div class="card border">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="ri-file-text-line me-2"></i>
+                                    Quy tắc ứng xử
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="behaviorRulesContent">
+                                    <div class="text-center text-muted py-3">
+                                        <i class="ri-loader-4-line ri-spin"></i> Đang tải...
+                                    </div>
+                                </div>
+
+                                <!-- Upload Section -->
+                                <div id="behaviorRulesUpload" class="mt-3 pt-3 border-top">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <small class="text-muted">
+                                            <i class="ri-information-line me-1"></i>
+                                            Định dạng: PDF, DOC, DOCX, XLS, XLSX, JPG, JPEG, PNG, GIF (tối đa 50MB)
+                                        </small>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnUploadBehaviorRules">
+                                        <i class="ri-upload-line me-1"></i>
+                                        Tải lên tài liệu
+                                    </button>
+                                </div>
+
+                                    <input type="file" id="behaviorRulesFileInput" style="display: none" 
+                                           accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
+                                    
+                                    <div id="selectedBehaviorRulesFile" class="mt-2" style="display: none">
+                                        <div class="alert alert-info d-flex align-items-center">
+                                            <i class="ri-file-text-line me-2"></i>
+                                            <div class="flex-grow-1">
+                                                <strong id="selectedFileName"></strong>
+                                                <small class="d-block text-muted" id="selectedFileSize"></small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="btnRemoveSelectedFile">
+                                                <i class="ri-close-line"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                      </div>
+                    </div> *@
+                
+
+            </div>
+        </form>
+    </div>
+
+    <!-- Simple Footer -->
+    <div class="modal-footer border-0">
+        <button type="button" class="btn btn-outline-secondary" onclick="$('#groupModal').modal('hide')">
+            <i class="ri-arrow-left-line me-1"></i>
+            Quay lại
+        </button>
+        <button type="submit" form="groupForm" class="btn btn-primary">
+            <i class="ri-save-line me-1"></i>
+            @(ViewBag.IsEdit ? "Cập Nhật" : "Tạo Hội Nhóm")
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function submitGroupForm(event) {
+        event.preventDefault();
+
+        const isEdit = @(ViewBag.IsEdit ? "true" : "false");
+
+        // Tạo FormData để gửi file
+        const formData = new FormData();
+        
+        // Thêm các field text
+        formData.append('GroupName', document.querySelector('input[name="GroupName"]').value);
+        
+        // Lấy content từ Quill Editor cho Description
+        let descriptionContent = '';
+        if (window.descriptionQuillEditor) {
+            descriptionContent = window.descriptionQuillEditor.root.innerHTML.trim();
+            if (descriptionContent === '<p><br></p>') {
+                descriptionContent = '';
+            }
+        }
+        formData.append('Description', descriptionContent);
+        formData.append('Rule', document.querySelector('textarea[name="Rule"]').value || '');
+        
+        // Lấy content từ Quill Editor cho MainActivities
+        let mainActivitiesContent = '';
+        if (window.mainActivitiesQuillEditor) {
+            mainActivitiesContent = window.mainActivitiesQuillEditor.root.innerHTML.trim();
+            // Nếu chỉ có <p><br></p> thì coi như rỗng
+            if (mainActivitiesContent === '<p><br></p>') {
+                mainActivitiesContent = '';
+            }
+        }
+        formData.append('MainActivities', mainActivitiesContent);
+        formData.append('IsActive', document.querySelector('select[name="IsActive"]').value === 'true' ? 'true' : 'false');
+
+        // Thêm Id cho edit
+        if (isEdit) {
+            formData.append('Id', document.querySelector('input[name="Id"]').value);
+        }
+
+        // Thêm file logo nếu có
+        const logoFile = document.querySelector('#logoFileInput').files[0];
+        if (logoFile) {
+            // Validate file size (5MB)
+            if (logoFile.size > 5 * 1024 * 1024) {
+                Swal.fire('Lỗi!', 'File logo quá lớn. Vui lòng chọn file nhỏ hơn 5MB', 'error');
+                return;
+            }
+            // Validate file type
+            if (!logoFile.type.startsWith('image/')) {
+                Swal.fire('Lỗi!', 'Vui lòng chọn file ảnh (JPG, PNG, GIF)', 'error');
+                return;
+            }
+            formData.append('Logo', logoFile);
+        }
+
+        // Xác định URL và method
+        const url = isEdit ? `/api/groups/${document.querySelector('input[name="Id"]').value}` : '/api/groups';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        console.log('Submitting group data with FormData');
+
+        // Gọi API với FormData
+        fetch(url, {
+            method: method,
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('_tk')
+                // Không set Content-Type, browser sẽ tự động set với boundary cho FormData
+            },
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('API Response:', data);
+                if (data.code === 0) {
+                    // Thành công
+                    Swal.fire('Thành công!', data.message, 'success');
+                    $('#groupModal').modal('hide');
+                    // Reload DataTable
+                    if (typeof groupsTable !== 'undefined') {
+                        groupsTable.ajax.reload();
+                    }
+                } else {
+                    // Lỗi
+                    Swal.fire('Lỗi!', data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Lỗi!', 'Có lỗi xảy ra khi lưu hội nhóm', 'error');
+            });
+    }
+
+    // Initialize Quill Editors for Description and MainActivities
+    var descriptionQuillEditor;
+    var mainActivitiesQuillEditor;
+
+    $(document).ready(function() {
+        // Initialize Quill Editors when form is loaded
+        setTimeout(function() {
+            initDescriptionQuillEditor();
+            initMainActivitiesQuillEditor();
+        }, 150);
+
+        // Re-initialize when modal is shown
+        $(document).on('shown.bs.modal', '#groupModal', function() {
+            setTimeout(function() {
+                if ($('#descriptionEditor').length > 0 && !window.descriptionQuillEditor) {
+                    initDescriptionQuillEditor();
+                }
+                if ($('#mainActivities').length > 0 && !window.mainActivitiesQuillEditor) {
+                    initMainActivitiesQuillEditor();
+                }
+            }, 100);
+        });
+
+        // Reset Quill when modal is hidden
+        $('#groupModal').on('hidden.bs.modal', function() {
+            if (window.descriptionQuillEditor) {
+                try {
+                    window.descriptionQuillEditor = null;
+                    console.log('Description Quill editor reset');
+                } catch (e) {
+                    console.warn('Error resetting Description Quill editor:', e);
+                }
+            }
+            if (window.mainActivitiesQuillEditor) {
+                try {
+                    window.mainActivitiesQuillEditor = null;
+                    console.log('MainActivities Quill editor reset');
+                } catch (e) {
+                    console.warn('Error resetting MainActivities Quill editor:', e);
+                }
+            }
+        });
+    });
+
+    function initDescriptionQuillEditor() {
+        const descriptionElement = document.getElementById('descriptionEditor');
+        if (!descriptionElement) {
+            console.warn('Description element not found');
+            return;
+        }
+
+        if (window.descriptionQuillEditor) {
+            console.log('Description Quill already initialized, skipping...');
+            return;
+        }
+
+        if ($(descriptionElement).hasClass('ql-editor') || $(descriptionElement).hasClass('ql-container')) {
+            console.log('Description element already has Quill classes, skipping...');
+            return;
+        }
+
+        if (typeof Quill !== 'undefined') {
+            try {
+                descriptionQuillEditor = new Quill('#descriptionEditor', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                        ]
+                    },
+                    placeholder: 'Nhập mô tả về hội nhóm...'
+                });
+
+                window.descriptionQuillEditor = descriptionQuillEditor;
+                console.log('Description Quill editor initialized successfully');
+            } catch (e) {
+                console.error('Error initializing Description Quill editor:', e);
+            }
+        } else {
+            console.warn('Quill is not loaded');
+        }
+    }
+
+    function initMainActivitiesQuillEditor() {
+        const mainActivitiesElement = document.getElementById('mainActivities');
+        if (!mainActivitiesElement) {
+            console.warn('MainActivities element not found');
+            return;
+        }
+
+        // Check if Quill is already initialized
+        if (window.mainActivitiesQuillEditor) {
+            console.log('MainActivities Quill already initialized, skipping...');
+            return;
+        }
+
+        // Check if element already has Quill classes
+        if ($(mainActivitiesElement).hasClass('ql-editor') || $(mainActivitiesElement).hasClass('ql-container')) {
+            console.log('MainActivities element already has Quill classes, skipping...');
+            return;
+        }
+
+        if (typeof Quill !== 'undefined') {
+            try {
+                mainActivitiesQuillEditor = new Quill('#mainActivities', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link', 'image'],
+                            ['clean']
+                        ]
+                    },
+                    placeholder: 'Nhập các hoạt động chính của hội nhóm...'
+                });
+
+                // Store reference globally
+                window.mainActivitiesQuillEditor = mainActivitiesQuillEditor;
+                console.log('MainActivities Quill editor initialized successfully');
+            } catch (e) {
+                console.error('Error initializing MainActivities Quill editor:', e);
+            }
+        } else {
+            console.warn('Quill is not loaded');
+        }
+    }
+
+    // Preview logo khi chọn file - hiển thị vào logo hiện tại
+    $(document).ready(function() {
+        $('#logoFileInput').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file size
+                if (file.size > 5 * 1024 * 1024) {
+                    Swal.fire('Lỗi!', 'File logo quá lớn. Vui lòng chọn file nhỏ hơn 5MB', 'error');
+                    $(this).val('');
+                    return;
+                }
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    Swal.fire('Lỗi!', 'Vui lòng chọn file ảnh (JPG, PNG, GIF)', 'error');
+                    $(this).val('');
+                    return;
+                }
+                // Hiển thị vào logo hiện tại
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#currentLogoImg').attr('src', e.target.result);
+                    $('#currentLogoSection').show();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    });
+
+    // Behavior Rules Management
+    $(document).ready(function() {
+        const isEdit = @(ViewBag.IsEdit ? "true" : "false");
+        let currentGroupId = null;
+        let selectedBehaviorRulesFile = null;
+
+        if (isEdit) {
+            currentGroupId = '@ViewBag.GroupId';
+            loadBehaviorRules();
+        }
+
+        // Load behavior rules for current group
+        function loadBehaviorRules() {
+            if (!currentGroupId) return;
+
+            $('#behaviorRulesContent').html('<div class="text-center text-muted py-3"><i class="ri-loader-4-line ri-spin"></i> Đang tải...</div>');
+            
+            $.ajax({
+                url: '/Setting/GetBehaviorRulesFile',
+                cache: false,
+                data: { 
+                    type: 2, // EBehaviorRuleType.BehaviorRulesAdmin
+                    groupId: currentGroupId
+                }
+            })
+            .done(function(res) {
+                if (res && res.success && res.data) {
+                    // Có file behavior rules
+                    const fileName = res.data.fileName || 'Tài liệu quy tắc';
+                    const fileUrl = res.data.fileUrl;
+                    const updatedDate = formatDate(res.data.updatedDate || res.data.createdDate);
+                    
+                    $('#behaviorRulesContent').html(`
+                        <div class="d-flex align-items-center">
+                            <div class="file-icon me-3">
+                                ${getFileIconHtml(getFileExtension(fileUrl))}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-medium">
+                                    <a href="${fileUrl}" target="_blank" class="text-decoration-none">
+                                        ${fileName}
+                                    </a>
+                                </div>
+                                <small class="text-muted">Cập nhật: ${updatedDate}</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteBehaviorRules()">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+                    `);
+                } else {
+                    // Chưa có file
+                    $('#behaviorRulesContent').html(`
+                        <div class="text-center text-muted py-3">
+                            <i class="ri-file-text-line display-6 mb-2"></i>
+                            <p class="mb-0">Chưa có tài liệu quy tắc ứng xử</p>
+                        </div>
+                    `);
+                }
+            })
+            .fail(function() {
+                $('#behaviorRulesContent').html(`
+                    <div class="text-center text-muted py-3">
+                        <i class="ri-error-warning-line display-6 mb-2"></i>
+                        <p class="mb-0">Có lỗi khi tải tài liệu</p>
+                    </div>
+                `);
+            });
+        }
+
+        // File upload handlers
+        $('#btnUploadBehaviorRules').on('click', function() {
+            $('#behaviorRulesFileInput').click();
+        });
+
+        $('#behaviorRulesFileInput').on('change', function() {
+            const file = this.files[0];
+            if (file) {
+                // Validate file size (50MB)
+                if (file.size > 50 * 1024 * 1024) {
+                    Swal.fire('Lỗi!', 'File quá lớn. Vui lòng chọn file nhỏ hơn 50MB', 'error');
+                return;
+            }
+            
+                selectedBehaviorRulesFile = file;
+                $('#selectedFileName').text(file.name);
+                $('#selectedFileSize').text(formatFileSize(file.size));
+                $('#selectedBehaviorRulesFile').show();
+                
+                // Upload immediately after selection
+                uploadBehaviorRulesFile();
+            }
+        });
+
+        $('#btnRemoveSelectedFile').on('click', function() {
+            selectedBehaviorRulesFile = null;
+            $('#behaviorRulesFileInput').val('');
+            $('#selectedBehaviorRulesFile').hide();
+        });
+
+        // Upload function
+        function uploadBehaviorRulesFile() {
+            if (!selectedBehaviorRulesFile || !currentGroupId) return;
+            
+            const formData = new FormData();
+            formData.append('file', selectedBehaviorRulesFile);
+            formData.append('groupId', currentGroupId); // Add groupId parameter
+            
+            $.ajax({
+                url: '/Setting/ReplaceBehaviorRulesFile',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    if (res && res.success) {
+                        Swal.fire('Thành công!', 'Đã tải lên tài liệu quy tắc ứng xử', 'success');
+                        selectedBehaviorRulesFile = null;
+                        $('#behaviorRulesFileInput').val('');
+                        $('#selectedBehaviorRulesFile').hide();
+                        loadBehaviorRules(); // Reload display
+                    } else {
+                        Swal.fire('Lỗi!', res.message || 'Tải lên thất bại', 'error');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Lỗi!', 'Có lỗi xảy ra khi tải lên tài liệu', 'error');
+                }
+            });
+        }
+
+        // Delete behavior rules
+        window.deleteBehaviorRules = function() {
+            if (!currentGroupId) return;
+            
+            Swal.fire({
+                title: 'Xác nhận xóa',
+                text: 'Bạn có chắc muốn xóa tài liệu quy tắc ứng xử này?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Có, xóa',
+                cancelButtonText: 'Hủy',
+                confirmButtonColor: '#dc3545'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                $.ajax({
+                        url: '/Setting/DeleteBehaviorRulesForGroup',
+                    type: 'DELETE',
+                        data: { groupId: currentGroupId },
+                        success: function(res) {
+                            if (res && res.success) {
+                                Swal.fire('Thành công!', 'Đã xóa tài liệu quy tắc ứng xử', 'success');
+                                loadBehaviorRules(); // Reload display
+                        } else {
+                                Swal.fire('Lỗi!', res.message || 'Xóa thất bại', 'error');
+                        }
+                    },
+                    error: function() {
+                            Swal.fire('Lỗi!', 'Có lỗi xảy ra khi xóa tài liệu', 'error');
+                    }
+                });
+            }
+        });
+        };
+
+        // Helper functions
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('vi-VN');
+        }
+
+        function getFileExtension(url) {
+            if (!url) return '';
+            return url.split('.').pop().toLowerCase();
+        }
+
+        function getFileIconHtml(extension) {
+            const iconMap = {
+                'pdf': '<i class="ri-file-pdf-line text-danger fs-4"></i>',
+                'doc': '<i class="ri-file-word-line text-primary fs-4"></i>',
+                'docx': '<i class="ri-file-word-line text-primary fs-4"></i>',
+                'xls': '<i class="ri-file-excel-line text-success fs-4"></i>',
+                'xlsx': '<i class="ri-file-excel-line text-success fs-4"></i>',
+                'jpg': '<i class="ri-image-line text-warning fs-4"></i>',
+                'jpeg': '<i class="ri-image-line text-warning fs-4"></i>',
+                'png': '<i class="ri-image-line text-warning fs-4"></i>',
+                'gif': '<i class="ri-image-line text-warning fs-4"></i>'
+            };
+            return iconMap[extension] || '<i class="ri-file-text-line text-secondary fs-4"></i>';
+        }
+    });
+</script>

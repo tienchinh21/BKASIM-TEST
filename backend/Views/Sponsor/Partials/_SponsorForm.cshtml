@@ -1,0 +1,332 @@
+@model MiniAppGIBA.Models.Request.Sponsors.CreateSponsorRequest
+
+<style>
+    .error-message {
+        color: red;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .image-preview {
+        position: relative;
+        display: inline-block;
+        margin: 5px;
+    }
+
+    .btn-preview-remove {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .preview-container img {
+        max-width: 200px;
+        max-height: 150px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+
+    /* Quill Editor Styles */
+    #introduction {
+        min-height: 200px;
+    }
+    
+    #introduction .ql-editor {
+        min-height: 160px;
+    }
+    
+    .ql-toolbar.ql-snow {
+        border-top: 1px solid #ccc;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+    }
+    
+    .ql-container.ql-snow {
+        border-bottom: 1px solid #ccc;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+    }
+
+    /* Prevent duplicate toolbars */
+    #introduction .ql-toolbar:not(:first-child) {
+        display: none !important;
+    }
+    
+    #introduction .ql-container:not(:last-child) {
+        display: none !important;
+    }
+</style>
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">@ViewBag.Title</h5>
+    </div>
+    <div class="modal-body">
+        <form id="sponsorForm" onsubmit="handleSponsorSubmit(event)">
+            @if (ViewBag.IsEdit)
+            {
+                <input type="hidden" id="sponsorId" value="@ViewBag.SponsorId" />
+            }
+            <!-- Flag to track image removal -->
+            <input type="hidden" id="shouldRemoveImage" value="false" />
+
+            <div class="row">
+                <!-- Tên nhà tài trợ -->
+                <div class="col-md-8">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Tên nhà tài trợ <span class="text-danger">*</span></label>
+                        <input id="sponsorName" type="text" class="form-control" value="@Model?.SponsorName"
+                            placeholder="Nhập tên nhà tài trợ..." required>
+                        <span class="error-message" id="error-sponsorName"></span>
+                    </div>
+                </div>
+
+                <!-- Trạng thái hoạt động -->
+                <div class="col-md-4">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Trạng thái hoạt động</label>
+                        <select id="isActive" class="form-select">
+                            <option value="true" @(Model?.IsActive != false ? "selected" : "")>Hoạt động</option>
+                            <option value="false" @(Model?.IsActive == false ? "selected" : "")>Không hoạt động</option>
+                        </select>
+                        <small class="text-muted">Chọn trạng thái hoạt động của nhà tài trợ</small>
+                    </div>
+                </div>
+
+                <!-- Website URL -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Website URL</label>
+                        <input id="websiteURL" type="url" class="form-control" value="@Model?.WebsiteURL"
+                            placeholder="https://example.com">
+                        <span class="error-message" id="error-websiteURL"></span>
+                    </div>
+                </div>
+
+                <!-- Giới thiệu -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Giới thiệu</label>
+                        <div id="introduction" class="rounded-bottom" style="height: 200px" data-type="content">
+                            @Html.Raw(Model?.Introduction)
+                        </div>
+                        <span class="error-message" id="error-introduction"></span>
+                    </div>
+                </div>
+
+                <!-- Hình ảnh -->
+                <div class="col-md-12">
+                    <div class="form-group mb-3">
+                        <label class="form-label">Hình ảnh</label>
+                        <input id="image" type="file" accept="image/*" class="form-control"
+                            onchange="previewImage(this)" />
+                        <div id="image-preview" class="mt-2 preview-container">
+                            @if (!string.IsNullOrEmpty(ViewBag.Image))
+                            {
+                                <div class="image-preview">
+                                    <img src="@ViewBag.Image" alt="Sponsor Image" />
+                                    <button type="button" class="btn-preview-remove"
+                                        onclick="removeImagePreview()">×</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="ri-arrow-left-line me-1"></i>
+            Đóng
+        </button>
+        <button type="submit" form="sponsorForm" class="btn btn-primary">
+            <i class="ri-save-line me-1"></i>
+            @ViewBag.Button
+        </button>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    var quillEditor;
+
+    // NOTE: Quill editor initialization is handled by modal events in Index.cshtml
+    // to prevent duplicate initialization
+
+    // Flag to track initialization state
+    window.quillInitialized = false;
+    
+    // Expose initQuillEditor function globally
+    window.initQuillEditor = function() {
+        // Check if already initialized
+        if (window.quillInitialized) {
+            console.log('Quill editor already initialized, skipping...');
+            return;
+        }
+        
+        // Check if element exists and is visible
+        const introElement = document.getElementById('introduction');
+        console.log('Introduction element:', introElement);
+        console.log('Quill available:', typeof Quill !== 'undefined');
+        
+        // Prevent multiple initialization by checking DOM
+        if (introElement && introElement.classList.contains('ql-container')) {
+            console.log('Quill DOM already exists, skipping...');
+            window.quillInitialized = true;
+            return;
+        }
+        
+        if (typeof Quill !== 'undefined' && introElement) {
+            try {
+                // Properly destroy existing editor if it exists
+                if (window.quillEditor) {
+                    console.log('Destroying existing Quill editor...');
+                    try {
+                        // Clear the editor content and remove Quill instance
+                        const container = window.quillEditor.container;
+                        if (container && container.parentNode) {
+                            const newDiv = document.createElement('div');
+                            newDiv.id = 'introduction';
+                            newDiv.className = 'rounded-bottom';
+                            newDiv.style.height = '200px';
+                            newDiv.setAttribute('data-type', 'content');
+                            container.parentNode.replaceChild(newDiv, container);
+                        }
+                        delete window.quillEditor;
+                    } catch (destroyError) {
+                        console.warn('Error destroying Quill editor:', destroyError);
+                    }
+                }
+                
+                // Re-get the element after potential replacement
+                const freshElement = document.getElementById('introduction');
+                if (!freshElement) {
+                    console.error('Introduction element not found after cleanup');
+                    return;
+                }
+                
+                quillEditor = new Quill('#introduction', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            [{ 'header': [1, 2, 3, false] }],
+                            ['bold', 'italic', 'underline', 'strike'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                            [{ 'align': [] }],
+                            ['link'],
+                            ['clean']
+                        ]
+                    },
+                    placeholder: 'Nhập giới thiệu về nhà tài trợ...'
+                });
+
+                // Store reference globally for form submission
+                window.quillEditor = quillEditor;
+                window.quillInitialized = true; // Mark as initialized
+                console.log('Quill editor initialized successfully');
+                
+                // Set existing content if in edit mode
+                const isEdit = @(ViewBag.IsEdit ? "true" : "false");
+                if (isEdit) {
+                    const existingContent = @Html.Raw(Json.Serialize(Model?.Introduction ?? ""));
+                    if (existingContent) {
+                        quillEditor.root.innerHTML = existingContent;
+                        console.log('Set existing content:', existingContent);
+                    }
+                }
+            } catch (error) {
+                console.error('Error initializing Quill editor:', error);
+            }
+        } else {
+            console.error('Quill is not loaded or #introduction element not found');
+            console.log('Retrying in 500ms...');
+            setTimeout(window.initQuillEditor, 500);
+        }
+    }
+
+    function handleSponsorSubmit(event) {
+        event.preventDefault();
+
+        const isEdit = @(ViewBag.IsEdit ? "true" : "false");
+        const sponsorId = isEdit ? $('#sponsorId').val() : null;
+
+        // Validate form
+        if (!validateSponsorForm()) {
+            return;
+        }
+
+        // Call global function from Index.cshtml
+        submitSponsorForm(isEdit, sponsorId);
+    }
+
+    // Image preview functions
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            const previewContainer = $('#image-preview');
+
+            reader.onload = function (e) {
+                previewContainer.html(`
+                    <div class="image-preview">
+                        <img src="${e.target.result}" alt="Sponsor Image" />
+                        <button type="button" class="btn-preview-remove" onclick="removeImagePreview()">×</button>
+                    </div>
+                `);
+                
+                // Reset remove flag when new image is selected
+                $('#shouldRemoveImage').val('false');
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removeImagePreview() {
+        $('#image').val('');
+        $('#image-preview').empty();
+        
+        // CRITICAL FIX: Set flag to remove existing image from database
+        $('#shouldRemoveImage').val('true');
+        console.log('Image removal flag set to true');
+    }
+
+    function validateSponsorForm() {
+        let isValid = true;
+
+        // Clear previous errors
+        $('.error-message').text('').hide();
+
+        // Validate required fields
+        const sponsorName = $('#sponsorName').val();
+        if (!sponsorName || sponsorName.trim() === '') {
+            $('#error-sponsorName').text('Tên nhà tài trợ là bắt buộc').show();
+            isValid = false;
+        }
+
+        // Validate URL if provided
+        const websiteURL = $('#websiteURL').val();
+        if (websiteURL && websiteURL.trim() !== '') {
+            const urlPattern = /^https?:\/\/.+/;
+            if (!urlPattern.test(websiteURL)) {
+                $('#error-websiteURL').text('URL website không hợp lệ').show();
+                isValid = false;
+            }
+        }
+
+        return isValid;
+    }
+</script>

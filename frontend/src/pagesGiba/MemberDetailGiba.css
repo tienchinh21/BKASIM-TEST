@@ -1,0 +1,58 @@
+/* iOS Drag and Drop Fixes for react-beautiful-dnd */
+
+/* Fix for iOS touch events */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent iOS scroll issues during drag */
+[data-rbd-droppable-id] {
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
+}
+
+/* Fix for draggable items on iOS */
+[data-rbd-draggable-id] {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* Ensure drag handle works on iOS */
+[data-rbd-drag-handle-draggable-id] {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  cursor: grab;
+}
+
+[data-rbd-drag-handle-draggable-id]:active {
+  cursor: grabbing;
+}
+
+/* Fix for iOS Safari transform issues */
+.dragging-item {
+  -webkit-transform: translate3d(0, 0, 0) !important;
+  transform: translate3d(0, 0, 0) !important;
+}
+
+/* Prevent text selection during drag on iOS */
+body.dragging {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Fix for position issues after drag */
+[data-rbd-draggable-id] > div {
+  position: relative !important;
+}
+
+/* Smooth transitions */
+[data-rbd-draggable-id]:not([data-rbd-dragging]) {
+  transition: transform 0.2s ease;
+}
+

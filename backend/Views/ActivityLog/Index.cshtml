@@ -1,0 +1,414 @@
+@{
+    ViewData["Title"] = "Lịch Sử Hoạt Động ADMIN";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .btn-primary {
+        background-color: #00BCD4;
+        border-color: #00BCD4;
+        border-radius: 8px;
+    }
+
+    .btn-primary:hover {
+        background-color: #00ACC1;
+        border-color: #00ACC1;
+    }
+
+    .card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+        border-radius: 12px 12px 0 0;
+        border-bottom: 1px solid #E9ECEF;
+    }
+
+    .action-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .action-login {
+        background-color: #E3F2FD;
+        color: #1976D2;
+    }
+
+    .action-create {
+        background-color: #E8F5E9;
+        color: #388E3C;
+    }
+
+    .action-update {
+        background-color: #FFF3E0;
+        color: #F57C00;
+    }
+
+    .action-delete {
+        background-color: #FFEBEE;
+        color: #D32F2F;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <h4 class="mb-2">Lịch Sử Hoạt Động</h4>
+                <p class="mb-0 text-muted">Theo dõi các hoạt động của ADMIN trong hệ thống</p>
+            </div>
+            <button class="btn btn-success" onclick="exportActivityLogs()">
+                <i class="ri-file-excel-line me-2"></i>Xuất Excel
+            </button>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Từ ngày</label>
+                        <input type="date" class="form-control" id="fromDate" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Đến ngày</label>
+                        <input type="date" class="form-control" id="toDate" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Loại hoạt động</label>
+                        <select id="filter-action-type" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option value="LOGIN">Đăng nhập</option>
+                            <option value="CREATE_ADMIN">Tạo ADMIN</option>
+                            <option value="UPDATE_ADMIN">Cập nhật ADMIN</option>
+                            <option value="DELETE_ADMIN">Xóa ADMIN</option>
+                            <option value="ASSIGN_GROUPS">Phân quyền nhóm</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button class="btn btn-primary w-100" onclick="activityLogsTable.ajax.reload()">
+                            <i class="ri-search-line me-1"></i>Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="activityLogsTable" class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">STT</th>
+                                <th>Thời gian</th>
+                                <th>Tên người dùng</th>
+                                <th>Hành động</th>
+                                <th>Mô tả</th>
+                                <th style="width: 100px;">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi Tiết Log -->
+<div class="modal fade" id="logDetailModal" tabindex="-1" aria-labelledby="logDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logDetailModalLabel">
+                    <i class="ri-file-list-3-line me-2"></i>Chi tiết lịch sử hoạt động
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="logDetailContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let activityLogsTable;
+
+        $(document).ready(function () {
+            // Set default dates (last 30 days)
+            const today = new Date();
+            const last30Days = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+            $('#toDate').val(today.toISOString().split('T')[0]);
+            $('#fromDate').val(last30Days.toISOString().split('T')[0]);
+
+            initDataTable();
+        });
+
+        function initDataTable() {
+            activityLogsTable = $('#activityLogsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '/ActivityLog/GetPage',
+                    type: 'GET',
+                    data: function (d) {
+                        return {
+                            draw: d.draw,
+                            page: (d.start / d.length) + 1,
+                            pageSize: d.length,
+                            fromDate: $('#fromDate').val(),
+                            toDate: $('#toDate').val(),
+                            actionType: $('#filter-action-type').val()
+                        };
+                    },
+                    error: function (xhr, error, code) {
+                        console.log('DataTable error:', error);
+                        // Don't show error for empty data
+                    }
+                },
+                columns: [
+                    {
+                        data: null,
+                        render: function (data, type, row, meta) {
+                            return meta.row + meta.settings._iDisplayStart + 1;
+                        }
+                    },
+                    {
+                        data: 'createdDate',
+                        render: function (data) {
+                            if (!data) return 'N/A';
+
+                            try {
+                                const date = new Date(data);
+                                if (isNaN(date.getTime())) {
+                                    return 'N/A';
+                                }
+
+                                const time = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                                const dateStr = date.toLocaleDateString('vi-VN');
+                                return `<div>
+                                            <div class="fw-semibold">${time}</div>
+                                            <small class="text-muted">${dateStr}</small>
+                                        </div>`;
+                            } catch (error) {
+                                console.error('Date parsing error:', error, 'Data:', data);
+                                return 'N/A';
+                            }
+                        }
+                    },
+                    {
+                        data: null,
+                        render: function (data) {
+                            return `<div>
+                                        <div class="fw-semibold">${data.accountFullName || 'N/A'}</div>
+                                        <small class="text-muted">${data.accountEmail || ''}</small>
+                                    </div>`;
+                        }
+                    },
+                    {
+                        data: 'actionType',
+                        render: function (data) {
+                            return `<span class="action-badge">${translateActionType(data)}</span>`;
+                        }
+                    },
+                    {
+                        data: 'description',
+                        render: function (data) {
+                            if (!data) return 'N/A';
+                            // Truncate long descriptions
+                            if (data.length > 50) {
+                                return data.substring(0, 50) + '...';
+                            }
+                            return data;
+                        }
+                    },
+                    {
+                        data: null,
+                        orderable: false,
+                        render: function (data) {
+                            return `<button class="btn btn-sm btn-outline-info" onclick="viewLogDetail('${data.id}')" title="Xem chi tiết">
+                                        <i class="ri-eye-line"></i>
+                                    </button>`;
+                        }
+                    }
+                ],
+                language: {
+                    "sProcessing": "Đang xử lý...",
+                    "sLengthMenu": "Hiển thị _MENU_ mục",
+                    "sZeroRecords": "Không tìm thấy dữ liệu",
+                    "sInfo": "Hiển thị từ _START_ đến _END_ của _TOTAL_ dòng",
+                    "sInfoEmpty": "Hiển thị từ 0 đến 0 trong tổng số 0 mục (lọc từ NaN mục)",
+                    "sInfoFiltered": "(lọc từ _MAX_ mục)",
+                    "sSearch": "Tìm kiếm:",
+                    "oPaginate": {
+                        "sFirst": "Đầu",
+                        "sPrevious": "Trước",
+                        "sNext": "Tiếp",
+                        "sLast": "Cuối"
+                    }
+                },
+                pagingType: "full_numbers",
+                pageLength: 10,
+                order: [[1, 'desc']]
+            });
+        }
+
+        function exportActivityLogs() {
+            const fromDate = $('#fromDate').val();
+            const toDate = $('#toDate').val();
+            const actionType = $('#filter-action-type').val();
+
+            let url = `/ActivityLog/Export?fromDate=${fromDate}&toDate=${toDate}`;
+            if (actionType) {
+                url += `&actionType=${actionType}`;
+            }
+
+            window.location.href = url;
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+
+            try {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) {
+                    return 'N/A';
+                }
+                return date.toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            } catch (error) {
+                console.error('Date formatting error:', error, 'Data:', dateString);
+                return 'N/A';
+            }
+        }
+
+        function translateActionType(actionType) {
+            const translations = {
+                'LOGIN': 'Đăng nhập',
+                'LOGOUT': 'Đăng xuất',
+                'CREATE_ADMIN': 'Tạo ADMIN',
+                'UPDATE_ADMIN': 'Cập nhật ADMIN',
+                'DELETE_ADMIN': 'Xóa ADMIN',
+                'ASSIGN_GROUPS': 'Phân quyền nhóm',
+                'CREATE_GROUP': 'Tạo hội nhóm',
+                'UPDATE_GROUP': 'Cập nhật hội nhóm',
+                'DELETE_GROUP': 'Xóa hội nhóm',
+                'CREATE_EVENT': 'Tạo sự kiện',
+                'UPDATE_EVENT': 'Cập nhật sự kiện',
+                'DELETE_EVENT': 'Xóa sự kiện',
+                'EXPORT_DATA': 'Xuất dữ liệu',
+                'IMPORT_DATA': 'Nhập dữ liệu'
+            };
+            return translations[actionType] || actionType;
+        }
+
+        function viewLogDetail(logId) {
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('logDetailModal'));
+            modal.show();
+
+            // Load log details
+            $.ajax({
+                url: `/ActivityLog/GetDetail/${logId}`,
+                type: 'GET',
+                success: function (response) {
+                    if (response.success) {
+                        const log = response.data;
+                        let metadataHtml = '';
+
+                        // Parse metadata if exists
+                        if (log.metadata) {
+                            try {
+                                const metadata = JSON.parse(log.metadata);
+                                metadataHtml = `<pre class="bg-light p-3 rounded" style="max-height: 300px; overflow-y: auto;"><code>${JSON.stringify(metadata, null, 2)}</code></pre>`;
+                            } catch (e) {
+                                metadataHtml = `<pre class="bg-light p-3 rounded">${log.metadata}</pre>`;
+                            }
+                        } else {
+                            metadataHtml = '<p class="text-muted">Không có dữ liệu chi tiết</p>';
+                        }
+
+                        const html = `
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Loại hành động</label>
+                                    <p class="form-control-plaintext">${translateActionType(log.actionType)}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Thời gian</label>
+                                    <p class="form-control-plaintext">${formatDateTime(log.createdDate)}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Tài khoản</label>
+                                    <p class="form-control-plaintext">${log.accountFullName || 'N/A'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Email</label>
+                                    <p class="form-control-plaintext">${log.accountEmail || 'N/A'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Đối tượng</label>
+                                    <p class="form-control-plaintext">${log.targetEntity || 'N/A'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Mã ID đối tượng</label>
+                                    <p class="form-control-plaintext">${log.targetId || 'N/A'}</p>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Mô tả</label>
+                                    <p class="form-control-plaintext">${log.description || 'N/A'}</p>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Chi tiết kỹ thuật (Metadata)</label>
+                                    ${metadataHtml}
+                                </div>
+                            </div>
+                        `;
+
+                        $('#logDetailContent').html(html);
+                    } else {
+                        $('#logDetailContent').html('<div class="alert alert-danger">Không thể tải thông tin log</div>');
+                    }
+                },
+                error: function () {
+                    $('#logDetailContent').html('<div class="alert alert-danger">Có lỗi xảy ra khi tải thông tin log</div>');
+                }
+            });
+        }
+    </script>
+}
+

@@ -1,0 +1,435 @@
+@using MiniAppGIBA.Entities.Memberships
+@model List<Membership>
+
+@{
+    ViewData["Title"] = "Phê duyệt thành viên";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    // Helper function to get initials
+    string GetInitials(string fullName)
+    {
+        if (string.IsNullOrEmpty(fullName)) return "?";
+        
+        var words = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length >= 2)
+        {
+            return words[0].Substring(0, 1).ToUpper() + words[words.Length - 1].Substring(0, 1).ToUpper();
+        }
+        else if (words.Length == 1)
+        {
+            return words[0].Substring(0, Math.Min(2, words[0].Length)).ToUpper();
+        }
+        return "?";
+    }
+}
+
+<style>
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .member-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .member-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #0d6efd;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .member-details h6 {
+        margin: 0;
+        color: #333;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .member-details small {
+        color: #999;
+        font-size: 12px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: #999;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        display: block;
+    }
+</style>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                @{
+                    string title = "Phê duyệt thành viên";
+                    string description = "Quản lý phê duyệt thành viên đăng ký từ Mini App";
+                    string badgeClass = "bg-primary";
+                    string badgeIcon = "ri-group-line";
+                    string badgeText = "Tổng số";
+
+                    if (!string.IsNullOrEmpty(ViewBag.Status))
+                    {
+                        switch (ViewBag.Status)
+                        {
+                            case "0":
+                                title = "Thành viên chờ phê duyệt";
+                                description = "Danh sách thành viên đang chờ được phê duyệt";
+                                badgeClass = "bg-warning text-dark";
+                                badgeIcon = "ri-time-line";
+                                badgeText = "Chờ duyệt";
+                                break;
+                            case "1":
+                                title = "Thành viên đã phê duyệt";
+                                description = "Danh sách thành viên đã được phê duyệt";
+                                badgeClass = "bg-success";
+                                badgeIcon = "ri-check-line";
+                                badgeText = "Đã duyệt";
+                                break;
+                            case "2":
+                                title = "Thành viên bị từ chối";
+                                description = "Danh sách thành viên bị từ chối phê duyệt";
+                                badgeClass = "bg-danger";
+                                badgeIcon = "ri-close-line";
+                                badgeText = "Từ chối";
+                                break;
+                        }
+                    }
+                }
+                <h4 class="mb-3">@title</h4>
+                <p class="mb-0 text-muted">@description</p>
+            </div>
+            <div>
+                <span class="badge @badgeClass">
+                    <i class="@badgeIcon me-1"></i>@badgeText: @Model.Count
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="col-lg-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="ri-filter-3-line me-2"></i>
+                    Bộ lọc tìm kiếm
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Tìm kiếm</label>
+                            <div class="input-group">
+                                <input type="text" name="keyword" class="form-control"
+                                    placeholder="Tìm theo tên, SĐT, email..." value="@ViewBag.Keyword" />
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="ri-search-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Trạng thái</label>
+                            <select name="status" id="statusFilter" class="form-select" onchange="this.form.submit()">
+                                <option value="" @(string.IsNullOrEmpty(ViewBag.Status) ? "selected" : "")>Tất cả trạng thái</option>
+                                <option value="0" @(ViewBag.Status == "0" ? "selected" : "")>Chờ phê duyệt</option>
+                                <option value="1" @(ViewBag.Status == "1" ? "selected" : "")>Đã phê duyệt</option>
+                                <option value="2" @(ViewBag.Status == "2" ? "selected" : "")>Bị từ chối</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <a href="/MembershipApproval" class="btn btn-light border flex-fill">
+                                <i class="ri-refresh-line me-1"></i>
+                                Đặt lại
+                            </a>
+                            <button class="btn btn-primary flex-fill" type="submit">
+                                <i class="ri-filter-line me-1"></i>
+                                Lọc
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="col-lg-12">
+        @if (Model.Count > 0)
+        {
+            <div class="table-responsive rounded mb-3">
+                <table class="table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Thông tin thành viên</th>
+                            <th>Số điện thoại</th>
+                            <th>Ngày đăng ký</th>
+                            <th class="text-center">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var member in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="member-info">
+                                        <div class="member-avatar">
+                                            @if (!string.IsNullOrEmpty(member.ZaloAvatar) && (member.ZaloAvatar.StartsWith("http") || member.ZaloAvatar.StartsWith("/")))
+                                            {
+                                                <img src="@member.ZaloAvatar" alt="@member.Fullname" 
+                                                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
+                                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                                                <div style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
+                                                    @GetInitials(member.Fullname)
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                @GetInitials(member.Fullname)
+                                            }
+                                        </div>
+                                        <div class="member-details">
+                                            <h6>@member.Fullname</h6>
+                                            <small>@member.UserZaloName</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@member.PhoneNumber</td>
+                                <td>@member.CreatedDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-center">
+                                    <div class="action-buttons justify-content-center">
+                                        <a href="/MembershipApproval/Detail/@member.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="ri-eye-line"></i> Chi tiết
+                                        </a>
+                                        <!-- Simplified: All members are considered approved -->
+                                        <span class="badge bg-success">
+                                            <i class="ri-check-line me-1"></i>Đã duyệt
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (ViewBag.TotalPages > 1)
+            {
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        @if (ViewBag.CurrentPage > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1&keyword=@ViewBag.Keyword&status=@ViewBag.Status">« Đầu</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(ViewBag.CurrentPage - 1)&keyword=@ViewBag.Keyword&status=@ViewBag.Status">‹ Trước</a>
+                            </li>
+                        }
+
+                        @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                        {
+                            if (i == ViewBag.CurrentPage)
+                            {
+                                <li class="page-item active">
+                                    <span class="page-link">@i</span>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=@i&keyword=@ViewBag.Keyword&status=@ViewBag.Status">@i</a>
+                                </li>
+                            }
+                        }
+
+                        @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@(ViewBag.CurrentPage + 1)&keyword=@ViewBag.Keyword&status=@ViewBag.Status">Sau ›</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=@ViewBag.TotalPages&keyword=@ViewBag.Keyword&status=@ViewBag.Status">Cuối »</a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <i class="ri-inbox-line"></i>
+                        <p class="mt-3">Không có thành viên chờ phê duyệt</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let currentMemberId = '';
+
+        function approveMember(memberId) {
+            Swal.fire({
+                icon: 'question',
+                title: 'Xác nhận',
+                text: 'Bạn có chắc chắn muốn phê duyệt thành viên này?',
+                showCancelButton: true,
+                confirmButtonText: 'Có',
+                cancelButtonText: 'Không'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/MembershipApproval/Approve',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ membershipId: memberId, approvalStatus: 1 }),
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Thành công',
+                                    text: response.message,
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Lỗi',
+                                    text: response.message,
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        },
+                        error: function () {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Lỗi',
+                                text: 'Có lỗi xảy ra',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        function openRejectModal(memberId) {
+            currentMemberId = memberId;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Từ chối thành viên',
+                input: 'textarea',
+                inputPlaceholder: 'Nhập lý do từ chối...',
+                inputAttributes: {
+                    'aria-label': 'Nhập lý do từ chối'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Từ chối',
+                cancelButtonText: 'Hủy',
+                inputValidator: (value) => {
+                    if (!value || !value.trim()) {
+                        return 'Vui lòng nhập lý do từ chối'
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    submitReject(result.value);
+                }
+            });
+        }
+
+        function submitReject(reason) {
+            $.ajax({
+                url: '/MembershipApproval/Reject',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ membershipId: currentMemberId, approvalStatus: 2, approvalReason: reason }),
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Thành công',
+                            text: response.message,
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Lỗi',
+                            text: response.message,
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Lỗi',
+                        text: 'Có lỗi xảy ra',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+
+        // Handle status filter change with loading indicator
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusFilter = document.getElementById('statusFilter');
+            if (statusFilter) {
+                statusFilter.addEventListener('change', function() {
+                    // Show loading indicator
+                    const loadingHtml = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Đang tải...</span></div><p class="mt-2 text-muted">Đang lọc dữ liệu...</p></div>';
+                    
+                    // Replace table content with loading
+                    const tableContainer = document.querySelector('.table-responsive');
+                    if (tableContainer) {
+                        tableContainer.innerHTML = loadingHtml;
+                    }
+                    
+                    // Submit form
+                    this.form.submit();
+                });
+            }
+        });
+    </script>
+}
+
