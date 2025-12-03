@@ -89,7 +89,7 @@
                 <h4 class="mb-3">Quản Lý Thành Viên</h4>
                 <p class="mb-0 text-muted">Quản lý danh sách thành viên trong hệ thống</p>
             </div>
-            @if (canEdit)
+            @* @if (canEdit)
             {
                 <div>
                     <button type="button" class="btn btn-primary" onclick="openCreateModal()">
@@ -97,10 +97,7 @@
                         Tạo tài khoản
                     </button>
                 </div>
-
-
-
-            }
+            } *@
         </div>
     </div>
 
@@ -501,25 +498,6 @@
                 });
             }
         }
-    }
-
-
-
-
-
-            const price = sub.price ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(sub.price) : 'Miễn phí';
-
-            tbody.append(`
-                    <tr>
-                        <td class="text-center">${index + 1}</td>
-                        <td>${sub.planName}</td>
-                        <td class="text-center">${sub.durationDays} ngày</td>
-                        <td class="text-center">${new Date(sub.startDate).toLocaleDateString('vi-VN')}</td>
-                        <td class="text-center">${new Date(sub.endDate).toLocaleDateString('vi-VN')}</td>
-                        <td class="text-center">${statusBadge}</td>
-                    </tr>
-                `);
-        });
     }
 
     // Handle modal events

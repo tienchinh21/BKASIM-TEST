@@ -83,17 +83,6 @@ namespace MiniAppGIBA.Controller.CMS
             return new List<string>();
         }
 
-        /// <summary>
-        /// Get group type filter based on user role
-        /// Always returns null - GIBA has full access, no type filtering needed
-        /// </summary>
-        [Obsolete("GetGroupTypeFilter is deprecated. GIBA has full access to all groups without type filtering.")]
-        protected string? GetGroupTypeFilter()
-        {
-            // GIBA has full access - no type filter needed
-            return null;
-        }
-
         protected void SetSuccessMessage(string message)
         {
             TempData["SuccessMessage"] = message;

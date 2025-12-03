@@ -17,13 +17,8 @@ namespace MiniAppGIBA.Models.Queries.Articles
         public DateTime? EndDate { get; set; }
 
         /// <summary>
-        /// User's group IDs for filtering (null = GIBA/all access, empty = NBD/Club, specific IDs = Group role)
+        /// User's group IDs for filtering (null = GIBA/all access)
         /// </summary>
         public List<string>? UserGroupIds { get; set; }
-
-        /// <summary>
-        /// Group type filter for NBD/Club roles ("NBD" or "Club")
-        /// </summary>
-        public string? GroupTypeFilter { get; set; }
     }
 }

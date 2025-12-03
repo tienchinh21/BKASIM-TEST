@@ -47,7 +47,7 @@ namespace MiniAppGIBA.Controller.CMS
             try
             {
                 // GIBA has full access to all groups - no filtering needed
-                var groups = await _groupService.GetActiveGroupsAsync(null, null);
+                var groups = await _groupService.GetActiveGroupsAsync();
                 ViewBag.Groups = groups;
 
                 return View();
@@ -138,7 +138,7 @@ namespace MiniAppGIBA.Controller.CMS
                     Status = true // Chỉ lấy groups active
                 };
                 
-                var result = await _groupService.GetGroupsAsync(query, null, null, null);
+                var result = await _groupService.GetGroupsAsync(query);
                 ViewBag.Groups = result.Items;
                 ViewBag.IsEdit = false;
                 ViewBag.Title = "Tạo Sự Kiện Mới";
@@ -176,7 +176,7 @@ namespace MiniAppGIBA.Controller.CMS
                 // }
 
                 // GIBA has full access - load all active groups
-                var groups = await _groupService.GetActiveGroupsAsync(null, null);
+                var groups = await _groupService.GetActiveGroupsAsync();
                 ViewBag.Groups = groups;
                 ViewBag.IsEdit = true;
                 ViewBag.EventId = id;

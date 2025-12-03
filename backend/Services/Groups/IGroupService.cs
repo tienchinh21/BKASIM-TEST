@@ -10,7 +10,7 @@ namespace MiniAppGIBA.Service.Groups
         /// <summary>
         /// Lấy danh sách hội nhóm với phân trang và filter
         /// </summary>
-        Task<PagedResult<GroupDTO>> GetGroupsAsync(GroupQueryParameters query, string? userZaloId = null, List<string>? allowedGroupIds = null, string? groupType = null);
+        Task<PagedResult<GroupDTO>> GetGroupsAsync(GroupQueryParameters query, string? userZaloId = null, List<string>? allowedGroupIds = null);
 
         /// <summary>
         /// Lấy tất cả hội nhóm với phân trang - hiển thị tất cả groups, isJoined dựa trên việc user đã tham gia hay chưa
@@ -55,7 +55,7 @@ namespace MiniAppGIBA.Service.Groups
         /// <summary>
         /// Lấy danh sách hội nhóm đang hoạt động
         /// </summary>
-        Task<List<GroupDTO>> GetActiveGroupsAsync(List<string>? allowedGroupIds = null, string? groupType = null);
+        Task<List<GroupDTO>> GetActiveGroupsAsync(List<string>? allowedGroupIds = null);
 
         /// <summary>
         /// [MINI APP] Lấy thông tin hội nhóm cho người ngoài (chưa tham gia) - chỉ hiển thị sự kiện công khai

@@ -41,7 +41,7 @@ namespace MiniAppGIBA.Service.Groups
         /// <summary>
         /// Lấy danh sách hội nhóm với phân trang và filter
         /// </summary>
-        public async Task<PagedResult<GroupDTO>> GetGroupsAsync(GroupQueryParameters query, string? userZaloId = null, List<string>? allowedGroupIds = null, string? groupType = null)
+        public async Task<PagedResult<GroupDTO>> GetGroupsAsync(GroupQueryParameters query, string? userZaloId = null, List<string>? allowedGroupIds = null)
         {
             try
             {
@@ -49,8 +49,6 @@ namespace MiniAppGIBA.Service.Groups
                 IQueryable<Group> queryable = _groupRepository.AsQueryable()
                     .Include(g => g.MembershipGroups.Where(mg => mg.Membership.IsDelete != true))
                     .ThenInclude(mg => mg.Membership);
-
-                // groupType parameter is deprecated - GIBA has full access to all groups
 
                 if (allowedGroupIds != null && allowedGroupIds.Any())
                 {
@@ -677,14 +675,12 @@ namespace MiniAppGIBA.Service.Groups
         /// <summary>
         /// Lấy danh sách hội nhóm đang hoạt động
         /// </summary>
-        public async Task<List<GroupDTO>> GetActiveGroupsAsync(List<string>? allowedGroupIds = null, string? groupType = null)
+        public async Task<List<GroupDTO>> GetActiveGroupsAsync(List<string>? allowedGroupIds = null)
         {
             try
             {
                 IQueryable<Group> queryable = _groupRepository.AsQueryable()
                     .Where(g => g.IsActive);
-
-                // groupType filtering is deprecated - GIBA has full access to all groups
 
                 // allowedGroupIds filtering is deprecated - GIBA has full access
                 if (allowedGroupIds != null && allowedGroupIds.Any())

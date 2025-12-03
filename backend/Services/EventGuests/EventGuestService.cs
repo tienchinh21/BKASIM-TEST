@@ -770,7 +770,7 @@ namespace MiniAppGIBA.Services.EventGuests
             }
         }
 
-        public async Task<List<EventGuestDTO>> GetEventGuestListsWithRegistrationsAsync(string eventId, List<string>? allowedGroupIds = null, string? groupType = null)
+        public async Task<List<EventGuestDTO>> GetEventGuestListsWithRegistrationsAsync(string eventId, List<string>? allowedGroupIds = null)
         {
             try
             {
@@ -866,7 +866,7 @@ namespace MiniAppGIBA.Services.EventGuests
             }
         }
 
-        public async Task<List<EventGuestDTO>> GetAllEventGuestsWithRegistrationsAsync(List<string>? allowedGroupIds = null, string? groupType = null)
+        public async Task<List<EventGuestDTO>> GetAllEventGuestsWithRegistrationsAsync(List<string>? allowedGroupIds = null)
         {
             try
             {
