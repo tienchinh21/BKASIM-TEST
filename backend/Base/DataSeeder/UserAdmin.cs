@@ -53,7 +53,7 @@ namespace MiniAppGIBA.Base.DataSeeder
                 return;
             }
 
-            var superAdminUsername = "superadmin@miniappgiba.com";
+            var superAdminUsername = "superadmin@miniappbkasim.com";
             var existingSuperAdmin = await membershipRepository.AsQueryable()
                 .FirstOrDefaultAsync(m => m.Username == superAdminUsername);
 
