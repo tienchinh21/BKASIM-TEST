@@ -483,17 +483,15 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th width="5%">STT</th>
-                                        <th width="20%">Họ tên</th>
-                                        <th width="15%">Số điện thoại</th>
-                                        <th width="15%">Công ty</th>
-                                        <th width="15%">Chức vụ trong nhóm</th>
-                                        <th width="12%">Trạng thái</th>
-                                        <th width="18%">Thao tác</th>
+                                        <th width="25%">Họ tên</th>
+                                        <th width="20%">Số điện thoại</th>
+                                        <th width="25%">Chức vụ trong nhóm</th>
+                                        <th width="25%">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="membersTableBody">
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted py-3">
+                                        <td colspan="5" class="text-center text-muted py-3">
                                             <i class="ri-loader-4-line ri-spin"></i> Đang tải...
                                         </td>
                                     </tr>
@@ -1183,7 +1181,7 @@
         function loadGroupMembers(groupId) {
             $('#membersTableBody').html(`
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-3">
+                    <td colspan="5" class="text-center text-muted py-3">
                         <i class="ri-loader-4-line ri-spin"></i> Đang tải...
                     </td>
                 </tr>
@@ -1200,7 +1198,7 @@
                         if (response.data.length === 0) {
                             $('#membersTableBody').html(`
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted py-3">
+                                    <td colspan="5" class="text-center text-muted py-3">
                                         <i class="ri-user-line"></i> Chưa có thành viên
                                     </td>
                                 </tr>
@@ -1210,12 +1208,6 @@
 
                         let membersHtml = '';
                         response.data.forEach((member, index) => {
-                            const statusBadge = member.isApproved === true 
-                                ? '<span class="badge bg-success">Đã duyệt</span>'
-                                : member.isApproved === false
-                                ? '<span class="badge bg-danger">Từ chối</span>'
-                                : '<span class="badge bg-warning">Chờ duyệt</span>';
-                            
                             const groupPosition = member.groupPosition || 'N/A';
                             
                             membersHtml += `
@@ -1228,9 +1220,7 @@
                                         </div>
                                     </td>
                                     <td>${member.phoneNumber || 'N/A'}</td>
-                                    <td>${member.company || 'N/A'}</td>
                                     <td>${groupPosition}</td>
-                                    <td>${statusBadge}</td>
                                     <td>
                                         <div class="d-flex gap-1">
                                             <button class="btn btn-sm btn-outline-primary" onclick="editMember('${member.membershipId}')" title="Chỉnh sửa">
@@ -1248,7 +1238,7 @@
                     } else {
                         $('#membersTableBody').html(`
                             <tr>
-                                <td colspan="7" class="text-center text-danger py-3">
+                                <td colspan="5" class="text-center text-danger py-3">
                                     <i class="ri-error-warning-line"></i> ${response.message || 'Không thể tải danh sách thành viên'}
                                 </td>
                             </tr>
@@ -1258,7 +1248,7 @@
                 error: function (xhr, status, error) {
                     $('#membersTableBody').html(`
                         <tr>
-                            <td colspan="7" class="text-center text-danger py-3">
+                            <td colspan="5" class="text-center text-danger py-3">
                                 <i class="ri-error-warning-line"></i> Có lỗi xảy ra khi tải danh sách thành viên
                             </td>
                         </tr>
