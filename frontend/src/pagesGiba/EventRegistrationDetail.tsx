@@ -66,13 +66,13 @@ const EventRegistrationDetail: React.FC = () => {
       case 0:
         return "#FFA500"; // Chờ duyệt (Orange)
       case 1:
-        return "#3b82f6"; // Đã duyệt (Blue)
+        return "#0066cc"; // Đã duyệt (Sky Blue - BKASIM)
       case 2:
         return "#558B2F"; // Đã check-in (Green)
       case 3:
         return "#757575"; // Đã hủy (Gray)
       default:
-        return "#DD5531";
+        return "#003d82"; // Navy Blue - BKASIM
     }
   };
 
@@ -130,7 +130,7 @@ const EventRegistrationDetail: React.FC = () => {
                   <div className="text-sm text-gray-600 mb-1">
                     Club:{" "}
                     <span className="font-semibold text-gray-900">
-                      Giba - {registration.groupName}
+                      DN BKASIM - {registration.groupName}
                     </span>
                   </div>
                 )}

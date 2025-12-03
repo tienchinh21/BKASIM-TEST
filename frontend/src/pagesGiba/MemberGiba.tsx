@@ -15,9 +15,10 @@ import SectionTitleGiba from "../componentsGiba/SectionTitleGiba";
 import ApprovalStatusBadge from "../componentsGiba/ApprovalStatusBadge";
 import { getManagementMenuItems } from "../componentsGiba/ManagementMenuItems";
 import { useGetUserRole } from "../hooks/useHasRole";
-import HelloCard from "./home/components/HelloCard";
+import MemberHelloCard from "../componentsGiba/MemberHelloCard";
 import axios from "axios";
 import dfData from "../common/DefaultConfig.json";
+import HelloCard from "./home/components/HelloCard";
 
 const MemberGiba: React.FC = () => {
   const navigate = useNavigate();
@@ -106,7 +107,7 @@ const MemberGiba: React.FC = () => {
 
         if (response.data.success && response.data.data) {
           const profileData = response.data.data;
-          console.log("MemberGiba - Profile data fetched:", profileData);
+
           setUserProfileData({
             slug: profileData.slug || null,
             term: profileData.term || null,
@@ -364,14 +365,18 @@ const MemberGiba: React.FC = () => {
   };
 
   return (
-    <Page className="bg-white min-h-screen mt-[50px] pb-20">
+    <Page className="bg-gray-50 min-h-screen mt-[50px] pb-20">
       <div className="relative">
-        {/* <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-black via-black to-black/60 rounded-b-3xl z-10"></div>
-        <div className="absolute top-0 left-0 right-0 h-28 bg-black rounded-b-2xl z-5"></div> */}
-
-        <div className="relative z-30 mx-4 py-2 mb-4">
+        <div className="relative z-30 mx-3 pt-2 mb-4">
           <HelloCard
             isInfo={false}
+            term={userProfileData.term}
+            appPosition={userProfileData.appPosition}
+            isLoadingProfile={isLoadingProfile}
+          />
+        </div>
+        <div className="relative z-30 mx-3">
+          <MemberHelloCard
             term={userProfileData.term}
             appPosition={userProfileData.appPosition}
             isLoadingProfile={isLoadingProfile}
@@ -383,11 +388,21 @@ const MemberGiba: React.FC = () => {
           membershipInfo.approvalStatus !== null &&
           membershipInfo.approvalStatus !== 1 && (
             <div className="relative z-40 mx-4 pt-3">
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg shadow-md">
+              <div
+                className={`border-l-4 p-4 rounded-r-lg shadow-md ${
+                  membershipInfo.approvalStatus === 0
+                    ? "bg-blue-50 border-blue-400"
+                    : "bg-red-50 border-red-400"
+                }`}
+              >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 pt-0.5">
                     <svg
-                      className="w-5 h-5 text-yellow-600"
+                      className={`w-5 h-5 ${
+                        membershipInfo.approvalStatus === 0
+                          ? "text-blue-600"
+                          : "text-red-600"
+                      }`}
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
@@ -399,13 +414,25 @@ const MemberGiba: React.FC = () => {
                     </svg>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-yellow-800">
+                    <p
+                      className={`text-sm font-semibold ${
+                        membershipInfo.approvalStatus === 0
+                          ? "text-blue-900"
+                          : "text-red-900"
+                      }`}
+                    >
                       {membershipInfo.approvalStatus === 0 &&
-                        "Tài khoản đang chờ duyệt"}
+                        "⏳ Tài khoản đang chờ duyệt"}
                       {membershipInfo.approvalStatus === 2 &&
-                        "Tài khoản đã bị từ chối"}
+                        "❌ Tài khoản đã bị từ chối"}
                     </p>
-                    <p className="text-xs text-yellow-700 mt-1">
+                    <p
+                      className={`text-xs mt-1.5 ${
+                        membershipInfo.approvalStatus === 0
+                          ? "text-blue-700"
+                          : "text-red-700"
+                      }`}
+                    >
                       {membershipInfo.approvalStatus === 0 &&
                         "Một số tính năng sẽ bị hạn chế cho đến khi admin phê duyệt tài khoản của bạn."}
                       {membershipInfo.approvalStatus === 2 &&
@@ -422,8 +449,8 @@ const MemberGiba: React.FC = () => {
             </div>
           )}
 
-        <div className="relative bg-white rounded-t-2xl relative z-20 px-2 pb-14">
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mt-4">
+        <div className="relative bg-white rounded-t-2xl relative z-20 px-3 pb-14">
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mt-4 shadow-sm">
             <SectionTitleGiba title="Tính năng cá nhân" />
             {menuItems.map((item) => (
               <MenuItemGiba
@@ -440,7 +467,7 @@ const MemberGiba: React.FC = () => {
             ))}
           </div>
 
-          {isLoggedIn && managementMenuItems.length > 0 && (
+          {/* {isLoggedIn && managementMenuItems.length > 0 && (
             <div className="bg-white rounded-xl border border-gray-100 overflow-hidden mt-4">
               <SectionTitleGiba title="Quản lý hội nhóm" />
               {managementMenuItems.map((item) => (
@@ -456,7 +483,7 @@ const MemberGiba: React.FC = () => {
                 />
               ))}
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </Page>

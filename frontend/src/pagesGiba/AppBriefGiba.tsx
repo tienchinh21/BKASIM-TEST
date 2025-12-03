@@ -174,7 +174,7 @@ const AppBriefGiba: React.FC = () => {
   };
 
   const handleContinue = () => {
-    navigate("/giba/login");
+    navigate("/giba/behavior-rules");
   };
 
   const renderContent = () => {
@@ -215,7 +215,7 @@ const AppBriefGiba: React.FC = () => {
           .app-brief-content {
             word-wrap: break-word;
             overflow-wrap: break-word;
-            color: #1f2937;
+            color: #000;
           }
           .app-brief-content * {
             max-width: 100%;

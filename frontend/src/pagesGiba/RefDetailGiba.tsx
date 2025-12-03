@@ -131,9 +131,9 @@ const RefDetailGiba: React.FC = () => {
   const getStatusGradient = (status: number) => {
     switch (status) {
       case 1:
-        return "linear-gradient(90deg, #3b82f6, #2563eb)"; // Đã gửi (xanh dương)
+        return "linear-gradient(90deg, #0066cc, #003d82)"; // Đã gửi (xanh BKASIM)
       case 2:
-        return "linear-gradient(90deg, #fbbf24, #f59e0b)"; // Đã xem (vàng)
+        return "linear-gradient(90deg, #0066cc, #003d82)"; // Đã xem (xanh BKASIM)
       case 3:
         return "linear-gradient(90deg, #10b981, #059669)"; // Đã chấp nhận (xanh lá)
       case 4:

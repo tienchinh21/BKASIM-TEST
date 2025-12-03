@@ -120,7 +120,7 @@ const InfoRow: React.FC<{
         style={{
           flex: 1,
           fontSize: "14px",
-          color: "#111827",
+          color: "#000",
           fontWeight: "400",
           lineHeight: "1.6",
           wordBreak: "break-word",
@@ -273,7 +273,7 @@ const PublicProfileGiba: React.FC = () => {
           <button
             onClick={() => navigate(-1)}
             style={{
-              background: "#000",
+              background: "#003d82",
               color: "#fff",
               padding: "10px 24px",
               borderRadius: "8px",
@@ -308,7 +308,7 @@ const PublicProfileGiba: React.FC = () => {
           bottom: 0,
           background: profileData?.profileTemplate?.themeColor
             ? `linear-gradient(135deg, ${profileData.profileTemplate.themeColor} 0%, ${profileData.profileTemplate.themeColor}dd 100%)`
-            : "linear-gradient(135deg, #C0002C 0%, #8B0000 100%)",
+            : "linear-gradient(135deg, #003d82 0%, #001f47 100%)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",
@@ -360,7 +360,7 @@ const PublicProfileGiba: React.FC = () => {
                   borderRadius: "16px",
                   background: profileData.basicInfo.zaloAvatar
                     ? "#fff"
-                    : "#C0002C",
+                    : "#003d82",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -451,7 +451,7 @@ const PublicProfileGiba: React.FC = () => {
                 style={{
                   width: "20px",
                   height: "20px",
-                  background: "#C0002C",
+                  background: "#003d82",
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
@@ -462,7 +462,7 @@ const PublicProfileGiba: React.FC = () => {
               </Box>
               <span
                 style={{
-                  color: "#C0002C",
+                  color: "#003d82",
                   fontSize: "14px",
                   fontWeight: "600",
                 }}
@@ -489,7 +489,7 @@ const PublicProfileGiba: React.FC = () => {
                 style={{
                   width: "20px",
                   height: "20px",
-                  background: "#C0002C",
+                  background: "#003d82",
                   borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
@@ -500,7 +500,7 @@ const PublicProfileGiba: React.FC = () => {
               </Box>
               <span
                 style={{
-                  color: "#C0002C",
+                  color: "#003d82",
                   fontSize: "14px",
                   fontWeight: "600",
                 }}

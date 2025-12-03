@@ -325,7 +325,7 @@ const MemberDetailGiba: React.FC = () => {
       }
     }
 
-    const shareTitle = `GIBA - ${memberDetail.basicInfo.fullName}`;
+    const shareTitle = `DN BKASIM - ${memberDetail.basicInfo.fullName}`;
     const shareDescription = memberDetail.basicInfo.profile
       ? `${memberDetail.basicInfo.profile}\n${
           memberDetail.basicInfo.position ? memberDetail.basicInfo.position : ""
@@ -454,7 +454,7 @@ const MemberDetailGiba: React.FC = () => {
           <button
             onClick={() => navigate(-1)}
             style={{
-              background: "#000",
+              background: "#003d82",
               color: "#fff",
               padding: "10px 24px",
               borderRadius: "8px",
@@ -656,7 +656,7 @@ const MemberDetailGiba: React.FC = () => {
                 borderRadius: "2px",
               }}
             />
-            Thành viên Club GIBA
+            Thành viên CLB DN BKASIM
           </h2>
           <div
             style={{
@@ -700,7 +700,7 @@ const MemberDetailGiba: React.FC = () => {
               borderRadius: "2px",
             }}
           />
-          Thành viên Club GIBA
+          Thành viên CLB DN BKASIM
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {groupsArray.map((group, index) => (
@@ -721,7 +721,9 @@ const MemberDetailGiba: React.FC = () => {
                   marginBottom: "4px",
                 }}
               >
-                {group?.groupName ? `GIBA - ${group.groupName}` : "GIBA"}
+                {group?.groupName
+                  ? `DN BKASIM - ${group.groupName}`
+                  : "DN BKASIM"}
               </div>
               {group?.groupPosition && (
                 <div
@@ -1196,6 +1198,8 @@ const MemberDetailGiba: React.FC = () => {
               marginBottom: "16px",
               boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
               borderLeft: `4px solid ${themeColor}`,
+              minWidth: 0,
+              overflow: "hidden",
             }}
           >
             <h2
@@ -1226,6 +1230,9 @@ const MemberDetailGiba: React.FC = () => {
                 lineHeight: "1.5",
                 margin: 0,
                 whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                overflowWrap: "break-word",
+                minWidth: 0,
               }}
             >
               {memberDetail.basicInfo.profile}

@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Page } from "zmp-ui";
 import { useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { token, phoneNumberUser, userMembershipInfo } from "../../recoil/RecoilState";
+import {
+  token,
+  phoneNumberUser,
+  userMembershipInfo,
+} from "../../recoil/RecoilState";
 import axios from "axios";
 import dfData from "../../common/DefaultConfig.json";
 import useSetHeader from "../../components/hooks/useSetHeader";
@@ -16,7 +20,7 @@ import LoadingGiba from "../../componentsGiba/LoadingGiba";
 
 interface ComingSoonData {
   events: any[];
-  newsletter: any;
+  newsletters: any;
   meetings: any[];
   showcases: any[];
 }
@@ -112,13 +116,16 @@ const ComingSoonPage: React.FC = () => {
       }
 
       // Fetch ComingSoon data
-      const comingSoonResponse = await axios.get(`${dfData.domain}/api/ComingSoon`, {
-        headers,
-      });
+      const comingSoonResponse = await axios.get(
+        `${dfData.domain}/api/ComingSoon`,
+        {
+          headers,
+        }
+      );
 
       let comingSoonData: ComingSoonData = {
         events: [],
-        newsletter: null,
+        newsletters: null,
         meetings: [],
         showcases: [],
       };
@@ -130,7 +137,9 @@ const ComingSoonPage: React.FC = () => {
       // Fetch confirmed events only if user is pending approval
       let confirmedEvents: any[] = [];
       const phoneToUse = phoneNumber || membershipInfo?.phoneNumber;
-      const isPendingApproval = membershipInfo?.approvalStatus === 0 || membershipInfo?.approvalStatus === 2;
+      const isPendingApproval =
+        membershipInfo?.approvalStatus === 0 ||
+        membershipInfo?.approvalStatus === 2;
 
       console.log("ComingSoonPage - isPendingApproval:", isPendingApproval);
       console.log("ComingSoonPage - phoneToUse:", phoneToUse);
@@ -157,7 +166,9 @@ const ComingSoonPage: React.FC = () => {
 
       if (confirmedEvents.length > 0) {
         const confirmedEventIds = new Set(confirmedEvents.map((e) => e.id));
-        mergedEvents = mergedEvents.filter((event) => !confirmedEventIds.has(event.id));
+        mergedEvents = mergedEvents.filter(
+          (event) => !confirmedEventIds.has(event.id)
+        );
 
         const markedConfirmedEvents = confirmedEvents.map((event) => ({
           ...event,
@@ -250,7 +261,7 @@ const ComingSoonPage: React.FC = () => {
           emptyMessage="Không có showcase sắp tới"
         />
 
-        {data.newsletter && (
+        {data.newsletters && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4 px-4">
               <h3 className="text-lg font-bold text-black">Bản tin</h3>
@@ -270,7 +281,7 @@ const ComingSoonPage: React.FC = () => {
                   flexShrink: 0,
                 }}
               >
-                <ItemNew item={data.newsletter} />
+                <ItemNew item={data.newsletters} />
               </div>
             </div>
           </div>

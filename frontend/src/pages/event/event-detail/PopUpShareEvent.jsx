@@ -56,8 +56,8 @@ const PopUpShareEvent = ({ visible, onClose, detail }) => {
         <Box
           className="btn btn-light"
           style={{
-            border: "1px solid #4665D6",
-            color: "#4665D6",
+            border: "1px solid #003d82",
+            color: "#003d82",
             width: "44%",
             gap: 8,
             display: "flex",
@@ -79,7 +79,7 @@ const PopUpShareEvent = ({ visible, onClose, detail }) => {
         {/* Nút chia sẻ trên Zalo */}
         <Box
           style={{
-            background: "#4665D6",
+            background: "#003d82",
             color: "#fff",
             width: "44%",
             gap: 8,

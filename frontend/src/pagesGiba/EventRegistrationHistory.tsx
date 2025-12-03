@@ -86,7 +86,7 @@ const RegistrationCard = React.memo<{
             </div>
             {registration.groupName && (
               <div className="text-xs text-gray-500">
-                Club: Giba - {registration.groupName}
+                Club: DN BKASIM - {registration.groupName}
               </div>
             )}
           </div>
@@ -264,9 +264,9 @@ const EventRegistrationHistory: React.FC = () => {
   const getAccentColor = useCallback((status: number) => {
     switch (status) {
       case 0:
-        return "linear-gradient(90deg, #fbbf24, #f59e0b)";
+        return "linear-gradient(90deg, #0066cc, #003d82)";
       case 1:
-        return "linear-gradient(90deg, #3b82f6, #2563eb)";
+        return "linear-gradient(90deg, #0066cc, #003d82)";
       case 2:
         return "linear-gradient(90deg, #10b981, #059669)";
       case 3:
@@ -365,11 +365,13 @@ const EventRegistrationHistory: React.FC = () => {
             setTypeFilter(value);
             setStatusFilter("");
             setCurrentPage(1);
+            setRegistrations([]);
           }}
           activeChildTab={statusFilter}
           onChildTabChange={(value) => {
             setStatusFilter(value);
             setCurrentPage(1);
+            setRegistrations([]);
           }}
         />
       </Box>

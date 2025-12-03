@@ -19,6 +19,9 @@ namespace MiniAppGIBA.Models.Request.Memberships
         public string? Password { get; set; }
 
         public string? ZaloAvatar { get; set; }
+
+        public string UserZaloIdByOA { get; set; } = string.Empty;
+
     }
 
     public class RegisterMemberByAdminRequest

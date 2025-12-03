@@ -4,10 +4,10 @@
  */
 
 export const colorsGiba = {
-  // Primary colors - Modern blue/purple gradient
-  primary: "#6366f1", // Indigo-500
-  primaryDark: "#4f46e5", // Indigo-600
-  primaryLight: "#818cf8", // Indigo-400
+  // Primary colors - BKASIM Blue gradient
+  primary: "#003d82", // Navy Blue
+  primaryDark: "#001f47", // Darker Navy
+  primaryLight: "#0066cc", // Sky Blue
 
   // Secondary colors - Elegant gray scale
   secondary: "#64748b", // Slate-500
@@ -18,7 +18,7 @@ export const colorsGiba = {
   success: "#10b981", // Emerald-500
   warning: "#f59e0b", // Amber-500
   error: "#ef4444", // Red-500
-  info: "#3b82f6", // Blue-500
+  info: "#0066cc", // Blue-500 (updated to match primary light)
 
   // Neutral colors - Modern backgrounds
   white: "#ffffff",
@@ -32,8 +32,8 @@ export const colorsGiba = {
   textTertiary: "#94a3b8", // Slate-400
 
   // Accent colors - Subtle highlights
-  accent: "#8b5cf6", // Violet-500
-  accentLight: "#a78bfa", // Violet-400
+  accent: "#0066cc", // Sky Blue (updated to match primary light)
+  accentLight: "#4d94d9", // Lighter Sky Blue
 } as const;
 
 export type ColorKey = keyof typeof colorsGiba;

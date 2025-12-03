@@ -45,7 +45,7 @@ const FloatingActionButtonGiba: React.FC<FloatingActionButtonGibaProps> = ({
         return "bg-purple-500 hover:bg-purple-600 text-white";
       case "yellow":
       default:
-        return "bg-yellow-400 hover:bg-yellow-500 text-black";
+        return "bg-blue-600 hover:bg-blue-700 text-white";
     }
   };
 

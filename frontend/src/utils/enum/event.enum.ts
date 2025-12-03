@@ -1,7 +1,7 @@
 export enum EventType {
   ALL = "",
-  NBD = "NBD",
-  CLUB = "Club",
+  // NBD = "NBD",
+  // CLUB = "Club",
   MY_GROUPS = "me",
 }
 
@@ -37,8 +37,8 @@ export enum CheckInStatus {
 
 export const EventTypeLabel: Record<EventType, string> = {
   [EventType.ALL]: "Tất cả",
-  [EventType.NBD]: "NBD",
-  [EventType.CLUB]: "Club",
+  // [EventType.NBD]: "NBD",
+  // [EventType.CLUB]: "Club",
   [EventType.MY_GROUPS]: "Sự kiện của tôi",
 };
 
@@ -74,28 +74,28 @@ export const EventTabsData: TabGroup[] = [
       { id: "all-ended", name: "Đã kết thúc", value: EventStatus.ENDED },
     ],
   },
-  {
-    id: "nbd",
-    name: "NBD",
-    value: EventType.NBD,
-    children: [
-      { id: "nbd-all", name: "Tất cả", value: EventStatus.ALL },
-      { id: "nbd-ongoing", name: "Đang diễn ra", value: EventStatus.ONGOING },
-      { id: "nbd-upcoming", name: "Sắp diễn ra", value: EventStatus.UPCOMING },
-      { id: "nbd-ended", name: "Đã kết thúc", value: EventStatus.ENDED },
-    ],
-  },
-  {
-    id: "club",
-    name: "Club",
-    value: EventType.CLUB,
-    children: [
-      { id: "club-all", name: "Tất cả", value: EventStatus.ALL },
-      { id: "club-ongoing", name: "Đang diễn ra", value: EventStatus.ONGOING },
-      { id: "club-upcoming", name: "Sắp diễn ra", value: EventStatus.UPCOMING },
-      { id: "club-ended", name: "Đã kết thúc", value: EventStatus.ENDED },
-    ],
-  },
+  // {
+  //   id: "nbd",
+  //   name: "NBD",
+  //   value: EventType.NBD,
+  //   children: [
+  //     { id: "nbd-all", name: "Tất cả", value: EventStatus.ALL },
+  //     { id: "nbd-ongoing", name: "Đang diễn ra", value: EventStatus.ONGOING },
+  //     { id: "nbd-upcoming", name: "Sắp diễn ra", value: EventStatus.UPCOMING },
+  //     { id: "nbd-ended", name: "Đã kết thúc", value: EventStatus.ENDED },
+  //   ],
+  // },
+  // {
+  //   id: "club",
+  //   name: "Club",
+  //   value: EventType.CLUB,
+  //   children: [
+  //     { id: "club-all", name: "Tất cả", value: EventStatus.ALL },
+  //     { id: "club-ongoing", name: "Đang diễn ra", value: EventStatus.ONGOING },
+  //     { id: "club-upcoming", name: "Sắp diễn ra", value: EventStatus.UPCOMING },
+  //     { id: "club-ended", name: "Đã kết thúc", value: EventStatus.ENDED },
+  //   ],
+  // },
   {
     id: "my-groups",
     name: "Sự kiện của tôi",

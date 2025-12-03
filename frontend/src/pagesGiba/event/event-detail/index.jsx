@@ -129,7 +129,7 @@ const EventDetail = () => {
 
   const getTabStyle = (tabKey) => ({
     padding: "2px 20px",
-    backgroundColor: activeTab === tabKey ? "#333" : "transparent",
+    backgroundColor: activeTab === tabKey ? "#003d82" : "transparent",
     color: activeTab === tabKey ? "#fff" : "#000",
     borderRadius: GlobalStyles.borderRadius.xs,
     transition: "all 0.3s",

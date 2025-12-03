@@ -18,20 +18,20 @@ const { Option } = Select;
 // Custom CSS for form components
 const customStyles = `
   .giba-datepicker .ant-picker {
-    background-color: #1f2937 !important;
-    border-color: #374151 !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #d1d5db !important;
+    color: #000 !important;
   }
 
   .giba-datepicker .ant-picker:hover,
   .giba-datepicker .ant-picker:focus {
-    background-color: #1f2937 !important;
-    border-color: white !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #003d82 !important;
+    color: #000 !important;
   }
 
   .giba-datepicker .ant-picker-input input {
-    color: white !important;
+    color: #000 !important;
     background-color: transparent !important;
   }
 
@@ -40,20 +40,20 @@ const customStyles = `
   }
 
   .giba-select .ant-select-selector {
-    background-color: #1f2937 !important;
-    border-color: #374151 !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #d1d5db !important;
+    color: #000 !important;
   }
 
   .giba-select .ant-select-selector:hover,
   .giba-select .ant-select-selector:focus {
-    background-color: #1f2937 !important;
-    border-color: white !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #003d82 !important;
+    color: #000 !important;
   }
 
   .giba-select .ant-select-selection-item {
-    color: white !important;
+    color: #000 !important;
   }
 
   .giba-select .ant-select-selection-placeholder {
@@ -61,22 +61,22 @@ const customStyles = `
   }
 
   .giba-select-multiple .ant-select-selector {
-    background-color: #1f2937 !important;
-    border-color: #374151 !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #d1d5db !important;
+    color: #000 !important;
   }
 
   .giba-select-multiple .ant-select-selector:hover,
   .giba-select-multiple .ant-select-selector:focus {
-    background-color: #1f2937 !important;
-    border-color: white !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #003d82 !important;
+    color: #000 !important;
   }
 
   .giba-select-multiple .ant-select-selection-item {
-    background-color: #C0002C !important;
+    background-color: #003d82 !important;
     color: white !important;
-    border-color: #C0002C !important;
+    border-color: #003d82 !important;
   }
 
   .giba-select-multiple .ant-select-selection-placeholder {
@@ -85,30 +85,30 @@ const customStyles = `
 
   /* TextArea focus styles */
   .ant-input:focus {
-    background-color: #1f2937 !important;
-    border-color: white !important;
-    color: white !important;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
+    background-color: #f5f5f5 !important;
+    border-color: #003d82 !important;
+    color: #000 !important;
+    box-shadow: 0 0 0 2px rgba(0, 61, 130, 0.2) !important;
   }
 
   .ant-input:hover {
-    background-color: #1f2937 !important;
-    border-color: #6b7280 !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #d1d5db !important;
+    color: #000 !important;
   }
 
   /* Disabled input styles */
   .ant-input[disabled] {
-    background-color: #1f2937 !important;
-    border-color: #374151 !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #d1d5db !important;
+    color: #000 !important;
     opacity: 1 !important;
   }
 
   .ant-input[disabled]:hover {
-    background-color: #1f2937 !important;
-    border-color: #374151 !important;
-    color: white !important;
+    background-color: #f5f5f5 !important;
+    border-color: #d1d5db !important;
+    color: #000 !important;
   }
 `;
 
@@ -368,8 +368,11 @@ const EditInfoGiba: React.FC = () => {
   const onFinish = async (values: any) => {
     setSpinning(true);
     try {
+      // Get ALL form values (including fields from inactive tabs)
+      const allFormValues = form.getFieldsValue();
+
       // Merge dữ liệu cũ với dữ liệu mới - giữ nguyên dữ liệu cũ nếu không thay đổi
-      const mergedData = mergeFormData(values, profileData || {});
+      const mergedData = mergeFormData(allFormValues, profileData || {});
 
       // Format payload theo API spec
       const payload = {
@@ -505,454 +508,459 @@ const EditInfoGiba: React.FC = () => {
               className="space-y-4"
             >
               {/* Personal Info Tab */}
-              {activeTab === "personal" ? (
-                <div className="space-y-4">
-                  {/* Họ tên */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Họ tên <span className="text-red-500">*</span>
-                    </label>
-                    <Form.Item
-                      name="fullname"
-                      rules={[
-                        { required: true, message: "Vui lòng điền họ và tên" },
-                      ]}
-                    >
-                      <Input
-                        disabled
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all disabled:opacity-100 disabled:cursor-not-allowed disabled:text-white"
-                        placeholder="Họ và tên"
-                      />
-                    </Form.Item>
-                  </div>
+              <div
+                style={{ display: activeTab === "personal" ? "block" : "none" }}
+                className="space-y-4"
+              >
+                {/* Họ tên */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Họ tên <span className="text-red-500">*</span>
+                  </label>
+                  <Form.Item
+                    name="fullname"
+                    rules={[
+                      { required: true, message: "Vui lòng điền họ và tên" },
+                    ]}
+                  >
+                    <Input
+                      disabled
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all disabled:opacity-100 disabled:cursor-not-allowed disabled:text-white"
+                      placeholder="Họ và tên"
+                    />
+                  </Form.Item>
+                </div>
 
-                  {/* Số điện thoại */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Số điện thoại <span className="text-red-500">*</span>
-                    </label>
-                    <Form.Item
-                      name="phoneNumber"
-                      rules={[
+                {/* Số điện thoại */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Số điện thoại <span className="text-red-500">*</span>
+                  </label>
+                  <Form.Item
+                    name="phoneNumber"
+                    rules={[
+                      {
+                        required: true,
+                        message: "Vui lòng điền số điện thoại",
+                      },
+                    ]}
+                  >
+                    <Input
+                      disabled
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all disabled:opacity-100 disabled:cursor-not-allowed disabled:text-white"
+                      placeholder="Số điện thoại"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Email
+                  </label>
+                  <Form.Item
+                    name="email"
+                    rules={[{ type: "email", message: "Email không hợp lệ" }]}
+                  >
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Email"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Ngày sinh */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Ngày sinh
+                  </label>
+                  <Form.Item name="dayOfBirth">
+                    <DatePicker
+                      format="DD/MM/YYYY"
+                      placeholder="Chọn ngày sinh"
+                      style={{ width: "100%", height: "48px" }}
+                      className="giba-datepicker"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Địa chỉ */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Địa chỉ
+                  </label>
+                  <Form.Item name="address">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Địa chỉ"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Công ty */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Công ty
+                  </label>
+                  <Form.Item name="company">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Công ty"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Chức vụ */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Chức vụ
+                  </label>
+                  <Form.Item name="position">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Chức vụ"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Chức danh */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Chức danh
+                  </label>
+                  <Form.Item name="appPosition">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Chức danh"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Nhiệm kỳ */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Nhiệm kỳ
+                  </label>
+                  <Form.Item name="term">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhiệm kỳ"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Mô tả bản thân */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Mô tả bản thân
+                  </label>
+                  <Form.Item name="profile">
+                    <TextArea
+                      rows={4}
+                      maxLength={500}
+                      showCount
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Mô tả bản thân"
+                      style={{
+                        backgroundColor: "#f5f5f5",
+                        borderColor: "#d1d5db",
+                        color: "#000",
+                      }}
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Lĩnh vực */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Lĩnh vực
+                  </label>
+                  <Form.Item name="fieldIds">
+                    <Select
+                      mode="multiple"
+                      placeholder="Chọn lĩnh vực"
+                      style={{ width: "100%" }}
+                      className="giba-select-multiple"
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) => {
+                        const children = option?.children;
+                        if (typeof children === "string") {
+                          return (children as string)
+                            .toLowerCase()
+                            .includes(input.toLowerCase());
+                        }
+                        return false;
+                      }}
+                    >
+                      {fields.map((field) => (
+                        <Option key={field.id} value={field.id}>
+                          {field.fieldName || field.name || field.id}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </div>
+              </div>
+
+              {/* Legal Info Tab */}
+              <div
+                style={{ display: activeTab === "legal" ? "block" : "none" }}
+                className="space-y-4"
+              >
+                {/* Thông tin pháp nhân */}
+
+                {/* Logo công ty */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Logo công ty
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      {profileData?.companyLogo ? (
+                        <img
+                          src={profileData.companyLogo}
+                          alt="Logo công ty"
+                          className="w-20 h-20 object-cover rounded-lg border border-gray-600"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-800 border border-gray-600 rounded-lg flex items-center justify-center">
+                          <span className="text-gray-500 text-xs">
+                            Chưa có logo
+                          </span>
+                        </div>
+                      )}
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<EditOutlined />}
+                        loading={uploadingLogo}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute -top-2 -right-2 bg-red-600 border-red-600 hover:bg-red-700"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-400">
+                        Nhấn vào nút chỉnh sửa để thay đổi logo công ty
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Định dạng: JPG, PNG (tối đa 5MB)
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    style={{ display: "none" }}
+                  />
+                </div>
+
+                {/* Tên công ty */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Tên công ty
+                  </label>
+                  <Form.Item name="companyFullName">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập tên đầy đủ công ty"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Tên thương hiệu */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Tên thương hiệu
+                  </label>
+                  <Form.Item name="companyBrandName">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập tên thương hiệu"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Mã số thuế */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Mã số thuế
+                  </label>
+                  <Form.Item name="taxCode">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập mã số thuế"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Ngành nghề kinh doanh */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Ngành nghề kinh doanh
+                  </label>
+                  <Form.Item name="businessField">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập ngành nghề kinh doanh"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Loại hình doanh nghiệp */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Loại hình doanh nghiệp
+                  </label>
+                  <Form.Item name="businessType">
+                    <Select
+                      placeholder="Chọn loại hình doanh nghiệp"
+                      style={{ width: "100%", height: "48px" }}
+                      className="giba-select"
+                      options={[
+                        { value: "Công ty TNHH", label: "Công ty TNHH" },
                         {
-                          required: true,
-                          message: "Vui lòng điền số điện thoại",
+                          value: "Công ty Cổ phần",
+                          label: "Công ty Cổ phần",
                         },
+                        {
+                          value: "Doanh nghiệp tư nhân",
+                          label: "Doanh nghiệp tư nhân",
+                        },
+                        { value: "Hộ kinh doanh", label: "Hộ kinh doanh" },
                       ]}
-                    >
-                      <Input
-                        disabled
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all disabled:opacity-100 disabled:cursor-not-allowed disabled:text-white"
-                        placeholder="Số điện thoại"
-                      />
-                    </Form.Item>
-                  </div>
+                    />
+                  </Form.Item>
+                </div>
 
-                  {/* Email */}
+                {/* Địa chỉ trụ sở chính */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Địa chỉ trụ sở chính
+                  </label>
+                  <Form.Item name="headquartersAddress">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập địa chỉ trụ sở chính"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Website doanh nghiệp */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Website doanh nghiệp
+                  </label>
+                  <Form.Item name="companyWebsite">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập website doanh nghiệp"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* SĐT doanh nghiệp */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    SĐT doanh nghiệp
+                  </label>
+                  <Form.Item name="companyPhoneNumber">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập số điện thoại doanh nghiệp"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Email doanh nghiệp */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Email doanh nghiệp
+                  </label>
+                  <Form.Item name="companyEmail">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập email doanh nghiệp"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Người đại diện pháp lý */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Người đại diện pháp lý
+                  </label>
+                  <Form.Item name="legalRepresentative">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập tên người đại diện pháp lý"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Chức vụ của người đại diện */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Chức vụ của người đại diện
+                  </label>
+                  <Form.Item name="legalRepresentativePosition">
+                    <Input
+                      className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
+                      placeholder="Nhập chức vụ của người đại diện"
+                    />
+                  </Form.Item>
+                </div>
+
+                {/* Giấy chứng nhận đăng ký kinh doanh */}
+                <div className="space-y-3">
+                  <h4 className="text-lg font-medium text-white">
+                    Giấy chứng nhận đăng ký kinh doanh
+                  </h4>
+
+                  {/* Số */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Email
+                      Số
                     </label>
-                    <Form.Item
-                      name="email"
-                      rules={[{ type: "email", message: "Email không hợp lệ" }]}
-                    >
+                    <Form.Item name="businessRegistrationNumber">
                       <Input
                         className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Email"
+                        placeholder="Nhập số giấy chứng nhận"
                       />
                     </Form.Item>
                   </div>
 
-                  {/* Ngày sinh */}
+                  {/* Ngày cấp */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Ngày sinh
+                      Ngày cấp
                     </label>
-                    <Form.Item name="dayOfBirth">
+                    <Form.Item name="businessRegistrationDate">
                       <DatePicker
                         format="DD/MM/YYYY"
-                        placeholder="Chọn ngày sinh"
+                        placeholder="Chọn ngày cấp"
                         style={{ width: "100%", height: "48px" }}
                         className="giba-datepicker"
                       />
                     </Form.Item>
                   </div>
 
-                  {/* Địa chỉ */}
+                  {/* Nơi cấp */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Địa chỉ
+                      Nơi cấp
                     </label>
-                    <Form.Item name="address">
+                    <Form.Item name="businessRegistrationPlace">
                       <Input
                         className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Địa chỉ"
+                        placeholder="Nhập nơi cấp giấy chứng nhận"
                       />
-                    </Form.Item>
-                  </div>
-
-                  {/* Công ty */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Công ty
-                    </label>
-                    <Form.Item name="company">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Công ty"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Chức vụ */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Chức vụ
-                    </label>
-                    <Form.Item name="position">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Chức vụ"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Chức danh */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Chức danh
-                    </label>
-                    <Form.Item name="appPosition">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Chức danh"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Nhiệm kỳ */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Nhiệm kỳ
-                    </label>
-                    <Form.Item name="term">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhiệm kỳ"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Mô tả bản thân */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Mô tả bản thân
-                    </label>
-                    <Form.Item name="profile">
-                      <TextArea
-                        rows={4}
-                        maxLength={500}
-                        showCount
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Mô tả bản thân"
-                        style={{
-                          backgroundColor: "#1f2937",
-                          borderColor: "#374151",
-                          color: "white",
-                        }}
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Lĩnh vực */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Lĩnh vực
-                    </label>
-                    <Form.Item name="fieldIds">
-                      <Select
-                        mode="multiple"
-                        placeholder="Chọn lĩnh vực"
-                        style={{ width: "100%" }}
-                        className="giba-select-multiple"
-                        showSearch
-                        optionFilterProp="children"
-                        filterOption={(input, option) => {
-                          const children = option?.children;
-                          if (typeof children === "string") {
-                            return (children as string)
-                              .toLowerCase()
-                              .includes(input.toLowerCase());
-                          }
-                          return false;
-                        }}
-                      >
-                        {fields.map((field) => (
-                          <Option key={field.id} value={field.id}>
-                            {field.fieldName || field.name || field.id}
-                          </Option>
-                        ))}
-                      </Select>
                     </Form.Item>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Thông tin pháp nhân */}
-
-                  {/* Logo công ty */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Logo công ty
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      <div className="relative">
-                        {profileData?.companyLogo ? (
-                          <img
-                            src={profileData.companyLogo}
-                            alt="Logo công ty"
-                            className="w-20 h-20 object-cover rounded-lg border border-gray-600"
-                          />
-                        ) : (
-                          <div className="w-20 h-20 bg-gray-800 border border-gray-600 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-500 text-xs">
-                              Chưa có logo
-                            </span>
-                          </div>
-                        )}
-                        <Button
-                          type="primary"
-                          size="small"
-                          icon={<EditOutlined />}
-                          loading={uploadingLogo}
-                          onClick={() => fileInputRef.current?.click()}
-                          className="absolute -top-2 -right-2 bg-red-600 border-red-600 hover:bg-red-700"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-400">
-                          Nhấn vào nút chỉnh sửa để thay đổi logo công ty
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Định dạng: JPG, PNG (tối đa 5MB)
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileSelect}
-                      style={{ display: "none" }}
-                    />
-                  </div>
-
-                  {/* Tên công ty */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Tên công ty
-                    </label>
-                    <Form.Item name="companyFullName">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập tên đầy đủ công ty"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Tên thương hiệu */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Tên thương hiệu
-                    </label>
-                    <Form.Item name="companyBrandName">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập tên thương hiệu"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Mã số thuế */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Mã số thuế
-                    </label>
-                    <Form.Item name="taxCode">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập mã số thuế"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Ngành nghề kinh doanh */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Ngành nghề kinh doanh
-                    </label>
-                    <Form.Item name="businessField">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập ngành nghề kinh doanh"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Loại hình doanh nghiệp */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Loại hình doanh nghiệp
-                    </label>
-                    <Form.Item name="businessType">
-                      <Select
-                        placeholder="Chọn loại hình doanh nghiệp"
-                        style={{ width: "100%", height: "48px" }}
-                        className="giba-select"
-                        options={[
-                          { value: "Công ty TNHH", label: "Công ty TNHH" },
-                          {
-                            value: "Công ty Cổ phần",
-                            label: "Công ty Cổ phần",
-                          },
-                          {
-                            value: "Doanh nghiệp tư nhân",
-                            label: "Doanh nghiệp tư nhân",
-                          },
-                          { value: "Hộ kinh doanh", label: "Hộ kinh doanh" },
-                        ]}
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Địa chỉ trụ sở chính */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Địa chỉ trụ sở chính
-                    </label>
-                    <Form.Item name="headquartersAddress">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập địa chỉ trụ sở chính"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Website doanh nghiệp */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Website doanh nghiệp
-                    </label>
-                    <Form.Item name="companyWebsite">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập website doanh nghiệp"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* SĐT doanh nghiệp */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      SĐT doanh nghiệp
-                    </label>
-                    <Form.Item name="companyPhoneNumber">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập số điện thoại doanh nghiệp"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Email doanh nghiệp */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Email doanh nghiệp
-                    </label>
-                    <Form.Item name="companyEmail">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập email doanh nghiệp"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Người đại diện pháp lý */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Người đại diện pháp lý
-                    </label>
-                    <Form.Item name="legalRepresentative">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập tên người đại diện pháp lý"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Chức vụ của người đại diện */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Chức vụ của người đại diện
-                    </label>
-                    <Form.Item name="legalRepresentativePosition">
-                      <Input
-                        className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                        placeholder="Nhập chức vụ của người đại diện"
-                      />
-                    </Form.Item>
-                  </div>
-
-                  {/* Giấy chứng nhận đăng ký kinh doanh */}
-                  <div className="space-y-3">
-                    <h4 className="text-lg font-medium text-white">
-                      Giấy chứng nhận đăng ký kinh doanh
-                    </h4>
-
-                    {/* Số */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Số
-                      </label>
-                      <Form.Item name="businessRegistrationNumber">
-                        <Input
-                          className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                          placeholder="Nhập số giấy chứng nhận"
-                        />
-                      </Form.Item>
-                    </div>
-
-                    {/* Ngày cấp */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Ngày cấp
-                      </label>
-                      <Form.Item name="businessRegistrationDate">
-                        <DatePicker
-                          format="DD/MM/YYYY"
-                          placeholder="Chọn ngày cấp"
-                          style={{ width: "100%", height: "48px" }}
-                          className="giba-datepicker"
-                        />
-                      </Form.Item>
-                    </div>
-
-                    {/* Nơi cấp */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Nơi cấp
-                      </label>
-                      <Form.Item name="businessRegistrationPlace">
-                        <Input
-                          className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-white focus:border-transparent focus:bg-gray-900 focus:text-white outline-none transition-all"
-                          placeholder="Nhập nơi cấp giấy chứng nhận"
-                        />
-                      </Form.Item>
-                    </div>
-                  </div>
-                </div>
-              )}
+              </div>
             </Form>
           </>
         )}
@@ -961,7 +969,7 @@ const EditInfoGiba: React.FC = () => {
       {/* Submit Button - Fixed Bottom */}
       <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-black border-t border-gray-800 z-50">
         <button
-          onClick={() => onFinish(form.getFieldsValue())}
+          onClick={() => form.submit()}
           className="w-full mb-2 py-3 px-6 rounded-lg font-semibold text-base transition-all duration-200 bg-white text-black hover:bg-gray-200 shadow-lg"
         >
           Lưu

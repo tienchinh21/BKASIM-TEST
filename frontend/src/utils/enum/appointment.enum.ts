@@ -20,8 +20,8 @@ export const AppointmentStatusColor: Record<AppointmentStatus, string> = {
 };
 
 export const AppointmentStatusGradient: Record<AppointmentStatus, string> = {
-  [AppointmentStatus.PENDING]: "linear-gradient(90deg, #fbbf24, #f59e0b)",
-  [AppointmentStatus.CONFIRMED]: "linear-gradient(90deg, #3b82f6, #2563eb)",
+  [AppointmentStatus.PENDING]: "linear-gradient(90deg, #0066cc, #003d82)",
+  [AppointmentStatus.CONFIRMED]: "linear-gradient(90deg, #0066cc, #003d82)",
   [AppointmentStatus.CANCELLED]: "linear-gradient(90deg, #ef4444, #dc2626)",
   [AppointmentStatus.REJECTED]: "linear-gradient(90deg, #f97316, #ea580c)",
 };

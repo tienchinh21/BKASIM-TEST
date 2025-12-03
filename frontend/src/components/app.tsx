@@ -28,6 +28,7 @@ import EditInfoGiba from "../pagesGiba/EditInfoGiba";
 import GuestListHistory from "../pagesGiba/GuestListHistory";
 import GuestListDetail from "../pagesGiba/GuestListDetail";
 import GroupJoinRequestHistory from "../pagesGiba/GroupJoinRequestHistory";
+import GroupJoinRequestDetail from "../pagesGiba/GroupJoinRequestDetail";
 import DashboardGiba from "../pagesGiba/DashboardGiba";
 import ProfileIntroGiba from "../pagesGiba/ProfileIntroGiba";
 import ProfileViewGiba from "../pagesGiba/ProfileViewGiba";
@@ -64,6 +65,7 @@ import ManagerMembership from "../pagesGiba/managerMembership/managerMembersip";
 import Achievements from "../pagesGiba/achievements/Achievements";
 import ProfileMembership from "../pagesGiba/profilemembership/ProfileMemberships";
 import ComingSoonPage from "../pagesGiba/comingSoon/ComingSoonPage";
+import GroupRegisterPage from "../pagesGiba/GroupRegisterPage";
 
 // Component to handle deep links
 const DeepLinkHandler = () => {
@@ -255,6 +257,16 @@ const MyApp = () => {
                 }
               />
 
+              {/* Giba group register page */}
+              <Route
+                path="/giba/group-register"
+                element={
+                  <PrivateRoute>
+                    <GroupRegisterPage />
+                  </PrivateRoute>
+                }
+              />
+
               {/* Giba login fallback */}
               <Route path="/giba/login" element={<LoginGiba />} />
 
@@ -383,6 +395,16 @@ const MyApp = () => {
                 element={
                   <PrivateRoute>
                     <GroupJoinRequestHistory />
+                  </PrivateRoute>
+                }
+              />
+
+              {/* Giba group join request detail */}
+              <Route
+                path="/giba/group-join-request-detail/:groupId"
+                element={
+                  <PrivateRoute>
+                    <GroupJoinRequestDetail />
                   </PrivateRoute>
                 }
               />

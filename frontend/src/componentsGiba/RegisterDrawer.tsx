@@ -26,22 +26,17 @@ const RegisterDrawer: React.FC<RegisterDrawerProps> = ({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     reason: "",
-    company: "",
-    position: "",
   });
   const [isAgreedRules, setIsAgreedRules] = useState(false);
   const [rulesDrawerVisible, setRulesDrawerVisible] = useState(false);
 
-  // Load saved form data from sessionStorage when drawer opens
   useEffect(() => {
     if (visible && groupId) {
       const savedData = sessionStorage.getItem(`registerDrawer_${groupId}`);
       if (savedData) {
         try {
           const parsed = JSON.parse(savedData);
-          setFormData(
-            parsed.formData || { reason: "", company: "", position: "" }
-          );
+          setFormData(parsed.formData || { reason: "" });
           setIsAgreedRules(parsed.isAgreedRules || false);
         } catch (error) {
           console.error("Error parsing saved drawer data:", error);

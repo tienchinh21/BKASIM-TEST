@@ -19,7 +19,7 @@ import ComingSoonSkeleton from "./skeletons/ComingSoonSkeleton";
 
 interface ComingSoonData {
   events: any[];
-  newsletter: any;
+  newsletters: any | any[];
   meetings: any[];
   showcases: any[];
 }
@@ -114,6 +114,8 @@ const ShowcaseCard: React.FC<{ item: any }> = ({ item }) => {
 
 const NewsletterCard: React.FC<{ item: any }> = ({ item }) => {
   const navigate = useNavigate();
+
+  console.log("item", item);
 
   // Helper function to strip HTML tags and get plain text
   const stripHtml = (html: string) => {
@@ -261,7 +263,7 @@ const ComingSoonSwiper: React.FC<ComingSoonSwiperProps> = ({
 
       let comingSoonData: ComingSoonData = {
         events: [],
-        newsletter: null,
+        newsletters: null,
         meetings: [],
         showcases: [],
       };
@@ -277,34 +279,15 @@ const ComingSoonSwiper: React.FC<ComingSoonSwiperProps> = ({
         membershipInfo?.approvalStatus === 0 ||
         membershipInfo?.approvalStatus === 2;
 
-      console.log("ComingSoonSwiper - phoneNumber:", phoneNumber);
-      console.log(
-        "ComingSoonSwiper - membershipInfo?.phoneNumber:",
-        membershipInfo?.phoneNumber
-      );
-      console.log(
-        "ComingSoonSwiper - approvalStatus:",
-        membershipInfo?.approvalStatus
-      );
-      console.log("ComingSoonSwiper - isPendingApproval:", isPendingApproval);
-      console.log("ComingSoonSwiper - phoneToUse:", phoneToUse);
-
       if (isPendingApproval && phoneToUse && phoneToUse.trim() !== "") {
         try {
-          console.log(
-            "User is pending approval, calling confirmed events API with phone:",
-            phoneToUse
-          );
           const confirmedResponse = await axios.get(
             `${dfData.domain}/api/EventGuests/GetConfirmedEventsByPhone/${phoneToUse}`,
             { headers }
           );
 
-          console.log("Confirmed events response:", confirmedResponse.data);
-
           if (confirmedResponse.data && Array.isArray(confirmedResponse.data)) {
             confirmedEvents = confirmedResponse.data;
-            console.log("Confirmed events count:", confirmedEvents.length);
           }
         } catch (error) {
           console.error("Error fetching confirmed events:", error);
@@ -353,7 +336,7 @@ const ComingSoonSwiper: React.FC<ComingSoonSwiperProps> = ({
       // Set empty data structure on error
       setData({
         events: [],
-        newsletter: null,
+        newsletters: null,
         meetings: [],
         showcases: [],
       });
@@ -405,7 +388,8 @@ const ComingSoonSwiper: React.FC<ComingSoonSwiperProps> = ({
     (data.events && data.events.length > 0) ||
     (data.meetings && data.meetings.length > 0) ||
     (data.showcases && data.showcases.length > 0) ||
-    data.newsletter;
+    (data.newsletters &&
+      (Array.isArray(data.newsletters) ? data.newsletters.length > 0 : true));
 
   if (!hasData) return null;
 
@@ -439,7 +423,11 @@ const ComingSoonSwiper: React.FC<ComingSoonSwiperProps> = ({
           <ShowcaseCard key={showcase.id} item={showcase} />
         ))}
 
-        {data.newsletter && <NewsletterCard item={data.newsletter} />}
+        {data.newsletters && Array.isArray(data.newsletters)
+          ? data.newsletters.map((newsletter) => (
+              <NewsletterCard key={newsletter.id} item={newsletter} />
+            ))
+          : data.newsletters && <NewsletterCard item={data.newsletters} />}
       </div>
     </div>
   );
