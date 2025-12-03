@@ -25,6 +25,31 @@ namespace MiniAppGIBA.Controller.CMS
         }
 
         /// <summary>
+        /// Display the group selection page for custom field configuration
+        /// </summary>
+        [HttpGet]
+        public IActionResult SelectGroup()
+        {
+            try
+            {
+                // Only GIBA (super admin) can manage custom field tabs
+                if (!IsSuperAdmin())
+                {
+                    SetErrorMessage("Chỉ GIBA mới có quyền quản lý các tab trường tùy chỉnh!");
+                    return RedirectToAction("Index", "Groups");
+                }
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading group selection page");
+                SetErrorMessage("Có lỗi xảy ra khi tải trang chọn hội nhóm");
+                return RedirectToAction("Index", "Groups");
+            }
+        }
+
+        /// <summary>
         /// Display the custom field tabs management page for a group
         /// </summary>
         [HttpGet]
@@ -39,10 +64,9 @@ namespace MiniAppGIBA.Controller.CMS
                     return RedirectToAction("Index", "Groups");
                 }
 
-                if (string.IsNullOrEmpty(groupId))
+                if (string.IsNullOrEmpty(groupId) || groupId == "all")
                 {
-                    SetErrorMessage("ID hội nhóm không được để trống");
-                    return RedirectToAction("Index", "Groups");
+                    return RedirectToAction("SelectGroup");
                 }
 
                 ViewBag.GroupId = groupId;
@@ -90,7 +114,6 @@ namespace MiniAppGIBA.Controller.CMS
         /// API endpoint to create a new tab for a group
         /// </summary>
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateTab([FromBody] CreateCustomFieldTabRequest request)
         {
             try
@@ -138,8 +161,8 @@ namespace MiniAppGIBA.Controller.CMS
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating tab");
-                return Json(new { success = false, message = "Có lỗi xảy ra khi tạo tab" });
+                _logger.LogError(ex, "Error creating tab: {Message}", ex.Message);
+                return Json(new { success = false, message = "Có lỗi xảy ra khi tạo tab: " + ex.Message });
             }
         }
 
@@ -147,7 +170,6 @@ namespace MiniAppGIBA.Controller.CMS
         /// API endpoint to update an existing tab
         /// </summary>
         [HttpPut]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateTab([FromBody] UpdateCustomFieldTabRequest request)
         {
             try
@@ -205,7 +227,6 @@ namespace MiniAppGIBA.Controller.CMS
         /// API endpoint to delete a tab and all its associated fields
         /// </summary>
         [HttpDelete]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteTab(string tabId)
         {
             try
@@ -252,7 +273,6 @@ namespace MiniAppGIBA.Controller.CMS
         /// API endpoint to reorder tabs within a group
         /// </summary>
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReorderTabs([FromBody] ReorderTabsRequest request)
         {
             try

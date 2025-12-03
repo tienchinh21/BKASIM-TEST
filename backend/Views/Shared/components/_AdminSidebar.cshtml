@@ -73,14 +73,14 @@
             }
 
             @* Hội Nhóm *@
-            <li class="@(new string[] { "Groups", "SubscriptionPlan" }.Contains(controller) ? "active" : "")">
+            <li class="@(new string[] { "Groups", "SubscriptionPlan", "CustomFieldTab", "CustomField" }.Contains(controller) ? "active" : "")">
                 <a href="#groups" class="collapsed" data-bs-toggle="collapse" aria-expanded="false">
                     <i class="ri-team-line" style="font-size: 20px;"></i>
                     <span class="ml-4">Nhóm</span>
                     <i class="ri-arrow-right-s-line dropdown-indicator-icon iq-arrow-right arrow-active"></i>
                 </a>
                 <ul id="groups"
-                    class="iq-submenu collapse @(new string[] { "Groups", "SubscriptionPlan" }.Contains(controller) ? "show" : "")"
+                    class="iq-submenu collapse @(new string[] { "Groups", "SubscriptionPlan", "CustomFieldTab", "CustomField" }.Contains(controller) ? "show" : "")"
                     data-parent="#iq-sidebar-toggle">
                     <li class="@(new string[] { "Groups" }.Contains(controller) ? "active" : "")">
                         <a href="/Groups">
@@ -92,6 +92,11 @@
                             <li class="@(new string[] { "SubscriptionPlan" }.Contains(controller) ? "active" : "")">
                                 <a href="/SubscriptionPlan">
                                     <i class="ri-subtract-line"></i><span>Quản Lý Gói Cước</span>
+                                </a>
+                            </li>
+                            <li class="@(new string[] { "CustomFieldTab", "CustomField" }.Contains(controller) ? "active" : "")">
+                                <a href="/CustomFieldTab/SelectGroup" class="svg-icon">
+                                    <i class="ri-subtract-line"></i><span>Cấu Hình Form Tùy Chỉnh</span>
                                 </a>
                             </li>
                     }

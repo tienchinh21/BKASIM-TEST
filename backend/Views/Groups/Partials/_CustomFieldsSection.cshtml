@@ -1,0 +1,638 @@
+@{
+    var groupId = ViewBag.GroupId as string;
+}
+
+<style>
+    .custom-fields-section {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 16px;
+        margin-top: 20px;
+        background: #f9fafb;
+    }
+
+    .section-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 4px;
+    }
+
+    .section-desc {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 16px;
+    }
+
+    .tab-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 8px;
+        background: white;
+        transition: all 0.2s ease;
+    }
+
+    .tab-card:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .tab-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #111827;
+        flex: 1;
+    }
+
+    .field-count-badge {
+        display: inline-block;
+        background-color: #f3f4f6;
+        color: #374151;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .tab-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .field-list {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .field-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        font-size: 13px;
+        color: #6b7280;
+    }
+
+    .field-item-name {
+        flex: 1;
+    }
+
+    .field-type-badge {
+        display: inline-block;
+        background-color: #f3f4f6;
+        color: #374151;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 24px;
+        color: #9ca3af;
+    }
+
+    .empty-state-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+        opacity: 0.5;
+    }
+
+    .modal-header {
+        background-color: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-header .modal-title {
+        color: #111827;
+        font-weight: 500;
+    }
+</style>
+
+<div class="custom-fields-section">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <div class="section-title">Cấu hình Form Tùy Chỉnh</div>
+            <div class="section-desc">Quản lý các tab và trường thông tin cho biểu mẫu đăng ký thành viên</div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="openCreateTabModal()">
+            <i class="ri-add-line me-1"></i>
+            Thêm Tab Mới
+        </button>
+    </div>
+
+    <div id="customFieldsTabsContainer" style="max-height: 400px; overflow-y: auto;">
+        <div id="tabsList">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="ri-inbox-line"></i>
+                </div>
+                <p style="margin: 0;">Chưa có tab nào. Hãy tạo tab đầu tiên để bắt đầu!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Thêm/Sửa Tab -->
+<div class="modal fade" id="tabModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tabModalTitle">Tạo Tab Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tabForm">
+                    <input type="hidden" id="tabId" />
+                    <div class="mb-3">
+                        <label for="tabName" class="form-label">Tên Tab <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="tabName" placeholder="VD: Thông tin cơ bản" maxlength="100" required />
+                        <div class="form-text">Tối đa 100 ký tự</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveTab()">Lưu Tab</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Thêm/Sửa Field -->
+<div class="modal fade" id="fieldModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fieldModalTitle">Tạo Trường Mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="fieldForm">
+                    <input type="hidden" id="fieldId" />
+                    <input type="hidden" id="fieldTabId" />
+                    
+                    <div class="mb-3">
+                        <label for="fieldName" class="form-label">Tên Trường <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="fieldName" placeholder="VD: Họ và tên" maxlength="100" required />
+                        <div class="form-text">Tối đa 100 ký tự</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="fieldType" class="form-label">Loại Trường <span class="text-danger">*</span></label>
+                        <select class="form-select" id="fieldType" required onchange="updateFieldTypeOptions()">
+                            <option value="">-- Chọn loại trường --</option>
+                            <option value="1">Text (Văn bản)</option>
+                            <option value="8">Email</option>
+                            <option value="9">Số điện thoại</option>
+                            <option value="7">Văn bản dài</option>
+                            <option value="6">Ngày giờ</option>
+                            <option value="2">Số nguyên</option>
+                            <option value="3">Số thập phân</option>
+                            <option value="5">Boolean (Có/Không)</option>
+                            <option value="10">URL</option>
+                            <option value="12">Dropdown (Chọn một)</option>
+                            <option value="13">Multiple Choice (Chọn nhiều)</option>
+                            <option value="14">File</option>
+                            <option value="15">Hình ảnh</option>
+                        </select>
+                    </div>
+
+                    <div id="optionsSection" style="display: none;" class="mb-3">
+                        <label for="fieldOptions" class="form-label">Các Tùy Chọn <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="fieldOptions" rows="3" placeholder="Nhập mỗi tùy chọn trên một dòng"></textarea>
+                        <div class="form-text">Nhập mỗi tùy chọn trên một dòng riêng</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isRequired" />
+                            <label class="form-check-label" for="isRequired">Trường bắt buộc</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveField()">Lưu Trường</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Xác nhận xóa Tab -->
+<div class="modal fade" id="deleteTabModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa tab <strong id="deleteTabName"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteTab()">Xóa Tab</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Xác nhận xóa Field -->
+<div class="modal fade" id="deleteFieldModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa trường <strong id="deleteFieldName"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteField()">Xóa Trường</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let customFieldsGroupId = '@groupId';
+    let allTabs = [];
+    let currentEditingTabId = null;
+    let currentDeletingTabId = null;
+    let currentEditingFieldId = null;
+    let currentDeletingFieldId = null;
+
+    const fieldTypeMap = {
+        '1': 'Text', '2': 'Integer', '3': 'Decimal', '5': 'Boolean', '6': 'DateTime',
+        '7': 'LongText', '8': 'Email', '9': 'PhoneNumber', '10': 'URL',
+        '12': 'Dropdown', '13': 'MultipleChoice', '14': 'File', '15': 'Image'
+    };
+
+    $(document).ready(function () {
+        if (customFieldsGroupId) {
+            loadTabs();
+        }
+        
+        // Reload tabs khi modal được show (cho edit mode) - chỉ load 1 lần
+        let tabsLoaded = false;
+        $('#groupModal').on('shown.bs.modal', function () {
+            if (customFieldsGroupId && !tabsLoaded) {
+                loadTabs();
+                tabsLoaded = true;
+            }
+        });
+    });
+
+    function loadTabs() {
+        $.ajax({
+            url: '/CustomFieldTab/GetTabs',
+            type: 'GET',
+            data: { groupId: customFieldsGroupId },
+            success: function (response) {
+                if (response.success && response.data && response.data.length > 0) {
+                    allTabs = response.data;
+                    displayTabs(allTabs);
+                } else {
+                    $('#tabsList').html(`
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="ri-inbox-line"></i>
+                            </div>
+                            <p style="margin: 0;">Chưa có tab nào. Hãy tạo tab đầu tiên để bắt đầu!</p>
+                        </div>
+                    `);
+                }
+            },
+            error: function () {
+                console.error('Error loading tabs');
+            }
+        });
+    }
+
+    function displayTabs(tabs) {
+        const tabsList = $('#tabsList');
+        tabsList.empty();
+
+        tabs.forEach((tab) => {
+            const fieldCount = tab.fieldCount || 0;
+            const fieldsHtml = tab.fields && tab.fields.length > 0
+                ? tab.fields.map(f => `
+                    <div class="field-item">
+                        <i class="ri-drag-move-line" style="color: #d1d5db;"></i>
+                        <span class="field-item-name">${escapeHtml(f.fieldName)}</span>
+                        <span class="field-type-badge">${fieldTypeMap[f.fieldType] || 'Unknown'}</span>
+                        <button type="button" class="btn btn-sm btn-link p-0" onclick="openEditFieldModal('${f.id}', '${escapeHtml(f.fieldName)}', '${f.fieldType}', '${f.isRequired}', '${JSON.stringify(f.fieldOptions || []).replace(/"/g, '&quot;')}')">
+                            <i class="ri-edit-line"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-link p-0 text-danger" onclick="openDeleteFieldModal('${f.id}', '${escapeHtml(f.fieldName)}')">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+                `).join('')
+                : '<div class="field-item text-muted"><i class="ri-inbox-line"></i> Chưa có trường nào</div>';
+
+            const tabHtml = `
+                <div class="tab-card">
+                    <div class="tab-header">
+                        <div class="tab-name">${escapeHtml(tab.tabName)}</div>
+                        <span class="field-count-badge">${fieldCount} trường</span>
+                        <div class="tab-actions">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Thao tác">
+                                    <i class="ri-more-2-line"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#" onclick="openEditTabModal('${tab.id}', '${escapeHtml(tab.tabName)}'); return false;"><i class="ri-edit-line me-2"></i>Sửa Tab</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="openCreateFieldModal('${tab.id}'); return false;"><i class="ri-add-line me-2"></i>Thêm Trường</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="openDeleteTabModal('${tab.id}', '${escapeHtml(tab.tabName)}'); return false;"><i class="ri-delete-bin-line me-2"></i>Xóa Tab</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field-list">
+                        ${fieldsHtml}
+                    </div>
+                </div>
+            `;
+            tabsList.append(tabHtml);
+        });
+    }
+
+    function openCreateTabModal() {
+        currentEditingTabId = null;
+        $('#tabId').val('');
+        $('#tabName').val('');
+        $('#tabModalTitle').text('Tạo Tab Mới');
+        $('#tabModal').modal('show');
+        $('#tabName').focus();
+    }
+
+    function openEditTabModal(tabId, tabName) {
+        currentEditingTabId = tabId;
+        $('#tabId').val(tabId);
+        $('#tabName').val(tabName);
+        $('#tabModalTitle').text('Chỉnh sửa Tab');
+        $('#tabModal').modal('show');
+        $('#tabName').focus();
+    }
+
+    function saveTab() {
+        const tabName = $('#tabName').val().trim();
+        if (!tabName) {
+            Swal.fire('Lỗi', 'Tên tab không được để trống', 'error');
+            return;
+        }
+
+        const isCreate = !currentEditingTabId;
+        const url = isCreate ? '/CustomFieldTab/CreateTab' : '/CustomFieldTab/UpdateTab';
+        const method = isCreate ? 'POST' : 'PUT';
+
+        const data = {
+            tabName: tabName,
+            entityType: 1,
+            entityId: customFieldsGroupId
+        };
+
+        if (!isCreate) {
+            data.id = currentEditingTabId;
+        }
+
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (response) {
+                if (response.success) {
+                    // Đóng modal tab
+                    const tabModalElement = document.getElementById('tabModal');
+                    const tabModalBS = bootstrap.Modal.getOrCreateInstance(tabModalElement);
+                    tabModalBS.hide();
+                    
+                    // Reload tabs sau khi modal đóng
+                    setTimeout(function() {
+                        loadTabs();
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success(response.message);
+                        }
+                    }, 300);
+                } else {
+                    Swal.fire('Lỗi', response.message, 'error');
+                }
+            },
+            error: function () {
+                Swal.fire('Lỗi', 'Có lỗi xảy ra khi lưu tab', 'error');
+            }
+        });
+    }
+
+    function openDeleteTabModal(tabId, tabName) {
+        currentDeletingTabId = tabId;
+        $('#deleteTabName').text(tabName);
+        $('#deleteTabModal').modal('show');
+    }
+
+    function confirmDeleteTab() {
+        if (!currentDeletingTabId) return;
+
+        $.ajax({
+            url: `/CustomFieldTab/DeleteTab?tabId=${currentDeletingTabId}`,
+            type: 'DELETE',
+            success: function (response) {
+                if (response.success) {
+                    const deleteTabModalElement = document.getElementById('deleteTabModal');
+                    const deleteTabModalBS = bootstrap.Modal.getOrCreateInstance(deleteTabModalElement);
+                    deleteTabModalBS.hide();
+                    
+                    setTimeout(function() {
+                        loadTabs();
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success(response.message);
+                        }
+                    }, 300);
+                } else {
+                    Swal.fire('Lỗi', response.message, 'error');
+                }
+            },
+            error: function () {
+                Swal.fire('Lỗi', 'Có lỗi xảy ra khi xóa tab', 'error');
+            }
+        });
+    }
+
+    function openCreateFieldModal(tabId) {
+        if (!tabId) {
+            showError('Lỗi', 'Vui lòng chọn tab trước');
+            return;
+        }
+        currentEditingFieldId = null;
+        $('#fieldId').val('');
+        $('#fieldTabId').val(tabId);
+        $('#fieldName').val('');
+        $('#fieldType').val('');
+        $('#fieldOptions').val('');
+        $('#isRequired').prop('checked', false);
+        $('#fieldModalTitle').text('Tạo Trường Mới');
+        $('#optionsSection').hide();
+        $('#fieldModal').modal('show');
+        $('#fieldName').focus();
+    }
+
+    function openEditFieldModal(fieldId, fieldName, fieldType, isRequired, fieldOptions) {
+        currentEditingFieldId = fieldId;
+        $('#fieldId').val(fieldId);
+        $('#fieldName').val(fieldName);
+        $('#fieldType').val(fieldType);
+        $('#isRequired').prop('checked', isRequired === 'true' || isRequired === true);
+        
+        try {
+            const options = JSON.parse(fieldOptions);
+            $('#fieldOptions').val(options.join('\n'));
+        } catch (e) {
+            $('#fieldOptions').val('');
+        }
+        
+        updateFieldTypeOptions();
+        $('#fieldModalTitle').text('Chỉnh sửa Trường');
+        $('#fieldModal').modal('show');
+        $('#fieldName').focus();
+    }
+
+    function updateFieldTypeOptions() {
+        const fieldType = $('#fieldType').val();
+        const optionsSection = $('#optionsSection');
+        
+        if (fieldType === '12' || fieldType === '13') {
+            optionsSection.show();
+            $('#fieldOptions').prop('required', true);
+        } else {
+            optionsSection.hide();
+            $('#fieldOptions').prop('required', false);
+        }
+    }
+
+    function saveField() {
+        const fieldName = $('#fieldName').val().trim();
+        const fieldType = $('#fieldType').val();
+        const tabId = $('#fieldTabId').val();
+        const isRequired = $('#isRequired').is(':checked');
+
+        if (!fieldName) {
+            Swal.fire('Lỗi', 'Tên trường không được để trống', 'error');
+            return;
+        }
+
+        if (!fieldType) {
+            Swal.fire('Lỗi', 'Loại trường không được để trống', 'error');
+            return;
+        }
+
+        let fieldOptions = null;
+        if (fieldType === '12' || fieldType === '13') {
+            const optionsText = $('#fieldOptions').val().trim();
+            if (!optionsText) {
+                Swal.fire('Lỗi', 'Các tùy chọn không được để trống', 'error');
+                return;
+            }
+            fieldOptions = optionsText.split('\n').map(o => o.trim()).filter(o => o);
+        }
+
+        const isCreate = !currentEditingFieldId;
+        const url = isCreate ? '/CustomField/CreateField' : '/CustomField/UpdateField';
+        const method = isCreate ? 'POST' : 'PUT';
+
+        const data = {
+            fieldName: fieldName,
+            fieldType: parseInt(fieldType),
+            customFieldTabId: tabId,
+            entityType: 1,
+            entityId: '',
+            isRequired: isRequired,
+            displayOrder: 0,
+            fieldOptions: fieldOptions
+        };
+
+        if (!isCreate) {
+            data.id = currentEditingFieldId;
+        }
+
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (response) {
+                if (response.success) {
+                    const fieldModalElement = document.getElementById('fieldModal');
+                    const fieldModalBS = bootstrap.Modal.getOrCreateInstance(fieldModalElement);
+                    fieldModalBS.hide();
+                    
+                    setTimeout(function() {
+                        loadTabs();
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success(response.message);
+                        }
+                    }, 300);
+                } else {
+                    Swal.fire('Lỗi', response.message, 'error');
+                }
+            },
+            error: function () {
+                Swal.fire('Lỗi', 'Có lỗi xảy ra khi lưu trường', 'error');
+            }
+        });
+    }
+
+    function openDeleteFieldModal(fieldId, fieldName) {
+        currentDeletingFieldId = fieldId;
+        $('#deleteFieldName').text(fieldName);
+        $('#deleteFieldModal').modal('show');
+    }
+
+    function confirmDeleteField() {
+        if (!currentDeletingFieldId) return;
+
+        $.ajax({
+            url: `/CustomField/DeleteField?fieldId=${currentDeletingFieldId}`,
+            type: 'DELETE',
+            success: function (response) {
+                if (response.success) {
+                    const deleteFieldModalElement = document.getElementById('deleteFieldModal');
+                    const deleteFieldModalBS = bootstrap.Modal.getOrCreateInstance(deleteFieldModalElement);
+                    deleteFieldModalBS.hide();
+                    
+                    setTimeout(function() {
+                        loadTabs();
+                        if (typeof toastr !== 'undefined') {
+                            toastr.success(response.message);
+                        }
+                    }, 300);
+                } else {
+                    Swal.fire('Lỗi', response.message, 'error');
+                }
+            },
+            error: function () {
+                Swal.fire('Lỗi', 'Có lỗi xảy ra khi xóa trường', 'error');
+            }
+        });
+    }
+
+    function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+</script>

@@ -84,14 +84,6 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXJ0aWNsZVxfQXJ0aWNsZS5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
-[d:/miniapp/BKASIM/backend/Views/CustomFieldTab/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VzdG9tRmllbGRUYWJcSW5kZXguY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
-[d:/miniapp/BKASIM/backend/Views/CustomField/Index.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3VzdG9tRmllbGRcSW5kZXguY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
 [d:/miniapp/BKASIM/backend/Views/Dashboard/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGFzaGJvYXJkXEluZGV4LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
@@ -206,6 +198,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [d:/miniapp/BKASIM/backend/Views/Groups/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR3JvdXBzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[d:/miniapp/BKASIM/backend/Views/Groups/Partials/_CustomFieldsSection.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcR3JvdXBzXFBhcnRpYWxzXF9DdXN0b21GaWVsZHNTZWN0aW9uLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [d:/miniapp/BKASIM/backend/Views/Groups/Partials/_GroupBehaviorRules.cshtml]

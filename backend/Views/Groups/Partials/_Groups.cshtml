@@ -88,6 +88,14 @@
                     <small class="text-muted">Mô tả các hoạt động chính mà hội nhóm thường tổ chức</small>
                 </div>
 
+                <!-- Custom Fields Section -->
+                <div class="col-12">
+                    @{
+                        ViewBag.GroupId = ViewBag.GroupId ?? "";
+                    }
+                    @await Html.PartialAsync("~/Views/Groups/Partials/_CustomFieldsSection.cshtml")
+                </div>
+
                 <!-- Behavior Rules Section -->
                     @* <div class="col-12">
                         <div class="card border">
@@ -159,6 +167,7 @@
 <script>
     function submitGroupForm(event) {
         event.preventDefault();
+        console.log('submitGroupForm called');
 
         const isEdit = @(ViewBag.IsEdit ? "true" : "false");
 
@@ -166,7 +175,10 @@
         const formData = new FormData();
         
         // Thêm các field text
-        formData.append('GroupName', document.querySelector('input[name="GroupName"]').value);
+        const groupNameInput = document.querySelector('input[name="GroupName"]');
+        if (groupNameInput) {
+            formData.append('GroupName', groupNameInput.value);
+        }
         
         // Lấy content từ Quill Editor cho Description
         let descriptionContent = '';
@@ -177,23 +189,29 @@
             }
         }
         formData.append('Description', descriptionContent);
-        formData.append('Rule', document.querySelector('textarea[name="Rule"]').value || '');
+        
+        const ruleTextarea = document.querySelector('textarea[name="Rule"]');
+        formData.append('Rule', ruleTextarea ? ruleTextarea.value : '');
         
         // Lấy content từ Quill Editor cho MainActivities
         let mainActivitiesContent = '';
         if (window.mainActivitiesQuillEditor) {
             mainActivitiesContent = window.mainActivitiesQuillEditor.root.innerHTML.trim();
-            // Nếu chỉ có <p><br></p> thì coi như rỗng
             if (mainActivitiesContent === '<p><br></p>') {
                 mainActivitiesContent = '';
             }
         }
         formData.append('MainActivities', mainActivitiesContent);
-        formData.append('IsActive', document.querySelector('select[name="IsActive"]').value === 'true' ? 'true' : 'false');
+        
+        const isActiveSelect = document.querySelector('select[name="IsActive"]');
+        formData.append('IsActive', isActiveSelect ? (isActiveSelect.value === 'true' ? 'true' : 'false') : 'true');
 
         // Thêm Id cho edit
         if (isEdit) {
-            formData.append('Id', document.querySelector('input[name="Id"]').value);
+            const idInput = document.querySelector('input[name="Id"]');
+            if (idInput) {
+                formData.append('Id', idInput.value);
+            }
         }
 
         // Thêm file logo nếu có
@@ -213,17 +231,24 @@
         }
 
         // Xác định URL và method
-        const url = isEdit ? `/api/groups/${document.querySelector('input[name="Id"]').value}` : '/api/groups';
-        const method = isEdit ? 'PUT' : 'POST';
+        let url = '/api/groups';
+        let method = 'POST';
+        
+        if (isEdit) {
+            const idInput = document.querySelector('input[name="Id"]');
+            if (idInput) {
+                url = `/api/groups/${idInput.value}`;
+                method = 'PUT';
+            }
+        }
 
-        console.log('Submitting group data with FormData');
+        console.log('Submitting to:', url, 'Method:', method);
 
         // Gọi API với FormData
         fetch(url, {
             method: method,
             headers: {
                 'Authorization': 'Bearer ' + localStorage.getItem('_tk')
-                // Không set Content-Type, browser sẽ tự động set với boundary cho FormData
             },
             body: formData
         })
@@ -231,15 +256,12 @@
             .then(data => {
                 console.log('API Response:', data);
                 if (data.code === 0) {
-                    // Thành công
                     Swal.fire('Thành công!', data.message, 'success');
                     $('#groupModal').modal('hide');
-                    // Reload DataTable
                     if (typeof groupsTable !== 'undefined') {
                         groupsTable.ajax.reload();
                     }
                 } else {
-                    // Lỗi
                     Swal.fire('Lỗi!', data.message, 'error');
                 }
             })
@@ -263,33 +285,13 @@
         // Re-initialize when modal is shown
         $(document).on('shown.bs.modal', '#groupModal', function() {
             setTimeout(function() {
-                if ($('#descriptionEditor').length > 0 && !window.descriptionQuillEditor) {
+                if (!window.descriptionQuillEditor) {
                     initDescriptionQuillEditor();
                 }
-                if ($('#mainActivities').length > 0 && !window.mainActivitiesQuillEditor) {
+                if (!window.mainActivitiesQuillEditor) {
                     initMainActivitiesQuillEditor();
                 }
             }, 100);
-        });
-
-        // Reset Quill when modal is hidden
-        $('#groupModal').on('hidden.bs.modal', function() {
-            if (window.descriptionQuillEditor) {
-                try {
-                    window.descriptionQuillEditor = null;
-                    console.log('Description Quill editor reset');
-                } catch (e) {
-                    console.warn('Error resetting Description Quill editor:', e);
-                }
-            }
-            if (window.mainActivitiesQuillEditor) {
-                try {
-                    window.mainActivitiesQuillEditor = null;
-                    console.log('MainActivities Quill editor reset');
-                } catch (e) {
-                    console.warn('Error resetting MainActivities Quill editor:', e);
-                }
-            }
         });
     });
 
@@ -300,13 +302,9 @@
             return;
         }
 
+        // Skip if already initialized
         if (window.descriptionQuillEditor) {
-            console.log('Description Quill already initialized, skipping...');
-            return;
-        }
-
-        if ($(descriptionElement).hasClass('ql-editor') || $(descriptionElement).hasClass('ql-container')) {
-            console.log('Description element already has Quill classes, skipping...');
+            console.log('Description Quill already initialized');
             return;
         }
 
@@ -329,12 +327,10 @@
                 });
 
                 window.descriptionQuillEditor = descriptionQuillEditor;
-                console.log('Description Quill editor initialized successfully');
+                console.log('Description Quill editor initialized');
             } catch (e) {
                 console.error('Error initializing Description Quill editor:', e);
             }
-        } else {
-            console.warn('Quill is not loaded');
         }
     }
 
@@ -345,15 +341,9 @@
             return;
         }
 
-        // Check if Quill is already initialized
+        // Skip if already initialized
         if (window.mainActivitiesQuillEditor) {
-            console.log('MainActivities Quill already initialized, skipping...');
-            return;
-        }
-
-        // Check if element already has Quill classes
-        if ($(mainActivitiesElement).hasClass('ql-editor') || $(mainActivitiesElement).hasClass('ql-container')) {
-            console.log('MainActivities element already has Quill classes, skipping...');
+            console.log('MainActivities Quill already initialized');
             return;
         }
 
@@ -375,14 +365,11 @@
                     placeholder: 'Nhập các hoạt động chính của hội nhóm...'
                 });
 
-                // Store reference globally
                 window.mainActivitiesQuillEditor = mainActivitiesQuillEditor;
-                console.log('MainActivities Quill editor initialized successfully');
+                console.log('MainActivities Quill editor initialized');
             } catch (e) {
                 console.error('Error initializing MainActivities Quill editor:', e);
             }
-        } else {
-            console.warn('Quill is not loaded');
         }
     }
 

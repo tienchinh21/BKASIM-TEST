@@ -36,7 +36,7 @@ namespace MiniAppGIBA.Base.Common
 
             // Đăng ký service sắp xếp object
             services.AddScoped<IEntityOrderingService, EntityOrderingService>();
-            
+
             // Đăng ký Hangfire Ordering Service (wrapper)
             services.AddScoped<IHangfireOrderingService, HangfireOrderingService>();
 
@@ -45,6 +45,12 @@ namespace MiniAppGIBA.Base.Common
 
             // Đăng ký HomePinRepository
             services.AddScoped<Services.HomePins.IHomePinRepository, Services.HomePins.HomePinRepository>();
+
+            // Đăng ký Custom Field Services
+            services.AddScoped<Services.CustomFields.ICustomFieldTabService, Services.CustomFields.CustomFieldTabService>();
+            services.AddScoped<Services.CustomFields.ICustomFieldService, Services.CustomFields.CustomFieldService>();
+            services.AddScoped<Services.CustomFields.ICustomFieldValueService, Services.CustomFields.CustomFieldValueService>();
+            services.AddScoped<Services.CustomFields.ICustomFieldFormHandler, Services.CustomFields.CustomFieldFormHandler>();
         }
 
     }
