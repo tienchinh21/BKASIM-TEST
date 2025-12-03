@@ -6611,19 +6611,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\nguye\\.nuget\\packages\\": {}
+    "C:\\Users\\tienc\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\MiniApp\\BKASIM\\backend\\MiniAppGIBA.csproj",
+      "projectUniqueName": "D:\\miniapp\\BKASIM\\backend\\MiniAppGIBA.csproj",
       "projectName": "MiniAppGIBA",
-      "projectPath": "D:\\MiniApp\\BKASIM\\backend\\MiniAppGIBA.csproj",
-      "packagesPath": "C:\\Users\\nguye\\.nuget\\packages\\",
-      "outputPath": "D:\\MiniApp\\BKASIM\\backend\\obj\\",
+      "projectPath": "D:\\miniapp\\BKASIM\\backend\\MiniAppGIBA.csproj",
+      "packagesPath": "C:\\Users\\tienc\\.nuget\\packages\\",
+      "outputPath": "D:\\miniapp\\BKASIM\\backend\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\nguye\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\tienc\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -6647,7 +6647,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.200"
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net9.0": {
@@ -6751,7 +6751,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.200/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.307/PortableRuntimeIdentifierGraph.json"
       }
     }
   },

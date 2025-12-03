@@ -1,19 +1,32 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import { Page, useNavigate } from "zmp-ui";
 import { useLocation } from "react-router-dom";
-import { useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import axios from "axios";
 import { toast } from "react-toastify";
+import debounce from "lodash.debounce";
 import useSetHeader from "../components/hooks/useSetHeader";
-import { token, isRegister, userMembershipInfo } from "../recoil/RecoilState";
+import {
+  token,
+  isRegister,
+  userMembershipInfo,
+  groupsDataCache,
+} from "../recoil/RecoilState";
+import { isCacheValid, CACHE_MAX_AGE } from "../utils/infiniteScrollUtils";
 import RegisterDrawer from "../componentsGiba/RegisterDrawer";
 import LoadingGiba from "../componentsGiba/LoadingGiba";
-import TwoTierTab from "../components/TwoTierTab/TwoTierTab";
+import Category from "../components/Category";
 import { useLoading } from "../hooks/useApiCall";
 import {
-  GroupType,
   GroupJoinStatus,
-  GroupTabsData,
+  GroupJoinStatusLabel,
 } from "../utils/enum/group.enum";
 import dfData from "../common/DefaultConfig.json";
 import noImage from "../assets/no_image.png";
@@ -33,6 +46,21 @@ interface Group {
   logo?: string | null;
 }
 
+interface GroupsFilterSearch {
+  page: number;
+  pageSize: number;
+  keyword: string;
+  joinStatus: string;
+}
+
+interface GroupsDataCache {
+  listGroups: Group[];
+  filterSearch: GroupsFilterSearch;
+  scrollTop: number;
+  timestamp: number | null;
+  totalPages: number;
+}
+
 const GroupsListGiba: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,22 +68,33 @@ const GroupsListGiba: React.FC = () => {
   const userToken = useRecoilValue(token);
   const isLoggedIn = useRecoilValue(isRegister);
   const membershipInfo = useRecoilValue(userMembershipInfo);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [groups, setGroups] = useState<Group[]>([]);
+
+  const [cache, setCache] = useRecoilState(groupsDataCache) as [
+    GroupsDataCache,
+    (
+      valOrUpdater:
+        | GroupsDataCache
+        | ((currVal: GroupsDataCache) => GroupsDataCache)
+    ) => void
+  ];
+
+  const [searchTerm, setSearchTerm] = useState(
+    cache.filterSearch.keyword || ""
+  );
   const [registerDrawerVisible, setRegisterDrawerVisible] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<{
     id: string;
     name: string;
   } | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<string>(GroupType.ALL);
-  const [activeChildTab, setActiveChildTab] = useState<string>(
-    GroupJoinStatus.ALL
-  );
+  const activeTab = cache.filterSearch.joinStatus || "";
+  const groups = cache.listGroups as Group[];
+  const isLoadingMore = loading && cache.filterSearch.page > 1;
 
-  const { loading, withLoading } = useLoading();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isRestoringRef = useRef<boolean>(false);
 
   useEffect(() => {
     setHeader({
@@ -66,6 +105,38 @@ const GroupsListGiba: React.FC = () => {
       hasLeftIcon: true,
     });
   }, [setHeader]);
+
+  useLayoutEffect(() => {
+    setCache((prev) => {
+      const cacheIsValid = isCacheValid(prev.timestamp, CACHE_MAX_AGE);
+      if (cacheIsValid && prev.listGroups.length > 0) {
+        isRestoringRef.current = true;
+        return prev;
+      }
+      return {
+        ...prev,
+        listGroups: [],
+        filterSearch: { ...prev.filterSearch, page: 1 },
+        scrollTop: 0,
+        timestamp: null,
+      };
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!isRestoringRef.current || cache.scrollTop === 0) return;
+    const container = scrollContainerRef.current;
+    if (!container) {
+      isRestoringRef.current = false;
+      return;
+    }
+    requestAnimationFrame(() => {
+      if (container && cache.scrollTop > 0) {
+        container.scrollTop = cache.scrollTop;
+      }
+      isRestoringRef.current = false;
+    });
+  }, [cache.listGroups.length]);
 
   useEffect(() => {
     if (groups.length === 0 || registerDrawerVisible) return;
@@ -95,93 +166,121 @@ const GroupsListGiba: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
+      if (searchTerm !== cache.filterSearch.keyword) {
+        setCache((prev) => ({
+          ...prev,
+          listGroups: [],
+          filterSearch: { ...prev.filterSearch, page: 1, keyword: searchTerm },
+          scrollTop: 0,
+          timestamp: null,
+        }));
+      }
     }, 350);
-
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, cache.filterSearch.keyword, setCache]);
 
-  const buildApiUrl = useCallback(() => {
-    const params = new URLSearchParams({
-      Page: "1",
-      PageSize: "15",
-      Keyword: debouncedSearchTerm || "",
-    });
+  const buildApiUrl = useCallback(
+    (page: number = cache.filterSearch.page) => {
+      const params = new URLSearchParams({
+        Page: String(page),
+        PageSize: String(cache.filterSearch.pageSize),
+        Keyword: cache.filterSearch.keyword || "",
+      });
 
-    if (
-      activeTab &&
-      activeTab !== GroupType.ALL &&
-      activeTab !== GroupType.MY_GROUPS
-    ) {
-      params.append("GroupType", activeTab);
-    }
+      const joinStatus = cache.filterSearch.joinStatus;
+      if (joinStatus === GroupJoinStatus.PENDING) {
+        params.append("JoinStatus", "pending");
+      } else if (joinStatus === GroupJoinStatus.APPROVED) {
+        params.append("JoinStatus", "approved");
+      }
 
-    if (activeChildTab === GroupJoinStatus.PENDING) {
-      params.append("JoinStatus", "pending");
-    } else if (activeChildTab === GroupJoinStatus.APPROVED) {
-      params.append("JoinStatus", "approved");
-    }
-
-    return `${dfData.domain}/api/Groups/all?${params.toString()}`;
-  }, [debouncedSearchTerm, activeTab, activeChildTab]);
+      return `${dfData.domain}/api/Groups/all?${params.toString()}`;
+    },
+    [cache.filterSearch]
+  );
 
   const filterGroups = useCallback(
-    (groups: Group[]): Group[] => {
-      if (activeChildTab === GroupJoinStatus.NOT_JOINED) {
-        return groups.filter(
+    (groupsList: Group[]): Group[] => {
+      const currentJoinStatus = cache.filterSearch.joinStatus;
+      if (currentJoinStatus === GroupJoinStatus.NOT_JOINED) {
+        return groupsList.filter(
           (group) =>
             group.isActive &&
             (group.joinStatus === null || group.joinStatus === "rejected")
         );
       }
 
-      if (activeChildTab === GroupJoinStatus.ALL) {
-        if (activeTab === GroupType.MY_GROUPS) {
-          return groups.filter(
-            (group) =>
-              group.isActive &&
-              (group.joinStatus === "pending" ||
-                group.joinStatus === "approved")
-          );
-        }
-        return groups.filter((group) => group.isActive);
+      if (currentJoinStatus === GroupJoinStatus.PENDING) {
+        return groupsList.filter(
+          (group) => group.isActive && group.joinStatus === "pending"
+        );
       }
 
-      return groups.filter(
-        (group) => group.isActive && group.joinStatus !== "rejected"
-      );
+      if (currentJoinStatus === GroupJoinStatus.APPROVED) {
+        return groupsList.filter(
+          (group) => group.isActive && group.joinStatus === "approved"
+        );
+      }
+
+      return groupsList.filter((group) => group.isActive);
     },
-    [activeTab, activeChildTab]
+    [cache.filterSearch.joinStatus]
   );
 
   useEffect(() => {
+    if (isRestoringRef.current) {
+      isRestoringRef.current = false;
+      return;
+    }
     const fetchGroups = async () => {
-      await withLoading(async () => {
-        try {
-          const url = buildApiUrl();
-          const headers: any = {};
-
-          if (userToken) {
-            headers.Authorization = `Bearer ${userToken}`;
-          }
-
-          const response = await axios.get(url, { headers });
-
-          if (response.data.code === 0 && response.data.data?.items) {
-            const filteredGroups = filterGroups(response.data.data.items);
-            setGroups(filteredGroups);
-          } else {
-            setGroups([]);
-          }
-        } catch (error) {
-          console.error("Error fetching groups:", error);
-          setGroups([]);
+      setLoading(true);
+      try {
+        const currentPage = cache.filterSearch.page;
+        const url = buildApiUrl(currentPage);
+        const headers: Record<string, string> = {};
+        if (userToken) headers.Authorization = `Bearer ${userToken}`;
+        const response = await axios.get(url, { headers });
+        if (response.data.code === 0 && response.data.data?.items) {
+          const filteredGroups = filterGroups(response.data.data.items);
+          const totalPages = response.data.data.totalPages || 1;
+          const isFirstPage = currentPage === 1;
+          setCache((prev) => ({
+            ...prev,
+            listGroups: isFirstPage
+              ? filteredGroups
+              : [...prev.listGroups, ...filteredGroups],
+            totalPages,
+            timestamp: isFirstPage ? Date.now() : prev.timestamp,
+          }));
+        } else if (cache.filterSearch.page === 1) {
+          setCache((prev) => ({
+            ...prev,
+            listGroups: [],
+            timestamp: Date.now(),
+          }));
         }
-      });
+      } catch (error) {
+        console.error("Error fetching groups:", error);
+        if (cache.filterSearch.page === 1) {
+          setCache((prev) => ({
+            ...prev,
+            listGroups: [],
+            timestamp: Date.now(),
+          }));
+        }
+      } finally {
+        setLoading(false);
+      }
     };
-
     fetchGroups();
-  }, [buildApiUrl, filterGroups, userToken, refreshTrigger, withLoading]);
+  }, [
+    cache.filterSearch,
+    buildApiUrl,
+    filterGroups,
+    userToken,
+    refreshTrigger,
+    setCache,
+  ]);
 
   // Memoized handlers
   const handleJoinClick = useCallback(
@@ -232,61 +331,103 @@ const GroupsListGiba: React.FC = () => {
     setRefreshTrigger((prev) => prev + 1);
   }, []);
 
-  const handleTabChange = useCallback((tabValue: string) => {
-    setActiveTab(tabValue);
-    setActiveChildTab(GroupJoinStatus.ALL);
-  }, []);
-
-  const handleChildTabChange = useCallback((childValue: string) => {
-    setActiveChildTab(childValue);
-  }, []);
+  const handleTabChange = useCallback(
+    (tabValue: string) => {
+      setCache((prev) => ({
+        ...prev,
+        listGroups: [],
+        filterSearch: { ...prev.filterSearch, page: 1, joinStatus: tabValue },
+        scrollTop: 0,
+        timestamp: null,
+      }));
+    },
+    [setCache]
+  );
 
   const handleCloseDrawer = useCallback(() => {
     setRegisterDrawerVisible(false);
     setSelectedGroup(null);
   }, []);
 
-  const filteredTabs = useMemo(() => {
-    if (isLoggedIn) {
-      return GroupTabsData;
-    }
-
-    return GroupTabsData.filter((tab) => tab.value !== GroupType.MY_GROUPS).map(
-      (tab) => {
-        if (tab.children) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleScroll = useCallback(
+    debounce((e: React.UIEvent<HTMLDivElement>) => {
+      if (isRestoringRef.current) {
+        isRestoringRef.current = false;
+        return;
+      }
+      const { scrollTop, clientHeight, scrollHeight } =
+        e.target as HTMLDivElement;
+      if (scrollTop === 0 && cache.filterSearch.page === 1) return;
+      setCache((prev) => {
+        const page = prev.filterSearch?.page || 1;
+        const totalPages = prev.totalPages || 1;
+        if (
+          scrollTop + clientHeight >= scrollHeight - 100 &&
+          !loading &&
+          page < totalPages
+        ) {
           return {
-            ...tab,
-            children: tab.children.filter(
-              (child) =>
-                child.value !== GroupJoinStatus.PENDING &&
-                child.value !== GroupJoinStatus.APPROVED
-            ),
+            ...prev,
+            scrollTop,
+            timestamp: Date.now(),
+            filterSearch: { ...prev.filterSearch, page: page + 1 },
           };
         }
-        return tab;
-      }
-    );
-  }, [isLoggedIn]);
+        return { ...prev, scrollTop, timestamp: Date.now() };
+      });
+    }, 200),
+    [loading, cache.filterSearch.page, cache.totalPages]
+  );
 
-  useEffect(() => {
-    const isValidTab = filteredTabs.some((tab) => tab.value === activeTab);
+  const statusTabs = useMemo(() => {
+    const tabs = [
+      {
+        id: "all",
+        name: GroupJoinStatusLabel[GroupJoinStatus.ALL],
+        value: GroupJoinStatus.ALL,
+      },
+      {
+        id: "not-joined",
+        name: GroupJoinStatusLabel[GroupJoinStatus.NOT_JOINED],
+        value: GroupJoinStatus.NOT_JOINED,
+      },
+      {
+        id: "pending",
+        name: GroupJoinStatusLabel[GroupJoinStatus.PENDING],
+        value: GroupJoinStatus.PENDING,
+      },
+      {
+        id: "approved",
+        name: GroupJoinStatusLabel[GroupJoinStatus.APPROVED],
+        value: GroupJoinStatus.APPROVED,
+      },
+    ];
 
-    if (!isValidTab && filteredTabs.length > 0) {
-      setActiveTab(filteredTabs[0].value);
-      setActiveChildTab(GroupJoinStatus.ALL);
+    if (!isLoggedIn) {
+      return tabs.filter(
+        (tab) =>
+          tab.value !== GroupJoinStatus.PENDING &&
+          tab.value !== GroupJoinStatus.APPROVED
+      );
     }
-  }, [filteredTabs, activeTab]);
+
+    return tabs;
+  }, [isLoggedIn]);
 
   return (
     <Page className="bg-white min-h-screen mt-[50px]">
-      <div className="">
+      <div
+        className="h-full overflow-y-auto"
+        ref={scrollContainerRef}
+        style={{ height: "calc(100vh - 50px)" }}
+        onScroll={handleScroll}
+      >
         <div className="mb-4">
-          <TwoTierTab
-            tabs={filteredTabs}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            activeChildTab={activeChildTab}
-            onChildTabChange={handleChildTabChange}
+          <Category
+            list={statusTabs}
+            value={activeTab}
+            onChange={handleTabChange}
             backgroundColor="#fff"
           />
         </div>
@@ -302,7 +443,7 @@ const GroupsListGiba: React.FC = () => {
         </div>
 
         <div className="px-4">
-          {loading ? (
+          {loading && cache.filterSearch.page === 1 && groups.length === 0 ? (
             <div className="flex justify-center py-8">
               <LoadingGiba size="lg" text="Đang tải danh sách Club..." />
             </div>
@@ -429,10 +570,14 @@ const GroupsListGiba: React.FC = () => {
                   </div>
                 </div>
               )}
+              {isLoadingMore && (
+                <div className="flex justify-center py-4">
+                  <LoadingGiba size="md" text="Đang tải thêm..." />
+                </div>
+              )}
             </div>
           )}
         </div>
-
         <div className="pb-20"></div>
       </div>
       {selectedGroup && (

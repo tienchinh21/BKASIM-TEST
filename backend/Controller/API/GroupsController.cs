@@ -13,6 +13,8 @@ using MiniAppGIBA.Entities.Memberships;
 using Microsoft.EntityFrameworkCore;
 using MiniAppGIBA.Base.Helper;
 using MiniAppGIBA.Services.Groups;
+using MiniAppGIBA.Services.CustomFields;
+using MiniAppGIBA.Enum;
 namespace MiniAppGIBA.Controller.API
 {
     [ApiController]
@@ -26,14 +28,19 @@ namespace MiniAppGIBA.Controller.API
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUrl _url;
         private readonly IMembershipGroupService _membershipGroupService;
+        private readonly ICustomFieldFormHandler _customFieldFormHandler;
+        private readonly ICustomFieldService _customFieldService;
+
         public GroupsController(
             IGroupService groupService,
             ILogger<GroupsController> logger,
             IRepository<MembershipGroup> membershipGroupRepository,
             IRepository<Membership> membershipRepository,
-            IUnitOfWork unitOfWork, 
+            IUnitOfWork unitOfWork,
             IMembershipGroupService membershipGroupService,
-            IUrl url)
+            IUrl url,
+            ICustomFieldFormHandler customFieldFormHandler,
+            ICustomFieldService customFieldService)
         {
             _groupService = groupService;
             _logger = logger;
@@ -42,6 +49,8 @@ namespace MiniAppGIBA.Controller.API
             _unitOfWork = unitOfWork;
             _url = url;
             _membershipGroupService = membershipGroupService;
+            _customFieldFormHandler = customFieldFormHandler;
+            _customFieldService = customFieldService;
         }
 
         /// <summary>
@@ -215,7 +224,7 @@ namespace MiniAppGIBA.Controller.API
         //         });
         //     }
         // }
-        
+
         /// Lấy thông tin chi tiết hội nhóm
         [HttpGet("{id}")]
         public async Task<IActionResult> GetGroup(string id)
@@ -260,7 +269,7 @@ namespace MiniAppGIBA.Controller.API
             try
             {
                 var userZaloId = User.FindFirst("UserZaloId")?.Value;
-                var groupDTO = await _groupService.GetGroupPublicAsync(id,userZaloId);
+                var groupDTO = await _groupService.GetGroupPublicAsync(id, userZaloId);
                 if (groupDTO == null)
                 {
                     return NotFound(new ApiResponse<object>
@@ -634,11 +643,62 @@ namespace MiniAppGIBA.Controller.API
                 await _membershipGroupRepository.AddAsync(membershipGroup);
                 await _unitOfWork.SaveChangesAsync();
 
+                // Handle custom field submission if provided
+                if (request.CustomFieldValues != null && request.CustomFieldValues.Any())
+                {
+                    try
+                    {
+                        // Validate custom field values
+                        var validationResult = await _customFieldFormHandler.ValidateFormAsync(
+                            ECustomFieldEntityType.GroupMembership,
+                            groupId,
+                            request.CustomFieldValues);
+
+                        if (!validationResult.IsValid)
+                        {
+                            var errorMessages = string.Join("; ", validationResult.Errors.Values);
+                            return BadRequest(new ApiResponse<object>
+                            {
+                                Code = 1,
+                                Message = $"Lỗi xác thực form: {errorMessages}",
+                                Data = validationResult.Errors
+                            });
+                        }
+
+                        // Submit custom field values
+                        await _customFieldFormHandler.SubmitFormAsync(
+                            ECustomFieldEntityType.GroupMembership,
+                            membershipGroup.Id,
+                            request.CustomFieldValues);
+
+                        // Mark that custom fields have been submitted
+                        membershipGroup.HasCustomFieldsSubmitted = true;
+                        await _unitOfWork.SaveChangesAsync();
+
+                        _logger.LogInformation("Custom field values submitted for membership group {MembershipGroupId}", membershipGroup.Id);
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        _logger.LogWarning(ex, "Custom field validation failed for membership group {MembershipGroupId}", membershipGroup.Id);
+                        return BadRequest(new ApiResponse<object>
+                        {
+                            Code = 1,
+                            Message = $"Lỗi xác thực form: {ex.Message}"
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error submitting custom fields for membership group {MembershipGroupId}", membershipGroup.Id);
+                        return Error("Có lỗi xảy ra khi lưu thông tin form", 500);
+                    }
+                }
+
                 return Success(new
                 {
                     message = "Gửi yêu cầu tham gia hội nhóm thành công! Vui lòng chờ admin xét duyệt.",
                     groupName = group.GroupName,
-                    status = "pending"
+                    status = "pending",
+                    membershipGroupId = membershipGroup.Id
                 });
             }
             catch (Exception ex)
@@ -663,7 +723,7 @@ namespace MiniAppGIBA.Controller.API
                         Message = "Không tìm thấy thông tin người dùng"
                     });
                 }
-                
+
                 // Sửa lỗi logic: phải có dấu ngoặc để chỉ lấy groups của user hiện tại
                 var userMemberships = await _membershipGroupRepository.AsQueryable()
                     .Include(mg => mg.Membership)
@@ -715,7 +775,7 @@ namespace MiniAppGIBA.Controller.API
                                 break;
                         }
                     }
-                    
+
                     return new
                     {
                         Id = g.Id,
@@ -1170,7 +1230,7 @@ namespace MiniAppGIBA.Controller.API
             var baseUrl = $"{request.Scheme}://{request.Host}";
             return $"{baseUrl}{relativePath}";
         }
-        
+
     }
-    
+
 }

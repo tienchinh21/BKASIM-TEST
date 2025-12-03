@@ -317,13 +317,12 @@
                                 index: data.start + index + 1,
                                 memberName: `<div class="d-flex flex-column">
                                                             <h6 class="mb-1">${item.memberName}</h6>
-                                                            <small class="text-muted">${item.company || 'Chưa có công ty'}</small>
                                                         </div>`,
                                 groupName: `<div class="d-flex flex-column align-items-center">
                                                             <span class="fw-semibold text-primary">${item.groupName}</span>
                                                             <small class="text-muted">Xin vào nhóm</small>
                                                         </div>`,
-                                position: item.position || '<span class="text-muted">Chưa có</span>',
+
                                 reason: item.reason
                                     ? `<div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${item.reason}">${item.reason}</div>`
                                     : '<span class="text-muted">Chưa có</span>',
@@ -381,7 +380,6 @@
                     { title: "STT", data: "index", className: 'text-center', width: "60px" },
                     { title: "Thành viên", data: "memberName", className: 'col-3' },
                     { title: "Hội nhóm", data: "groupName", className: 'text-center', width: "150px" },
-                    { title: "Chức vụ", data: "position", className: 'text-center', width: "120px" },
                     { title: "Lý do tham gia", data: "reason", className: 'col-3' },
                     { title: "Trạng thái", data: "status", className: 'text-center', width: "130px" },
                     { title: "Ngày tạo", data: "createdDate", className: 'text-center', width: "120px" },

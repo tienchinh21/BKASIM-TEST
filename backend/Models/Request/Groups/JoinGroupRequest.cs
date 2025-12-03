@@ -13,5 +13,11 @@ namespace MiniAppGIBA.Models.Request.Groups
 
         public string? Company { get; set; }
         public string? Position { get; set; }
+
+        /// <summary>
+        /// Dictionary of custom field IDs to submitted values
+        /// Key: CustomFieldId, Value: submitted field value
+        /// </summary>
+        public Dictionary<string, string>? CustomFieldValues { get; set; }
     }
 }

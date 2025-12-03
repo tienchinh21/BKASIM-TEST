@@ -21,6 +21,7 @@ using MiniAppGIBA.Entities.Appointment;
 using MiniAppGIBA.Entities.Rules;
 using MiniAppGIBA.Entities.Meetings;
 using MiniAppGIBA.Entities.HomePins;
+using MiniAppGIBA.Entities.CustomFields;
 
 namespace MiniAppGIBA.Base.Database
 {
@@ -102,6 +103,12 @@ namespace MiniAppGIBA.Base.Database
 
         #region HomePins
         public virtual DbSet<HomePin> HomePins { get; set; }
+        #endregion
+
+        #region CustomFields
+        public virtual DbSet<CustomFieldTab> CustomFieldTabs { get; set; }
+        public virtual DbSet<CustomField> CustomFields { get; set; }
+        public virtual DbSet<CustomFieldValue> CustomFieldValues { get; set; }
         #endregion
 
         #region Omni Mini Tools
@@ -274,10 +281,10 @@ namespace MiniAppGIBA.Base.Database
             {
                 entity.HasKey(r => r.Id);
 
-                    entity.HasOne(r => r.FromMember)
-                        .WithMany() // Nếu Membership khôFng có collection RefFroms
-                   
-                    .OnDelete(DeleteBehavior.Restrict); // ✅ Tắt cascade delete
+                entity.HasOne(r => r.FromMember)
+                    .WithMany() // Nếu Membership khôFng có collection RefFroms
+
+                .OnDelete(DeleteBehavior.Restrict); // ✅ Tắt cascade delete
 
                 entity.HasOne(r => r.ToMember)
                     .WithMany() // Nếu Membership không có collection RefTos
@@ -374,16 +381,16 @@ namespace MiniAppGIBA.Base.Database
             modelBuilder.Entity<FieldChild>(entity =>
             {
                 entity.HasKey(fc => fc.Id);
-                
+
                 // Relationship
                 entity.HasOne<Field>()
                     .WithMany(f => f.Children)
                     .HasForeignKey(fc => fc.FieldId)
                     .OnDelete(DeleteBehavior.Cascade);
-                
+
                 // Indexes
                 entity.HasIndex(fc => fc.FieldId);
-                
+
                 // Properties
                 entity.Property(fc => fc.ChildName).IsRequired().HasMaxLength(255);
                 entity.Property(fc => fc.Description).HasMaxLength(1000);
@@ -398,11 +405,11 @@ namespace MiniAppGIBA.Base.Database
             modelBuilder.Entity<Roles>(entity =>
             {
                 entity.HasKey(r => r.Id);
-                
+
                 // Indexes
                 entity.HasIndex(r => r.Name);
                 entity.HasIndex(r => r.IsActive);
-                
+
                 // Properties
                 entity.Property(r => r.Name).IsRequired().HasMaxLength(255);
             });
@@ -414,7 +421,7 @@ namespace MiniAppGIBA.Base.Database
                 // Foreign Key configuration
                 entity.Property(m => m.RoleId)
                     .HasMaxLength(32);
-                
+
                 // Index for RoleId
                 entity.HasIndex(m => m.RoleId);
             });
@@ -427,11 +434,11 @@ namespace MiniAppGIBA.Base.Database
             modelBuilder.Entity<ArticleCategory>(entity =>
             {
                 entity.HasKey(ac => ac.Id);
-                
+
                 // Indexes
                 entity.HasIndex(ac => ac.Name);
                 entity.HasIndex(ac => ac.DisplayOrder);
-                
+
                 // Properties
                 entity.Property(ac => ac.Name).IsRequired().HasMaxLength(255);
             });
@@ -465,7 +472,7 @@ namespace MiniAppGIBA.Base.Database
             modelBuilder.Entity<Showcase>(entity =>
             {
                 entity.HasKey(s => s.Id);
-                
+
                 // Indexes
                 entity.HasIndex(s => s.GroupId);
                 entity.HasIndex(s => s.MembershipId);
@@ -473,7 +480,7 @@ namespace MiniAppGIBA.Base.Database
                 entity.HasIndex(s => s.Status);
                 entity.HasIndex(s => s.StartDate);
                 entity.HasIndex(s => s.EndDate);
-                
+
                 // Properties
                 entity.Property(s => s.GroupId).IsRequired().HasMaxLength(32);
                 entity.Property(s => s.GroupName).HasMaxLength(255);
@@ -491,7 +498,7 @@ namespace MiniAppGIBA.Base.Database
             modelBuilder.Entity<Appointment>(entity =>
             {
                 entity.HasKey(a => a.Id);
-                
+
                 // Indexes
                 entity.HasIndex(a => a.AppointmentFrom);
                 entity.Property(a => a.AppointmentFrom).IsRequired();
@@ -500,7 +507,7 @@ namespace MiniAppGIBA.Base.Database
                 entity.Property(a => a.AppointmentTo).IsRequired();
 
                 entity.HasIndex(a => a.Status);
-                
+
                 // Properties
                 entity.Property(a => a.Name).IsRequired().HasMaxLength(255);
             });
@@ -513,7 +520,7 @@ namespace MiniAppGIBA.Base.Database
             modelBuilder.Entity<BehaviorRule>(entity =>
             {
                 entity.HasKey(r => r.Id);
-                
+
                 // Indexes
                 entity.HasIndex(r => r.IsActive);
                 entity.HasIndex(r => r.GroupId);
@@ -523,6 +530,84 @@ namespace MiniAppGIBA.Base.Database
             // ✅ HOME PINS CONFIGURATION
             // ========================================
             modelBuilder.ApplyConfiguration(new HomePinConfiguration());
+
+            // ========================================
+            // ✅ CUSTOM FIELDS CONFIGURATION
+            // ========================================
+
+            // CustomFieldTab configuration
+            modelBuilder.Entity<CustomFieldTab>(entity =>
+            {
+                entity.HasKey(t => t.Id);
+
+                // Indexes for filtering and sorting
+                entity.HasIndex(t => new { t.EntityType, t.EntityId });
+                entity.HasIndex(t => t.DisplayOrder);
+
+                // Properties
+                entity.Property(t => t.EntityId).IsRequired().HasMaxLength(32);
+                entity.Property(t => t.TabName).IsRequired().HasMaxLength(255);
+                entity.Property(t => t.DisplayOrder).HasDefaultValue(0);
+            });
+
+            // CustomField configuration
+            modelBuilder.Entity<CustomField>(entity =>
+            {
+                entity.HasKey(f => f.Id);
+
+                // Indexes for filtering and sorting
+                entity.HasIndex(f => f.CustomFieldTabId);
+                entity.HasIndex(f => new { f.EntityType, f.EntityId });
+                entity.HasIndex(f => f.DisplayOrder);
+
+                // Properties
+                entity.Property(f => f.EntityId).IsRequired().HasMaxLength(32);
+                entity.Property(f => f.FieldName).IsRequired().HasMaxLength(255);
+                entity.Property(f => f.FieldOptions).HasMaxLength(2000); // JSON options
+                entity.Property(f => f.DisplayOrder).HasDefaultValue(0);
+
+                // Relationship: CustomField -> CustomFieldTab
+                entity.HasOne(f => f.CustomFieldTab)
+                    .WithMany(t => t.CustomFields)
+                    .HasForeignKey(f => f.CustomFieldTabId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // CustomFieldValue configuration
+            modelBuilder.Entity<CustomFieldValue>(entity =>
+            {
+                entity.HasKey(v => v.Id);
+
+                // Indexes for filtering
+                entity.HasIndex(v => v.CustomFieldId);
+                entity.HasIndex(v => new { v.EntityType, v.EntityId });
+
+                // Properties
+                entity.Property(v => v.CustomFieldId).IsRequired().HasMaxLength(32);
+                entity.Property(v => v.EntityId).IsRequired().HasMaxLength(32);
+                entity.Property(v => v.FieldName).IsRequired().HasMaxLength(255);
+                entity.Property(v => v.FieldValue).IsRequired();
+
+                // Relationship: CustomFieldValue -> CustomField
+                entity.HasOne(v => v.CustomField)
+                    .WithMany(f => f.CustomFieldValues)
+                    .HasForeignKey(v => v.CustomFieldId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // MembershipGroup 1-n CustomFieldValue (for GroupMembership entity type)
+            modelBuilder.Entity<MembershipGroup>(entity =>
+            {
+                // Navigation property for custom field values
+                entity.HasMany(mg => mg.CustomFieldValues)
+                    .WithOne()
+                    .HasForeignKey(cfv => cfv.EntityId)
+                    .HasPrincipalKey(mg => mg.Id)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Index for tracking custom field submission status
+                entity.HasIndex(mg => mg.HasCustomFieldsSubmitted);
+            });
         }
     }
 }

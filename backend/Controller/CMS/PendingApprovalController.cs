@@ -8,6 +8,8 @@ using MiniAppGIBA.Service.Groups;
 using MiniAppGIBA.Services.Subscriptions;
 using MiniAppGIBA.Models.DTOs.Subscriptions;
 using MiniAppGIBA.Services.Memberships;
+using MiniAppGIBA.Services.CustomFields;
+using MiniAppGIBA.Enum;
 
 namespace MiniAppGIBA.Controller.CMS
 {
@@ -69,7 +71,7 @@ namespace MiniAppGIBA.Controller.CMS
 
                 // Get full membership details using UserZaloId
                 var fullMembership = await _membershipService.GetMembershipByUserZaloIdAsync(membershipGroup.UserZaloId);
-                
+
                 _logger.LogInformation("FullMembership result: {FullMembership}", fullMembership != null ? "Found" : "Not found");
 
                 ViewBag.MembershipGroupId = membershipGroup.Id;
@@ -359,17 +361,19 @@ namespace MiniAppGIBA.Controller.CMS
             try
             {
                 _logger.LogInformation("Testing membership service with UserZaloId: {UserZaloId}", userZaloId);
-                
+
                 var membership = await _membershipService.GetMembershipByUserZaloIdAsync(userZaloId);
-                
+
                 if (membership == null)
                 {
                     return Json(new { success = false, message = "Membership not found" });
                 }
 
-                return Json(new { 
-                    success = true, 
-                    data = new {
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
                         membership.Id,
                         membership.Fullname,
                         membership.PhoneNumber,
@@ -382,6 +386,99 @@ namespace MiniAppGIBA.Controller.CMS
             {
                 _logger.LogError(ex, "Error testing membership service");
                 return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Get custom field values submitted for a membership application
+        /// </summary>
+        [HttpGet("GetCustomFieldValues/{membershipGroupId}")]
+        public async Task<IActionResult> GetCustomFieldValues(string membershipGroupId)
+        {
+            if (!IsAdmin())
+            {
+                return Json(new { success = false, message = "Không có quyền truy cập" });
+            }
+
+            try
+            {
+                // Get membership group to check permission
+                var membershipGroup = await _membershipGroupService.GetMembershipGroupByIdAsync(membershipGroupId);
+                if (membershipGroup == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy đơn xin tham gia" });
+                }
+
+                // Check if ADMIN has permission to view for this group
+                if (!IsSuperAdmin() && !HasGroupPermission(membershipGroup.GroupId))
+                {
+                    return Json(new { success = false, message = "Bạn không có quyền xem thông tin này!" });
+                }
+
+                // Get custom field values for this membership application
+                var customFieldValueService = HttpContext.RequestServices.GetRequiredService<MiniAppGIBA.Services.CustomFields.ICustomFieldValueService>();
+                var customFieldTabService = HttpContext.RequestServices.GetRequiredService<MiniAppGIBA.Services.CustomFields.ICustomFieldTabService>();
+                var customFieldService = HttpContext.RequestServices.GetRequiredService<MiniAppGIBA.Services.CustomFields.ICustomFieldService>();
+
+                var values = await customFieldValueService.GetValuesByEntityAsync(
+                    MiniAppGIBA.Enum.ECustomFieldEntityType.GroupMembership,
+                    membershipGroupId);
+
+                if (!values.Any())
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        data = new
+                        {
+                            hasCustomFields = false,
+                            message = "Không có dữ liệu form tùy chỉnh"
+                        }
+                    });
+                }
+
+                // Get tabs and fields to organize values
+                var tabs = await customFieldTabService.GetTabsByEntityAsync(
+                    MiniAppGIBA.Enum.ECustomFieldEntityType.GroupMembership,
+                    membershipGroup.GroupId);
+
+                var fields = await customFieldService.GetFieldsByEntityAsync(
+                    MiniAppGIBA.Enum.ECustomFieldEntityType.GroupMembership,
+                    membershipGroup.GroupId);
+
+                // Organize values by tab
+                var organizedValues = tabs.OrderBy(t => t.DisplayOrder).Select(tab => new
+                {
+                    tab.Id,
+                    tab.TabName,
+                    tab.DisplayOrder,
+                    values = values
+                        .Where(v => fields.FirstOrDefault(f => f.Id == v.CustomFieldId)?.CustomFieldTabId == tab.Id)
+                        .Select(v => new
+                        {
+                            v.Id,
+                            v.FieldName,
+                            v.FieldValue,
+                            v.CreatedDate
+                        })
+                        .ToList()
+                }).ToList();
+
+                return Json(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        hasCustomFields = true,
+                        tabs = organizedValues,
+                        totalValues = values.Count
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting custom field values for membership group {MembershipGroupId}", membershipGroupId);
+                return Json(new { success = false, message = "Có lỗi xảy ra khi tải dữ liệu form" });
             }
         }
     }

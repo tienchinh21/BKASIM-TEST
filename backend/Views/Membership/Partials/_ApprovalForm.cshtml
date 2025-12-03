@@ -40,20 +40,24 @@
                                     <p class="mb-0">@(fullMembership.PhoneNumber ?? "Chưa có")</p>
                                 </div>
                             }
-                            <div class="col-md-6">
-                                <label class="text-muted small">Công ty</label>
-                                <p class="mb-0">@(Model.Company ?? "Chưa có")</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small">Chức vụ</label>
-                                <p class="mb-0">@(Model.Position ?? "Chưa có")</p>
-                            </div>
+
                             <div class="col-12">
                                 <label class="text-muted small">Lý do tham gia</label>
                                 <p class="mb-0">@(Model.Reason ?? "Chưa có")</p>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Custom Fields Section -->
+            <div class="col-12" id="customFieldsSection" style="display: none;">
+                <h6 class="text-primary mb-3">
+                    <i class="ri-file-list-line me-2"></i>
+                    Thông tin form tùy chỉnh
+                </h6>
+                <div id="customFieldsContainer">
+                    <!-- Will be populated by JavaScript -->
                 </div>
             </div>
 
@@ -121,6 +125,105 @@
 </div>
 
 <script>
+    // Load custom field values when modal is shown
+    $(document).ready(function () {
+        const membershipGroupId = '@Model.Id';
+        loadCustomFieldValues(membershipGroupId);
+    });
+
+    function loadCustomFieldValues(membershipGroupId) {
+        $.ajax({
+            url: `/Membership/GetCustomFieldValues/${membershipGroupId}`,
+            type: 'GET',
+            success: function (response) {
+                if (response.success && response.data.hasCustomFields) {
+                    displayCustomFieldValues(response.data);
+                } else {
+                    // Hide custom fields section if no data
+                    $('#customFieldsSection').hide();
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading custom field values:', error);
+                $('#customFieldsSection').hide();
+            }
+        });
+    }
+
+    function displayCustomFieldValues(data) {
+        const container = $('#customFieldsContainer');
+        container.empty();
+
+        if (!data.tabs || data.tabs.length === 0) {
+            $('#customFieldsSection').hide();
+            return;
+        }
+
+        // Show the custom fields section
+        $('#customFieldsSection').show();
+
+        // Create accordion for tabs
+        const accordionHtml = data.tabs.map((tab, index) => {
+            const tabValues = tab.values || [];
+            const valuesHtml = tabValues.length > 0
+                ? tabValues.map(value => `
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="text-muted small">
+                                <i class="ri-file-text-line me-1"></i>
+                                ${escapeHtml(value.fieldName)}
+                            </label>
+                        </div>
+                        <div class="col-md-8">
+                            <p class="mb-0 fw-semibold">
+                                ${escapeHtml(value.fieldValue)}
+                            </p>
+                            <small class="text-muted">
+                                Ngày gửi: ${new Date(value.createdDate).toLocaleString('vi-VN')}
+                            </small>
+                        </div>
+                    </div>
+                `).join('')
+                : '<p class="text-muted mb-0"><i class="ri-information-line me-1"></i>Không có dữ liệu</p>';
+
+            return `
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" data-bs-toggle="collapse" data-bs-target="#tab-${index}">
+                            <i class="ri-folder-line me-2"></i>
+                            ${escapeHtml(tab.tabName)}
+                            <span class="badge bg-secondary ms-2">${tabValues.length} trường</span>
+                        </button>
+                    </h2>
+                    <div id="tab-${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" data-bs-parent="#customFieldsAccordion">
+                        <div class="accordion-body">
+                            ${valuesHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        const html = `
+            <div class="accordion" id="customFieldsAccordion">
+                ${accordionHtml}
+            </div>
+        `;
+
+        container.html(html);
+    }
+
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
     function approveFromDetail(id, memberName) {
         if (confirm(`Bạn có chắc chắn muốn phê duyệt đơn của "${memberName}"?`)) {
             $.ajax({

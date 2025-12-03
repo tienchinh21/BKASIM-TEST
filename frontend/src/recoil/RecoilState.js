@@ -230,3 +230,21 @@ export const isFollowedOA = atom({
     key: 'isFollowedOA',
     default: false,
 })
+
+
+export const groupsDataCache = atom({
+    key: 'groupsDataCache',
+    default: {
+        listGroups: [],
+        filterSearch: {
+            page: 1,
+            pageSize: 10,
+            keyword: '',
+            groupType: '',
+            joinStatus: '',
+        },
+        scrollTop: 0,
+        timestamp: null,
+        totalPages: 1,
+    },
+});
