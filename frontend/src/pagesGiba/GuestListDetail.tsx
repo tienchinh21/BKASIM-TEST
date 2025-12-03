@@ -119,11 +119,11 @@ const GuestListDetail: React.FC = () => {
       case 2:
         return "#558B2F"; // Đã duyệt (Green)
       case 3:
-        return "#B1131E"; // Từ chối (Red)
+        return "#003d82"; // Từ chối (Navy Blue - BKASIM)
       case 4:
         return "#757575"; // Đã hủy (Gray)
       default:
-        return "#DD5531"; // Default
+        return "#0066cc"; // Default (Sky Blue - BKASIM)
     }
   };
 
@@ -447,7 +447,7 @@ const GuestListDetail: React.FC = () => {
               style={{
                 flex: 1,
                 padding: "10px",
-                background: "#000",
+                background: "#003d82",
                 border: "none",
                 borderRadius: "6px",
                 color: "#fff",

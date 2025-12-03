@@ -139,7 +139,12 @@ const GroupRulesDrawer: React.FC<GroupRulesDrawerProps> = ({
             {pageData.title}
           </h2>
           <div
-            className="prose prose-sm max-w-none text-gray-800"
+            className="prose prose-sm max-w-none text-gray-800 break-words overflow-wrap"
+            style={{
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
+              whiteSpace: "normal",
+            }}
             dangerouslySetInnerHTML={{ __html: pageData.content }}
           />
         </div>
@@ -265,7 +270,7 @@ const GroupRulesDrawer: React.FC<GroupRulesDrawerProps> = ({
       <div className="flex flex-col h-full">
         {renderProgressBar()}
 
-        <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg p-4 mb-4">
+        <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg mb-4">
           {isLoadingPage ? (
             <div className="flex justify-center items-center py-12">
               <LoadingGiba size="md" text="Đang tải nội dung..." />

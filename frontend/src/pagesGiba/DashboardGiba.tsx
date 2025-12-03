@@ -459,10 +459,10 @@ const DashboardGiba: React.FC = () => {
                   <Line
                     type="monotone"
                     dataKey="refReceived"
-                    stroke="#3b82f6"
+                    stroke="#0066cc"
                     strokeWidth={2}
                     name="Referral đã nhận"
-                    dot={{ fill: "#3b82f6", r: 4 }}
+                    dot={{ fill: "#0066cc", r: 4 }}
                   />
                 </LineChart>
               </ResponsiveContainer>

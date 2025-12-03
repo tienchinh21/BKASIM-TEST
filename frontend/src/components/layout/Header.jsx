@@ -95,7 +95,7 @@ const HeaderCustom = () => {
             display: "flex",
             flexDirection: "row",
             background: isGibaHeader
-              ? "#000000"
+              ? "#003d82"
               : "var(--background-header-color)",
             height: isGibaHeader ? 60 : 50,
             padding: isGibaHeader ? "16px 8px" : "0 16px",
@@ -183,7 +183,7 @@ const HeaderCustom = () => {
                   const titleText = title || "";
                   const titleLength = titleText.length;
                   // Nếu tên dài hơn 15 ký tự, logo di chuyển sang trái hơn
-                  const logoLeft = titleLength > 15 ? "10%" : "20%";
+                  const logoLeft = titleLength > 15 ? "20%" : "15%";
                   return (
                     <div
                       style={{
@@ -220,8 +220,11 @@ const HeaderCustom = () => {
                     textAlign: "center",
                     fontWeight: 800,
                     marginRight: hasLeftIcon ? "30px" : "12px",
-                    paddingLeft:
-                      groupLogo && (title || "").length > 15 ? "50px" : 0,
+                    paddingLeft: groupLogo ? "65px" : 0,
+                    paddingRight: "12px",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                 >
                   {title}

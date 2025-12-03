@@ -8,7 +8,13 @@ import {
   phoneNumberUser,
   userMembershipInfo,
 } from "../recoil/RecoilState";
-import { followOA, openWebview } from "zmp-sdk/apis";
+import {
+  followOA,
+  openWebview,
+  getPhoneNumber,
+  getAccessToken,
+  getUserInfo,
+} from "zmp-sdk/apis";
 import LoadingGiba from "../componentsGiba/LoadingGiba";
 import useSetHeader from "../components/hooks/useSetHeader";
 import dfData from "../common/DefaultConfig.json";
@@ -45,6 +51,7 @@ const BehaviorRulesGiba: React.FC = () => {
   const [isFollowedOAState, setIsFollowedOAState] =
     useRecoilState(isFollowedOA);
   const [isAgreedTerms, setIsAgreedTerms] = useState(false);
+  const [isAllowedZaloAccess, setIsAllowedZaloAccess] = useState(false);
   const [registrationData, setRegistrationData] = useState<any>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,10 +79,40 @@ const BehaviorRulesGiba: React.FC = () => {
       if (savedData) {
         setRegistrationData(JSON.parse(savedData));
       } else {
-        navigate("/giba/login");
+        // If no saved data, it means coming from AppBriefGiba
+        // Initialize with empty form data for direct registration
+        setRegistrationData({
+          formData: {
+            fullname: "",
+            position: "",
+            dayOfBirth: "",
+            gender: "",
+            address: "",
+            phone: "",
+            email: "",
+            userZaloIdByOA: "",
+            companyLogoFile: null,
+            companyFullName: "",
+            taxCode: "",
+            businessField: "",
+            headquartersAddress: "",
+            companyPhoneNumber: "",
+            companyEmail: "",
+            companyWebsite: "",
+            message: "",
+            reason: "",
+            object: "",
+            contribute: "",
+            careAbout: "",
+            otherContribute: "",
+          },
+          infoZalo: infoZalo,
+          phoneUser: phoneUser,
+          isExistingUser: false,
+        });
       }
     }
-  }, [setHeader, navigate, isReadOnlyMode, isGroupMode]);
+  }, [setHeader, isReadOnlyMode, isGroupMode, infoZalo, phoneUser]);
 
   const fetchPageFromAPI = useCallback(
     async (page: number): Promise<PageData | null> => {
@@ -232,7 +269,119 @@ const BehaviorRulesGiba: React.FC = () => {
     return isFollow;
   };
 
+  const handleAllowZaloAccess = async () => {
+    try {
+      // Bước 1: Lấy thông tin user từ Zalo (popup 1)
+      console.log("Calling getInfoUserZalo...");
+      const zaloInfo = await getInfoUserZalo();
+      console.log("zaloInfo:", zaloInfo);
+
+      if (!zaloInfo || Object.keys(zaloInfo).length === 0) {
+        toast.error("Không thể lấy thông tin người dùng. Vui lòng thử lại!");
+        setIsAllowedZaloAccess(false);
+        return;
+      }
+
+      // Bước 2: Lấy số điện thoại từ Zalo SDK (popup 2)
+      console.log("Calling getInfoPhonenumber...");
+      const phoneNumber = await getInfoPhonenumber();
+      console.log("phoneNumber:", phoneNumber);
+
+      if (!phoneNumber) {
+        toast.error("Không thể lấy số điện thoại. Vui lòng thử lại!");
+        setIsAllowedZaloAccess(false);
+        return;
+      }
+
+      // Cập nhật thông tin vào registrationData từ Zalo SDK
+      if (registrationData) {
+        registrationData.formData.fullname = zaloInfo?.name || "";
+        registrationData.formData.phone = phoneNumber;
+        registrationData.formData.userZaloIdByOA = zaloInfo?.idByOA || "";
+        registrationData.infoZalo = zaloInfo;
+      }
+
+      console.log("Updated registrationData:", registrationData);
+      toast.success("Đã cấp quyền truy cập thông tin và số điện thoại!");
+      setIsAllowedZaloAccess(true);
+    } catch (error) {
+      console.log("Error in handleAllowZaloAccess:", error);
+      toast.error("Lỗi khi cấp quyền. Vui lòng thử lại!");
+      setIsAllowedZaloAccess(false);
+    }
+  };
+
+  const getInfoUserZalo = async (): Promise<any> => {
+    const infoZaloPromise = await new Promise<any>((resolve) => {
+      getUserInfo({
+        autoRequestPermission: true,
+        success: (data) => {
+          const { userInfo } = data;
+          resolve(userInfo);
+        },
+        fail: (error) => {
+          console.log("Error getting user info:", error);
+          resolve({});
+        },
+      });
+    });
+    return infoZaloPromise;
+  };
+
+  const getInfoPhonenumber = async () => {
+    try {
+      const accessToken = await getAccessToken({});
+
+      if (!accessToken) {
+        return "";
+      }
+
+      const phoneNumberPromise = await new Promise((resolve) => {
+        getPhoneNumber({
+          success: async (data) => {
+            try {
+              const { token } = data;
+              const response = await axios.post(
+                `${dfData.domain}/api/ZaloHelperApi/GetPhoneNumber`,
+                {
+                  accessToken: accessToken,
+                  tokenNumber: token,
+                  secretKey: dfData.secretKey,
+                }
+              );
+
+              let phoneNumber = response.data.data.number;
+
+              if (phoneNumber.startsWith("84")) {
+                phoneNumber = "0" + phoneNumber.slice(2);
+              }
+              resolve(phoneNumber);
+            } catch (error) {
+              console.log("Error fetching phone number:", error);
+              resolve("");
+            }
+          },
+          fail: (error) => {
+            console.log("Error getting phone number:", error);
+            resolve("");
+          },
+        });
+      });
+
+      return phoneNumberPromise;
+    } catch (error) {
+      console.log("Error in getInfoPhonenumber:", error);
+      return "";
+    }
+  };
+
   const handleFinalSubmit = async () => {
+    console.log("handleFinalSubmit called", {
+      isFollowedOAState,
+      isAgreedTerms,
+      registrationData: !!registrationData,
+    });
+
     if (!isFollowedOAState) {
       toast.error("Vui lòng quan tâm OA để tiếp tục!");
       return;
@@ -240,6 +389,11 @@ const BehaviorRulesGiba: React.FC = () => {
 
     if (!isAgreedTerms) {
       toast.error("Vui lòng đồng ý với các điều khoản để tiếp tục!");
+      return;
+    }
+
+    if (!isAllowedZaloAccess) {
+      toast.error("Vui lòng cho phép truy cập thông tin và số điện thoại!");
       return;
     }
 
@@ -266,7 +420,7 @@ const BehaviorRulesGiba: React.FC = () => {
             formData.userZaloIdByOA || (infoZalo as any)?.idByOA || "",
           fullname: formData.fullname,
           phone: fixFormatPhoneNumber(formData.phone),
-          approvalStatus: 0,
+          approvalStatus: 1, // Auto-approved by system
         };
 
         if (formData.email && formData.email.trim()) {
@@ -674,6 +828,8 @@ const BehaviorRulesGiba: React.FC = () => {
           }
         );
 
+        console.log("Registration response:", response.data);
+
         if (response.data.success) {
           toast.success(response.data.data.message || "Đăng ký thành công!");
           setIsLoggedIn(true);
@@ -955,6 +1111,49 @@ const BehaviorRulesGiba: React.FC = () => {
                           Theo dõi Zalo OA {dfData.oaName || "GIBA"}
                         </span>{" "}
                         để nhận thông báo và cập nhật mới nhất{" "}
+                        <span className="text-red-500 font-bold">*</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <div
+                    className="flex items-start gap-3 p-4 bg-gray-900 border border-gray-700 rounded-lg cursor-pointer hover:bg-gray-800 transition-colors"
+                    onClick={handleAllowZaloAccess}
+                  >
+                    <div className="flex-shrink-0 mt-0.5">
+                      <div
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                          isAllowedZaloAccess
+                            ? "bg-white border-white"
+                            : "border-gray-500 bg-transparent"
+                        }`}
+                      >
+                        {isAllowedZaloAccess && (
+                          <svg
+                            className="w-3 h-3 text-black"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={3}
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-300 leading-relaxed">
+                        Tôi cho phép{" "}
+                        <span className="text-white font-semibold">
+                          truy cập thông tin cá nhân và số điện thoại
+                        </span>{" "}
+                        để hoàn tất đăng ký{" "}
                         <span className="text-red-500 font-bold">*</span>
                       </p>
                     </div>

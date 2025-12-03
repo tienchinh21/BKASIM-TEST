@@ -29,14 +29,14 @@
 }
 
 .category-item-active {
-  color: #000;
-  background-color: #fbbf24;
-  box-shadow: 0 2px 4px rgba(251, 191, 36, 0.2);
+  color: #fff;
+  background-color: #0066cc;
+  box-shadow: 0 2px 4px rgba(0, 102, 204, 0.2);
 }
 
 .category-item-active:hover {
-  background-color: #fbbf24;
-  color: #000;
+  background-color: #0066cc;
+  color: #fff;
 }
 
 .category-item-disabled {

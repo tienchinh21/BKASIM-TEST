@@ -248,3 +248,35 @@ export const groupsDataCache = atom({
         totalPages: 1,
     },
 });
+
+export const groupJoinRequestCache = atom({
+    key: 'groupJoinRequestCache',
+    default: {
+        listRequests: [],
+        filterSearch: {
+            page: 1,
+            pageSize: 10,
+            statusFilter: '',
+        },
+        scrollTop: 0,
+        timestamp: null,
+        totalPages: 1,
+    },
+});
+
+export const newsDataCacheGiba = atom({
+    key: 'newsDataCacheGiba',
+    default: {
+        listNews: [],
+        filterSearch: {
+            page: 1,
+            pageSize: 10,
+            keyword: '',
+            categoryId: '',
+            groupType: '',
+        },
+        scrollTop: 0,
+        timestamp: null,
+        totalPages: 1,
+    },
+});

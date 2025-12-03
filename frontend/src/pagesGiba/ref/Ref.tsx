@@ -218,14 +218,22 @@ const RefCreate: React.FC = () => {
   const loadGroups = async () => {
     try {
       setLoadingGroups(true);
-      const response = await axios.get(`${dfData.domain}/api/Groups/all-for-user`, {
-        headers: {
-          Authorization: `Bearer ${userToken}`,
-        },
-      });
+      const response = await axios.get(
+        `${dfData.domain}/api/Groups/all-for-user`,
+        {
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+          },
+        }
+      );
 
-      if (response.data.success && response.data.data) {
-        setGroups(response.data.data);
+      if (response.data.code === 0 && response.data.data?.items) {
+        const groupList = response.data.data.items.map((item: any) => ({
+          id: item.id,
+          name: item.groupName,
+          description: item.description,
+        }));
+        setGroups(groupList);
       }
     } catch (error) {
       console.error("Error loading groups:", error);
@@ -248,7 +256,7 @@ const RefCreate: React.FC = () => {
         }
       );
 
-      if (response.data.success && response.data.data?.membership) {
+      if (response.data.code === 0 && response.data.data?.membership) {
         let memberList = response.data.data.membership;
         // Loại bỏ chính mình khỏi danh sách người nhận ref
         if (excludeSelf && currentUser?.userZaloId) {
@@ -279,7 +287,7 @@ const RefCreate: React.FC = () => {
         }
       );
 
-      if (response.data.success && response.data.data?.membership) {
+      if (response.data.code === 0 && response.data.data?.membership) {
         setReferredMembers(response.data.data.membership);
       }
     } catch (error) {

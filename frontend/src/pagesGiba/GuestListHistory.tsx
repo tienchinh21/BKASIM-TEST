@@ -39,14 +39,14 @@ const GuestListCard = React.memo<{
 }>(({ guestList, getStatusColor, formatDate, onViewDetail }) => {
   const handleMouseEnter = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      e.currentTarget.style.background = "#374151";
+      e.currentTarget.style.background = "#f0f0f0";
     },
     []
   );
 
   const handleMouseLeave = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      e.currentTarget.style.background = "#000";
+      e.currentTarget.style.background = "#fff";
     },
     []
   );
@@ -70,7 +70,7 @@ const GuestListCard = React.memo<{
         style={{
           background:
             guestList.status === 1
-              ? "linear-gradient(90deg, #fbbf24, #f59e0b)"
+              ? "linear-gradient(90deg, #0066cc, #003d82)"
               : guestList.status === 2
               ? "linear-gradient(90deg, #10b981, #059669)"
               : guestList.status === 3

@@ -214,6 +214,7 @@ const BottomNavigationPage: React.FC<BottomNavigationPageProps> = ({
 
   var checkPathAccept = (pathCheck) => {
     var listPathNotAccept = [
+      "/giba/group-join-request-detail",
       "/event/success-join",
       "/giba/manager-club",
       "/giba/event",
@@ -330,7 +331,7 @@ const BottomNavigationPage: React.FC<BottomNavigationPageProps> = ({
                             mb-1
                             ${
                               activeTab === item.key
-                                ? "text-black"
+                                ? "text-blue-600"
                                 : "text-gray-400"
                             }
                           `}
@@ -344,7 +345,7 @@ const BottomNavigationPage: React.FC<BottomNavigationPageProps> = ({
                             text-xs font-medium
                             ${
                               activeTab === item.key
-                                ? "text-black font-bold"
+                                ? "text-blue-600 font-bold"
                                 : "text-gray-400"
                             }
                           `}

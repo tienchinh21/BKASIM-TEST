@@ -312,10 +312,12 @@ const GroupsListGiba: React.FC = () => {
         return;
       }
 
-      setSelectedGroup({ id: groupId, name: groupName });
-      setRegisterDrawerVisible(true);
+      // Navigate to GroupRegisterPage instead of opening drawer
+      navigate("/giba/group-register", {
+        state: { groupId, groupName },
+      });
     },
-    [isLoggedIn, membershipInfo.approvalStatus]
+    [isLoggedIn, membershipInfo.approvalStatus, navigate]
   );
 
   const handleViewClick = useCallback(
@@ -489,9 +491,10 @@ const GroupsListGiba: React.FC = () => {
                         </span>
                       </div>
 
-                      <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-                        {group.description}
-                      </p>
+                      <div
+                        className="text-sm text-gray-600 line-clamp-2 leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: group.description }}
+                      />
                     </div>
 
                     <div className="px-4 pb-4">
@@ -547,7 +550,7 @@ const GroupsListGiba: React.FC = () => {
                                 membershipInfo.approvalStatus !== 1 ||
                                 group.joinStatus === "pending"
                                   ? "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
-                                  : "bg-yellow-500 text-black hover:bg-yellow-600"
+                                  : "bg-blue-600 text-white hover:bg-blue-700"
                               }`}
                             >
                               {group.joinStatus === "pending"

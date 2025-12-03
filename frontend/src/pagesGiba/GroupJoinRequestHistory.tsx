@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import { Page, Box } from "zmp-ui";
 import { useNavigate } from "zmp-ui";
 import useSetHeader from "../components/hooks/useSetHeader";
-import { useRecoilValue } from "recoil";
-import { token } from "../recoil/RecoilState";
+import { useRecoilValue, useRecoilState } from "recoil";
+import { token, groupJoinRequestCache } from "../recoil/RecoilState";
 import axios from "axios";
 import LoadingGiba from "../componentsGiba/LoadingGiba";
 import Category from "../components/Category";
@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import dfData from "../common/DefaultConfig.json";
 import FloatingActionButtonGiba from "../componentsGiba/FloatingActionButtonGiba";
 import { Plus } from "lucide-react";
+import { isCacheValid, CACHE_MAX_AGE } from "../utils/infiniteScrollUtils";
 const { TextArea } = Input;
 
 interface JoinRequest {
@@ -31,17 +32,32 @@ interface JoinRequest {
   updatedDate: string;
 }
 
+interface GroupJoinRequestCache {
+  listRequests: JoinRequest[];
+  filterSearch: {
+    page: number;
+    pageSize: number;
+    statusFilter: string;
+  };
+  scrollTop: number;
+  timestamp: number | null;
+  totalPages: number;
+}
+
 const GroupJoinRequestHistory: React.FC = () => {
   const navigate = useNavigate();
   const setHeader = useSetHeader();
   const userToken = useRecoilValue(token);
+  const [cache, setCache] = useRecoilState(groupJoinRequestCache) as [
+    GroupJoinRequestCache,
+    (
+      valOrUpdater:
+        | GroupJoinRequestCache
+        | ((currVal: GroupJoinRequestCache) => GroupJoinRequestCache)
+    ) => void
+  ];
   const [loading, setLoading] = useState(false);
-  const [requests, setRequests] = useState<JoinRequest[]>([]);
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
-  const [showEditDrawer, setShowEditDrawer] = useState(false);
   const [editingRequest, setEditingRequest] = useState<JoinRequest | null>(
     null
   );
@@ -51,6 +67,12 @@ const GroupJoinRequestHistory: React.FC = () => {
     position: "",
   });
   const [updating, setUpdating] = useState(false);
+  const [showEditDrawer, setShowEditDrawer] = useState(false);
+
+  const requests = cache.listRequests;
+  const statusFilter = cache.filterSearch.statusFilter;
+  const currentPage = cache.filterSearch.page;
+  const totalPages = cache.totalPages;
 
   // Set header
   React.useEffect(() => {
@@ -62,6 +84,24 @@ const GroupJoinRequestHistory: React.FC = () => {
       hasLeftIcon: true,
     });
   }, [setHeader]);
+
+  // Initialize cache on mount
+  useLayoutEffect(() => {
+    setCache((prev) => {
+      const cacheIsValid = isCacheValid(prev.timestamp, CACHE_MAX_AGE);
+      if (cacheIsValid && prev.listRequests.length > 0) {
+        return prev;
+      }
+      // Reset to "Tất cả" tab when entering page
+      return {
+        ...prev,
+        listRequests: [],
+        filterSearch: { ...prev.filterSearch, page: 1, statusFilter: "" },
+        scrollTop: 0,
+        timestamp: null,
+      };
+    });
+  }, [setCache]);
 
   // Fetch join requests
   useEffect(() => {
@@ -82,30 +122,52 @@ const GroupJoinRequestHistory: React.FC = () => {
         });
 
         if (response.data.data) {
-          setRequests(response.data.data.items || []);
-          setTotalPages(response.data.totalPages || 1);
+          const newRequests = response.data.data.items || [];
+          const newTotalPages = response.data.data.totalPages || 1;
+          const isFirstPage = currentPage === 1;
+
+          setCache((prev) => ({
+            ...prev,
+            listRequests: isFirstPage
+              ? newRequests
+              : [...prev.listRequests, ...newRequests],
+            totalPages: newTotalPages,
+            timestamp: isFirstPage ? Date.now() : prev.timestamp,
+          }));
         } else {
-          setRequests([]);
-          setTotalPages(1);
+          if (currentPage === 1) {
+            setCache((prev) => ({
+              ...prev,
+              listRequests: [],
+              totalPages: 1,
+              timestamp: Date.now(),
+            }));
+          }
         }
       } catch (error) {
         console.error("Error fetching join requests:", error);
         toast.error("Không thể tải danh sách đơn tham gia nhóm");
-        setRequests([]);
-        setTotalPages(1);
+        if (currentPage === 1) {
+          setCache((prev) => ({
+            ...prev,
+            listRequests: [],
+            totalPages: 1,
+            timestamp: Date.now(),
+          }));
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchRequests();
-  }, [currentPage, statusFilter, userToken]);
+  }, [currentPage, statusFilter, userToken, setCache]);
 
   const statusCategories = [
-    { id: "", name: "Tất cả" },
-    { id: "null", name: "Chờ xét duyệt" },
-    { id: "true", name: "Đã duyệt" },
-    { id: "false", name: "Từ chối" },
+    { id: "", name: "Tất cả", value: "" },
+    { id: "null", name: "Chờ xét duyệt", value: "null" },
+    { id: "true", name: "Đã duyệt", value: "true" },
+    { id: "false", name: "Từ chối", value: "false" },
   ];
 
   const getStatusColor = (statusText: string) => {
@@ -128,6 +190,10 @@ const GroupJoinRequestHistory: React.FC = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleDetailClick = (request: JoinRequest) => {
+    navigate(`/giba/group-join-request-detail/${request.groupId}`);
   };
 
   const handleEditClick = (request: JoinRequest) => {
@@ -177,7 +243,10 @@ const GroupJoinRequestHistory: React.FC = () => {
         const updatedRequests = requests.map((req) =>
           req.id === editingRequest?.id ? { ...req, ...editForm } : req
         );
-        setRequests(updatedRequests);
+        setCache((prev) => ({
+          ...prev,
+          listRequests: updatedRequests,
+        }));
       } else {
         toast.error(response.data.message || "Không thể cập nhật thông tin");
       }
@@ -202,11 +271,18 @@ const GroupJoinRequestHistory: React.FC = () => {
           list={statusCategories}
           value={statusFilter}
           onChange={(value) => {
-            setStatusFilter(value);
-            setCurrentPage(1);
+            setCache((prev) => ({
+              ...prev,
+              listRequests: [],
+              filterSearch: {
+                ...prev.filterSearch,
+                page: 1,
+                statusFilter: value,
+              },
+              scrollTop: 0,
+              timestamp: null,
+            }));
           }}
-          valueChild=""
-          onChangeValueChild={() => {}}
           backgroundColor="#fff"
         />
       </Box>
@@ -222,12 +298,13 @@ const GroupJoinRequestHistory: React.FC = () => {
             {requests.map((request) => (
               <div
                 key={request.id}
-                className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-all duration-200"
+                className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer"
                 style={{
                   padding: "12px",
                   position: "relative",
                   overflow: "hidden",
                 }}
+                onClick={() => handleDetailClick(request)}
               >
                 {/* Status accent line */}
                 <div
@@ -235,7 +312,7 @@ const GroupJoinRequestHistory: React.FC = () => {
                   style={{
                     background:
                       request.statusText === "Chờ xét duyệt"
-                        ? "linear-gradient(90deg, #fbbf24, #f59e0b)" // Chờ xét duyệt (vàng)
+                        ? "linear-gradient(90deg, #0066cc, #003d82)" // Chờ xét duyệt (xanh BKASIM)
                         : request.statusText === "Đã duyệt"
                         ? "linear-gradient(90deg, #10b981, #059669)" // Đã duyệt (xanh)
                         : "linear-gradient(90deg, #ef4444, #dc2626)", // Từ chối (đỏ)
@@ -468,7 +545,7 @@ const GroupJoinRequestHistory: React.FC = () => {
               style={{
                 flex: 1,
                 padding: "10px",
-                background: "#000",
+                background: "#003d82",
                 border: "none",
                 borderRadius: "6px",
                 color: "#fff",

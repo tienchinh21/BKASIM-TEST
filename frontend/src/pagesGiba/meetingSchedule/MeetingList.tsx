@@ -8,11 +8,11 @@ import useSetHeader from "../../components/hooks/useSetHeader";
 import LoadingGiba from "../../componentsGiba/LoadingGiba";
 import { Plus, Calendar, Search } from "lucide-react";
 import FloatingActionButtonGiba from "../../componentsGiba/FloatingActionButtonGiba";
-import TwoTierTab from "../../components/TwoTierTab";
+import Category from "../../components/Category";
 import {
-  MeetingTabsData,
   MeetingGroupType,
   MeetingStatus,
+  MeetingStatusLabel,
 } from "../../utils/enum/meeting.enum";
 import { useHasRole } from "../../hooks/useHasRole";
 import axios from "axios";
@@ -35,7 +35,6 @@ const MeetingList: React.FC = () => {
   const hasRole = useHasRole();
   const userToken = useRecoilValue(token);
   const [loading, setLoading] = useState(false);
-  const [activeGroup, setActiveGroup] = useState<string>(MeetingGroupType.ALL);
   const [activeStatus, setActiveStatus] = useState<string>(MeetingStatus.ALL);
   const [searchKeyword, setSearchKeyword] = useState<string>("");
   const [inputSearchValue, setInputSearchValue] = useState<string>("");
@@ -71,10 +70,6 @@ const MeetingList: React.FC = () => {
         const params = new URLSearchParams();
         params.append("joinstatus", "approved");
 
-        if (activeGroup !== MeetingGroupType.ALL) {
-          params.append("grouptype", activeGroup);
-        }
-
         const response = await axios.get(
           `${dfData.domain}/api/Groups/all?${params.toString()}`,
           {
@@ -96,7 +91,7 @@ const MeetingList: React.FC = () => {
     };
 
     fetchGroups();
-  }, [userToken, activeGroup]);
+  }, [userToken]);
 
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -109,10 +104,6 @@ const MeetingList: React.FC = () => {
 
         if (searchKeyword.trim()) {
           params.append("Keyword", searchKeyword.trim());
-        }
-
-        if (activeGroup !== MeetingGroupType.ALL) {
-          params.append("type", activeGroup);
         }
 
         if (activeStatus !== MeetingStatus.ALL) {
@@ -164,7 +155,7 @@ const MeetingList: React.FC = () => {
       fetchMeetings();
     }
   }, [
-    activeGroup,
+    // activeGroup,
     activeStatus,
     searchKeyword,
     currentPage,
@@ -186,17 +177,6 @@ const MeetingList: React.FC = () => {
   const handleCreateMeeting = useCallback(() => {
     navigate("/giba/meeting-create");
   }, [navigate]);
-
-  const handleGroupChange = useCallback((groupValue: string) => {
-    setActiveGroup(groupValue);
-    setActiveStatus(MeetingStatus.ALL);
-    setSelectedGroupId("");
-    setInputSearchValue("");
-    setSearchKeyword("");
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-  }, []);
 
   const handleStatusChange = useCallback((statusValue: string) => {
     setActiveStatus(statusValue);
@@ -274,13 +254,32 @@ const MeetingList: React.FC = () => {
 
   return (
     <Page style={{ marginTop: "50px", background: "#f5f5f5" }}>
-      <TwoTierTab
-        tabs={MeetingTabsData}
-        activeTab={activeGroup}
-        onTabChange={handleGroupChange}
-        activeChildTab={activeStatus}
-        onChildTabChange={handleStatusChange}
-      />
+      <div className="bg-white border-b border-gray-200">
+        <Category
+          list={[
+            { id: "all", name: "Tất cả", value: MeetingStatus.ALL },
+            {
+              id: "scheduled",
+              name: "Sắp diễn ra",
+              value: MeetingStatus.SCHEDULED,
+            },
+            {
+              id: "ongoing",
+              name: "Đang diễn ra",
+              value: MeetingStatus.ONGOING,
+            },
+            {
+              id: "completed",
+              name: "Đã hoàn thành",
+              value: MeetingStatus.COMPLETED,
+            },
+            { id: "cancelled", name: "Đã hủy", value: MeetingStatus.CANCELLED },
+          ]}
+          value={activeStatus}
+          onChange={handleStatusChange}
+          containerStyle={{ paddingLeft: "16px", paddingRight: "16px" }}
+        />
+      </div>
 
       <div className="bg-white p-3 border-b border-gray-200">
         <div className="flex gap-2 mb-2">

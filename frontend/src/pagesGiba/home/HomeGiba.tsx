@@ -191,7 +191,7 @@ const HomeGiba: React.FC = () => {
         };
         setUserInfo(userInfoForDisplay);
 
-        let approvalStatus = 0;
+        let approvalStatus = 1; // Default to approved since system auto-approves
         const messageToCheck = res.data.data?.message || res.data.message || "";
 
         if (messageToCheck.includes("đã bị từ chối")) {

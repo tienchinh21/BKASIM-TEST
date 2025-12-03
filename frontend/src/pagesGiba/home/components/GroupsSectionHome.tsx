@@ -125,7 +125,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
                 e.stopPropagation();
                 onJoinClick?.(id);
               }}
-              className={`flex-1 bg-yellow-500 text-black py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-yellow-600 transition-colors ${
+              className={`flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors ${
                 !isRegistered ||
                 (membershipInfo && membershipInfo.approvalStatus !== 1)
                   ? "opacity-50 cursor-not-allowed"

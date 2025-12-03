@@ -83,17 +83,23 @@ const RefListGiba: React.FC = () => {
   const [refs, setRefs] = useState<RefItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // Get initial filter from location state or default to "sent"
-  const initialFilter = (location.state as any)?.filter as "sent" | "received" | undefined;
+  const initialFilter = (location.state as any)?.filter as
+    | "sent"
+    | "received"
+    | undefined;
   const [selectedFilter, setSelectedFilter] = useState<"sent" | "received">(
     initialFilter || "sent"
   );
 
-  const filterCategories = [
-    { id: "sent", name: "Đã gửi" },
-    { id: "received", name: "Đã nhận" },
-  ];
+  const filterCategories = useMemo(
+    () => [
+      { id: "sent", name: "Đã gửi", value: "sent" },
+      { id: "received", name: "Đã nhận", value: "received" },
+    ],
+    []
+  );
 
   const [showCompleteDrawer, setShowCompleteDrawer] = useState(false);
   const [completingRef, setCompletingRef] = useState<RefItem | null>(null);
@@ -113,6 +119,14 @@ const RefListGiba: React.FC = () => {
       hasLeftIcon: true,
     });
   }, [setHeader]);
+
+  // Ensure first tab is active on mount
+  useEffect(() => {
+    if (!initialFilter) {
+      setSelectedFilter("sent");
+      setCurrentPage(1);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchRefs = async () => {
@@ -174,9 +188,9 @@ const RefListGiba: React.FC = () => {
   const getStatusGradient = useCallback((status: number) => {
     switch (status) {
       case 1:
-        return "linear-gradient(90deg, #3b82f6, #2563eb)"; // Đã gửi (xanh dương)
+        return "linear-gradient(90deg, #0066cc, #003d82)"; // Đã gửi (xanh BKASIM)
       case 2:
-        return "linear-gradient(90deg, #fbbf24, #f59e0b)"; // Đã xem (vàng)
+        return "linear-gradient(90deg, #0066cc, #003d82)"; // Đã xem (xanh BKASIM)
       case 3:
         return "linear-gradient(90deg, #10b981, #059669)"; // Đã chấp nhận (xanh lá)
       case 4:
@@ -680,13 +694,15 @@ const RefListGiba: React.FC = () => {
 
   return (
     <Page style={{ marginTop: "50px", background: "#f5f5f5" }}>
-      <Category
-        list={filterCategories}
-        value={selectedFilter}
-        onChange={handleFilterChange}
-        onChangeValueChild={() => {}}
-        backgroundColor="#fff"
-      />
+      <div className="bg-white">
+        <Category
+          list={filterCategories}
+          value={selectedFilter}
+          onChange={handleFilterChange}
+          onChangeValueChild={() => {}}
+          backgroundColor="#fff"
+        />
+      </div>
 
       <div className="p-4 space-y-3">
         {loading ? (
@@ -887,7 +903,7 @@ const RefListGiba: React.FC = () => {
               style={{
                 flex: 1,
                 padding: "10px",
-                background: "#000",
+                background: "#003d82",
                 border: "none",
                 borderRadius: "6px",
                 color: "#fff",

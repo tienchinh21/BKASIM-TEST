@@ -148,7 +148,7 @@ const MemberCard: React.FC<{ member: Member; onClick?: () => void }> = ({
           <Box
             style={{
               fontWeight: "600",
-              color: "#111827",
+              color: "#000",
               fontSize: "16px",
               marginBottom: "4px",
               overflow: "hidden",
@@ -239,7 +239,7 @@ const TabNavigation: React.FC<{
                     transform: "translateX(-50%)",
                     width: "60%",
                     height: "3px",
-                    backgroundColor: "#000",
+                    backgroundColor: "#003d82",
                     borderRadius: "3px 3px 0 0",
                   }}
                 />
@@ -262,7 +262,7 @@ const InfoTab: React.FC<{
   const sectionTitleStyle: React.CSSProperties = {
     fontSize: "16px",
     fontWeight: "600",
-    color: "#111827",
+    color: "#000",
     marginBottom: "12px",
     margin: 0,
   };
@@ -279,9 +279,12 @@ const InfoTab: React.FC<{
       {/* Description */}
       <Box style={{ marginBottom: "24px" }}>
         <h3 style={sectionTitleStyle}>Giới thiệu</h3>
-        <p style={sectionTextStyle}>
-          {groupInfo.description || "Chưa cập nhật"}
-        </p>
+        <div
+          style={sectionTextStyle}
+          dangerouslySetInnerHTML={{
+            __html: groupInfo.description || "Chưa cập nhật",
+          }}
+        />
       </Box>
 
       {/* Main Activities */}
@@ -318,7 +321,7 @@ const InfoTab: React.FC<{
                 style={{
                   width: "40px",
                   height: "40px",
-                  background: "#000",
+                  background: "#003d82",
                   borderRadius: "8px",
                   display: "flex",
                   alignItems: "center",
@@ -345,7 +348,7 @@ const InfoTab: React.FC<{
                   style={{
                     fontSize: "14px",
                     fontWeight: "600",
-                    color: "#111827",
+                    color: "#000",
                     marginBottom: "2px",
                   }}
                 >
@@ -390,9 +393,7 @@ const InfoTab: React.FC<{
             >
               Thành viên
             </div>
-            <div
-              style={{ fontSize: "16px", fontWeight: "600", color: "#111827" }}
-            >
+            <div style={{ fontSize: "16px", fontWeight: "600", color: "#000" }}>
               {groupInfo.memberCount.toLocaleString()}
             </div>
           </Box>
@@ -406,9 +407,7 @@ const InfoTab: React.FC<{
             >
               Sự kiện
             </div>
-            <div
-              style={{ fontSize: "16px", fontWeight: "600", color: "#111827" }}
-            >
+            <div style={{ fontSize: "16px", fontWeight: "600", color: "#000" }}>
               {events.length}
             </div>
           </Box>
@@ -517,12 +516,14 @@ const MembersTab: React.FC<{
       <Box
         style={{
           display: "flex",
+          flexDirection: "column",
+          gap: "12px",
           justifyContent: "space-between",
-          alignItems: "center",
+          alignItems: "start",
           marginBottom: "16px",
         }}
       >
-        <Box style={{ fontSize: "18px", fontWeight: "600", color: "#111827" }}>
+        <Box style={{ fontSize: "18px", fontWeight: "600", color: "#000" }}>
           Thành viên ({sortedMembers.length})
         </Box>
         {isJoined && sortedMembers.length > 0 && (
@@ -632,7 +633,9 @@ const BottomActionButtons: React.FC<{
             fontWeight: "500",
             cursor: "pointer",
             transition: "all 0.3s",
-            border: "1px solid #eab308",
+            border: "1px solid #0066cc",
+            background: "#0066cc",
+            color: "#fff",
           }}
         >
           Tham gia nhóm
@@ -708,7 +711,7 @@ const GroupDetailGiba: React.FC = () => {
     }
 
     setLoading(true);
-    
+
     let shouldTryPublicAPI = false;
 
     // Try member API first
@@ -865,9 +868,12 @@ const GroupDetailGiba: React.FC = () => {
     }
 
     if (groupInfo && groupId) {
-      setRegisterDrawerVisible(true);
+      // Navigate to GroupRegisterPage instead of opening drawer
+      navigate("/giba/group-register", {
+        state: { groupId, groupName: groupInfo.groupName },
+      });
     }
-  }, [checkMembershipStatus, groupInfo, groupId, showSnackbar]);
+  }, [checkMembershipStatus, groupInfo, groupId, showSnackbar, navigate]);
 
   const handleTabClick = useCallback(
     (tab: TabType) => {

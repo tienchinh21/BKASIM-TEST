@@ -59,7 +59,7 @@ const HelloCard = ({ isInfo, term, appPosition, isLoadingProfile = false }) => {
   return (
     <Box
       style={{
-        border: "1px solid #000",
+        border: "1px solid #0066cc",
         borderRadius: "8px",
         padding: "8px",
         display: "flex",
@@ -136,10 +136,10 @@ const HelloCard = ({ isInfo, term, appPosition, isLoadingProfile = false }) => {
       ) : (
         <Box
           style={{
-            background: isPendingApproval ? "#E5E7EB" : "#FCD34D",
-            color: isPendingApproval ? "#9CA3AF" : "#000",
+            background: isPendingApproval ? "#E5E7EB" : "#0066cc",
+            color: isPendingApproval ? "#9CA3AF" : "#fff",
             borderRadius: "8px",
-            padding: "8px 16px",
+            padding: "8px 12px",
             cursor: loadingPhone || isPendingApproval ? "default" : "pointer",
             fontWeight: "600",
             opacity: isPendingApproval ? 0.6 : 1,

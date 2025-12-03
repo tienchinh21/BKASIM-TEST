@@ -73,7 +73,7 @@ const FollowOACard = () => {
                 }}
               >
                 <div style={{ fontSize: 14, fontWeight: "bold" }}>
-                  Quan tâm OA để nhận ưu đãi!
+                  Quan tâm OA!
                 </div>
                 <Box className="text-sub">{dfData.oaName}</Box>
               </Box>
@@ -88,9 +88,9 @@ const FollowOACard = () => {
               <Box
                 className="button-common"
                 style={{
-                  background: "#000000",
+                  background: "#0066cc",
                   color: "#ffffff",
-                  border: "1px solid #000000",
+                  border: "1px solid #0066cc",
                 }}
                 onClick={() => {
                   getFollowOA();
