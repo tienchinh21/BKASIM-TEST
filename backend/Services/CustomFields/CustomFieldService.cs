@@ -145,6 +145,7 @@ namespace MiniAppGIBA.Services.CustomFields
                     FieldType = request.FieldType,
                     FieldOptions = request.FieldOptions,
                     IsRequired = request.IsRequired,
+                    IsProfile = request.IsProfile,
                     DisplayOrder = request.DisplayOrder,
                     CreatedDate = DateTime.Now,
                     UpdatedDate = DateTime.Now
@@ -212,6 +213,7 @@ namespace MiniAppGIBA.Services.CustomFields
                 field.FieldType = request.FieldType;
                 field.FieldOptions = request.FieldOptions;
                 field.IsRequired = request.IsRequired;
+                field.IsProfile = request.IsProfile;
                 field.DisplayOrder = request.DisplayOrder;
                 field.UpdatedDate = DateTime.Now;
 
@@ -235,7 +237,7 @@ namespace MiniAppGIBA.Services.CustomFields
         }
 
         /// <summary>
-        /// Deletes a field and archives related submitted values with field name
+        /// Soft deletes a field (sets IsDelete = true) - preserves data for users who already submitted
         /// </summary>
         public async Task<bool> DeleteFieldAsync(string fieldId)
         {
@@ -246,10 +248,9 @@ namespace MiniAppGIBA.Services.CustomFields
                     throw new ArgumentException("FieldId is required", nameof(fieldId));
                 }
 
-                _logger.LogInformation("Deleting field with ID {FieldId}", fieldId);
+                _logger.LogInformation("Soft deleting field with ID {FieldId}", fieldId);
 
                 var field = await _fieldRepository.AsQueryable()
-                    .Include(f => f.CustomFieldValues)
                     .FirstOrDefaultAsync(f => f.Id == fieldId);
 
                 if (field == null)
@@ -258,31 +259,24 @@ namespace MiniAppGIBA.Services.CustomFields
                     return false;
                 }
 
-                // Archive submitted values by preserving field name
-                if (field.CustomFieldValues != null && field.CustomFieldValues.Count > 0)
-                {
-                    _logger.LogInformation("Archiving {ValueCount} submitted values for field {FieldId}",
-                        field.CustomFieldValues.Count, fieldId);
-
-                    // Values are already linked to the field, so they'll be preserved
-                    // The FieldName property in CustomFieldValue stores the archived field name
-                }
-
-                // Delete the field
-                _fieldRepository.Delete(field);
+                // Soft delete the field - submitted values are preserved
+                field.IsDelete = true;
+                field.UpdatedDate = DateTime.Now;
+                _fieldRepository.Update(field);
+                
                 var savedCount = await _unitOfWork.SaveChangesAsync();
 
                 if (savedCount == 0)
                 {
-                    throw new InvalidOperationException("Failed to delete field from database");
+                    throw new InvalidOperationException("Failed to soft delete field from database");
                 }
 
-                _logger.LogInformation("Successfully deleted field with ID {FieldId}", fieldId);
+                _logger.LogInformation("Successfully soft deleted field with ID {FieldId}", fieldId);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting field with ID {FieldId}", fieldId);
+                _logger.LogError(ex, "Error soft deleting field with ID {FieldId}", fieldId);
                 throw;
             }
         }
@@ -360,6 +354,7 @@ namespace MiniAppGIBA.Services.CustomFields
                 FieldType = field.FieldType,
                 FieldTypeText = field.FieldType.ToString(),
                 IsRequired = field.IsRequired,
+                IsProfile = field.IsProfile,
                 DisplayOrder = field.DisplayOrder,
                 CreatedDate = field.CreatedDate,
                 UpdatedDate = field.UpdatedDate

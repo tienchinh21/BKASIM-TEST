@@ -388,77 +388,60 @@ namespace MiniAppGIBA.Services.ComingSoon
             }
 
             // Thêm coming soon events (loại bỏ những cái đã pinned) và sắp xếp theo startTime
+            // Nếu cùng startTime thì sắp xếp theo CreatedDate (tạo trước lên trước)
             var comingSoonEvents = eventsList
                 .Where(e => !pinnedEventIds.Contains(e.Id))
-                .OrderBy(e => e.StartTime)
+                .OrderBy(e => e.CreatedDate)
+                // .ThenBy(e => e.CreatedDate)
                 .ToList();
             finalEventsList.AddRange(comingSoonEvents);
 
             response.Events = finalEventsList;
 
-            // 2. Lấy Newsletter (Article) mới nhất
-            var userGroupIds = new List<string>();
-            if (!string.IsNullOrEmpty(userZaloId))
-            {
-                var membershipGroupRepository = _unitOfWork.GetRepository<MiniAppGIBA.Entities.Groups.MembershipGroup>();
-                userGroupIds = await membershipGroupRepository.AsQueryable()
-                    .Where(mg => mg.UserZaloId == userZaloId && mg.IsApproved == true)
-                    .Select(mg => mg.GroupId)
-                    .ToListAsync();
-            }
+            // 2. Lấy Newsletter (Article) - CHỈ lấy bài viết được ghim (pinned)
+            var pinnedArticles = (homePinsResult.IsSuccess && homePinsResult.Data != null)
+                ? homePinsResult.Data.Pins
+                    .Where(p => p.EntityType == PinEntityType.Article)
+                    .OrderBy(p => p.DisplayOrder)
+                    .ToList()
+                : new List<Models.HomePins.HomePinDto>();
 
-            var articleQuery = new ArticleQueryParams
+            var newslettersList = new List<NewsletterDTO>();
+            
+            // Lấy TẤT CẢ bài viết được ghim
+            foreach (var pinnedArticle in pinnedArticles)
             {
-                Page = 1,
-                PageSize = 20
-            };
-            var articlesResult = await _articleService.GetPage(articleQuery);
-
-            // Filter articles theo logic:
-            var filteredArticles = articlesResult.Items.Where(a =>
-            {
-                // Public articles: luôn hiển thị
-                if (a.Status == 1)
+                var articleDetail = await _articleService.GetByIdAsync(pinnedArticle.EntityId);
+                
+                if (articleDetail != null)
                 {
-                    return true;
-                }
-
-                if (a.Status == 0 && !string.IsNullOrEmpty(userZaloId) && userGroupIds.Any())
-                {
-                    if (!string.IsNullOrEmpty(a.GroupIds))
+                    var description = string.Empty;
+                    if (!string.IsNullOrEmpty(articleDetail.Content))
                     {
-                        var articleGroupIds = a.GroupIds.Split(',').Select(g => g.Trim()).ToList();
-                        return articleGroupIds.Any(gid => userGroupIds.Contains(gid));
+                        var plainText = System.Text.RegularExpressions.Regex.Replace(articleDetail.Content, "<.*?>", string.Empty);
+                        description = plainText.Length > 200
+                            ? plainText.Substring(0, 200) + "..."
+                            : plainText;
                     }
+                    var bannerImage = "uploads/images/articles/" + articleDetail.BannerImage ?? string.Empty;
+                    var newsletterDto = new NewsletterDTO
+                    {
+                        Id = articleDetail.Id,
+                        Title = articleDetail.Title,
+                        Description = description ?? string.Empty,
+                        BannerImage = await _url.ToFullUrl(bannerImage, httpContext),
+                        Type = articleDetail.Status, // 0 = Nội bộ, 1 = Công khai
+                        TypeText = articleDetail.Status == 1 ? "Công khai" : "Nội bộ"
+                    };
+                    newslettersList.Add(newsletterDto);
                 }
-
-                return false;
-            })
-            .OrderByDescending(a => a.CreatedDate)
-            .ToList();
-
-            var latestArticle = filteredArticles.FirstOrDefault();
-            if (latestArticle != null)
-            {
-                var description = string.Empty;
-                if (!string.IsNullOrEmpty(latestArticle.Content))
-                {
-                    var plainText = System.Text.RegularExpressions.Regex.Replace(latestArticle.Content, "<.*?>", string.Empty);
-                    description = plainText.Length > 200
-                        ? plainText.Substring(0, 200) + "..."
-                        : plainText;
-                }
-                var bannerImage = "uploads/images/articles/" + latestArticle.BannerImage ?? string.Empty;
-                response.Newsletter = new NewsletterDTO
-                {
-                    Id = latestArticle.Id,
-                    Title = latestArticle.Title,
-                    Description = description ?? string.Empty,
-                    BannerImage = await _url.ToFullUrl(bannerImage, httpContext),
-                    Type = latestArticle.Status, // 0 = Nội bộ, 1 = Công khai
-                    TypeText = latestArticle.Status == 1 ? "Công khai" : "Nội bộ"
-                };
             }
+            
+            // Set danh sách tất cả bài viết được ghim
+            response.Newsletters = newslettersList;
+            
+            // Backward compatible: Newsletter = bài viết đầu tiên (nếu có)
+            
 
             // 3. Lấy Meetings từ 2 ngày trước đến 7 ngày sau
             var meetingQuery = new MeetingQueryParams

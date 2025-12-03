@@ -42,6 +42,7 @@ namespace MiniAppGIBA.Service.Authencation
             var authClaims = new List<Claim>
             {
                 new Claim("UserId", user.Id),
+                // new Claim("UserZaloId", user.UserZaloId ?? ""),
                 new Claim(ClaimTypes.Role, userRoles?.Name ?? ""),
                 new Claim(ClaimTypes.Name, user.Fullname ?? user.Username ?? ""),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),

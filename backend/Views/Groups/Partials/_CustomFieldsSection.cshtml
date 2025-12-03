@@ -95,6 +95,12 @@
         font-size: 11px;
     }
 
+    .field-badges {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+    }
+
     .empty-state {
         text-align: center;
         padding: 24px;
@@ -202,8 +208,7 @@
                             <option value="10">URL</option>
                             <option value="12">Dropdown (Chọn một)</option>
                             <option value="13">Multiple Choice (Chọn nhiều)</option>
-                            <option value="14">File</option>
-                            <option value="15">Hình ảnh</option>
+                            <!-- File và Hình ảnh đã bị ẩn -->
                         </select>
                     </div>
 
@@ -214,11 +219,16 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="isRequired" />
-                            <label class="form-check-label" for="isRequired">Trường bắt buộc</label>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <label class="form-label mb-0">Trường bắt buộc</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="isRequired" />
+                            </div>
                         </div>
                     </div>
+
+                    <!-- IsProfile hidden, default false -->
+                    <input type="hidden" id="isProfile" value="false" />
                 </form>
             </div>
             <div class="modal-footer">
@@ -268,17 +278,25 @@
 </div>
 
 <script>
-    let customFieldsGroupId = '@groupId';
-    let allTabs = [];
-    let currentEditingTabId = null;
-    let currentDeletingTabId = null;
-    let currentEditingFieldId = null;
-    let currentDeletingFieldId = null;
+    // Use var instead of let to avoid redeclaration error when partial is reloaded
+    var customFieldsGroupId = '@groupId';
+    var allTabs = [];
+    var currentEditingTabId = null;
+    var currentDeletingTabId = null;
+    var currentEditingFieldId = null;
+    var currentDeletingFieldId = null;
 
-    const fieldTypeMap = {
+    var fieldTypeMap = {
         '1': 'Text', '2': 'Integer', '3': 'Decimal', '5': 'Boolean', '6': 'DateTime',
         '7': 'LongText', '8': 'Email', '9': 'PhoneNumber', '10': 'URL',
         '12': 'Dropdown', '13': 'MultipleChoice', '14': 'File', '15': 'Image'
+    };
+
+    // Map ngược từ tên sang số để set giá trị cho select
+    var fieldTypeReverseMap = {
+        'Text': '1', 'Integer': '2', 'Decimal': '3', 'Boolean': '5', 'DateTime': '6',
+        'LongText': '7', 'Email': '8', 'PhoneNumber': '9', 'URL': '10',
+        'Dropdown': '12', 'MultipleChoice': '13', 'File': '14', 'Image': '15'
     };
 
     $(document).ready(function () {
@@ -286,12 +304,36 @@
             loadTabs();
         }
         
-        // Reload tabs khi modal được show (cho edit mode) - chỉ load 1 lần
-        let tabsLoaded = false;
+        // Reload tabs khi modal được show (cho edit mode)
         $('#groupModal').on('shown.bs.modal', function () {
-            if (customFieldsGroupId && !tabsLoaded) {
+            if (customFieldsGroupId) {
                 loadTabs();
-                tabsLoaded = true;
+            }
+        });
+        
+        // Reset khi modal đóng để lần sau mở lại sẽ load lại data
+        $('#groupModal').on('hidden.bs.modal', function () {
+            allTabs = [];
+            $('#tabsList').html(`
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="ri-inbox-line"></i>
+                    </div>
+                    <p style="margin: 0;">Chưa có tab nào. Hãy tạo tab đầu tiên để bắt đầu!</p>
+                </div>
+            `);
+        });
+        
+        // Ngăn các modal con đóng modal cha
+        $('#tabModal, #fieldModal, #deleteTabModal, #deleteFieldModal').on('hidden.bs.modal', function (e) {
+            e.stopPropagation();
+            // Đảm bảo modal group vẫn mở
+            if ($('#groupModal').hasClass('show')) {
+                $('body').addClass('modal-open');
+                // Đảm bảo backdrop vẫn hiển thị
+                if ($('.modal-backdrop').length === 0) {
+                    $('body').append('<div class="modal-backdrop fade show"></div>');
+                }
             }
         });
     });
@@ -302,8 +344,10 @@
             type: 'GET',
             data: { groupId: customFieldsGroupId },
             success: function (response) {
+                console.log('GetTabs response:', response);
                 if (response.success && response.data && response.data.length > 0) {
                     allTabs = response.data;
+                    console.log('Tabs loaded:', allTabs);
                     displayTabs(allTabs);
                 } else {
                     $('#tabsList').html(`
@@ -333,8 +377,11 @@
                     <div class="field-item">
                         <i class="ri-drag-move-line" style="color: #d1d5db;"></i>
                         <span class="field-item-name">${escapeHtml(f.fieldName)}</span>
-                        <span class="field-type-badge">${fieldTypeMap[f.fieldType] || 'Unknown'}</span>
-                        <button type="button" class="btn btn-sm btn-link p-0" onclick="openEditFieldModal('${f.id}', '${escapeHtml(f.fieldName)}', '${f.fieldType}', '${f.isRequired}', '${JSON.stringify(f.fieldOptions || []).replace(/"/g, '&quot;')}')">
+                        <span class="field-badges">
+                            <span class="badge bg-secondary">${f.fieldTypeText || f.fieldType || 'Unknown'}</span>
+                            ${f.isRequired ? '<span class="badge bg-danger">Bắt buộc</span>' : ''}
+                        </span>
+                        <button type="button" class="btn btn-sm btn-link p-0" onclick="openEditFieldModal('${f.id}', '${escapeHtml(f.fieldName)}', '${f.fieldType}', '${f.isRequired}', '${JSON.stringify(f.fieldOptions || []).replace(/"/g, '&quot;')}', 'false')">
                             <i class="ri-edit-line"></i>
                         </button>
                         <button type="button" class="btn btn-sm btn-link p-0 text-danger" onclick="openDeleteFieldModal('${f.id}', '${escapeHtml(f.fieldName)}')">
@@ -411,25 +458,33 @@
             data.id = currentEditingTabId;
         }
 
+        // Lấy AntiForgeryToken
+        const token = $('input[name="__RequestVerificationToken"]').val();
+
         $.ajax({
             url: url,
             type: method,
             contentType: 'application/json',
             data: JSON.stringify(data),
+            headers: {
+                'RequestVerificationToken': token
+            },
             success: function (response) {
                 if (response.success) {
-                    // Đóng modal tab
-                    const tabModalElement = document.getElementById('tabModal');
-                    const tabModalBS = bootstrap.Modal.getOrCreateInstance(tabModalElement);
-                    tabModalBS.hide();
+                    // Đóng modal tab một cách an toàn
+                    $('#tabModal').modal('hide');
                     
                     // Reload tabs sau khi modal đóng
                     setTimeout(function() {
                         loadTabs();
+                        // Đảm bảo modal group vẫn mở
+                        if ($('#groupModal').hasClass('show')) {
+                            $('body').addClass('modal-open');
+                        }
                         if (typeof toastr !== 'undefined') {
                             toastr.success(response.message);
                         }
-                    }, 300);
+                    }, 350);
                 } else {
                     Swal.fire('Lỗi', response.message, 'error');
                 }
@@ -449,21 +504,29 @@
     function confirmDeleteTab() {
         if (!currentDeletingTabId) return;
 
+        // Lấy AntiForgeryToken
+        const token = $('input[name="__RequestVerificationToken"]').val();
+
         $.ajax({
             url: `/CustomFieldTab/DeleteTab?tabId=${currentDeletingTabId}`,
             type: 'DELETE',
+            headers: {
+                'RequestVerificationToken': token
+            },
             success: function (response) {
                 if (response.success) {
-                    const deleteTabModalElement = document.getElementById('deleteTabModal');
-                    const deleteTabModalBS = bootstrap.Modal.getOrCreateInstance(deleteTabModalElement);
-                    deleteTabModalBS.hide();
+                    $('#deleteTabModal').modal('hide');
                     
                     setTimeout(function() {
                         loadTabs();
+                        // Đảm bảo modal group vẫn mở
+                        if ($('#groupModal').hasClass('show')) {
+                            $('body').addClass('modal-open');
+                        }
                         if (typeof toastr !== 'undefined') {
                             toastr.success(response.message);
                         }
-                    }, 300);
+                    }, 350);
                 } else {
                     Swal.fire('Lỗi', response.message, 'error');
                 }
@@ -486,18 +549,23 @@
         $('#fieldType').val('');
         $('#fieldOptions').val('');
         $('#isRequired').prop('checked', false);
+        $('#isProfile').val('false');
         $('#fieldModalTitle').text('Tạo Trường Mới');
         $('#optionsSection').hide();
         $('#fieldModal').modal('show');
         $('#fieldName').focus();
     }
 
-    function openEditFieldModal(fieldId, fieldName, fieldType, isRequired, fieldOptions) {
+    function openEditFieldModal(fieldId, fieldName, fieldType, isRequired, fieldOptions, isProfile) {
         currentEditingFieldId = fieldId;
         $('#fieldId').val(fieldId);
         $('#fieldName').val(fieldName);
-        $('#fieldType').val(fieldType);
+        // fieldType có thể là string (tên) hoặc số, cần convert sang số cho select
+        const fieldTypeValue = fieldTypeReverseMap[fieldType] || fieldType;
+        $('#fieldType').val(fieldTypeValue);
         $('#isRequired').prop('checked', isRequired === 'true' || isRequired === true);
+        // isProfile is hidden and always false
+        $('#isProfile').val('false');
         
         try {
             const options = JSON.parse(fieldOptions);
@@ -530,6 +598,7 @@
         const fieldType = $('#fieldType').val();
         const tabId = $('#fieldTabId').val();
         const isRequired = $('#isRequired').is(':checked');
+        const isProfile = false; // Always false
 
         if (!fieldName) {
             Swal.fire('Lỗi', 'Tên trường không được để trống', 'error');
@@ -548,7 +617,8 @@
                 Swal.fire('Lỗi', 'Các tùy chọn không được để trống', 'error');
                 return;
             }
-            fieldOptions = optionsText.split('\n').map(o => o.trim()).filter(o => o);
+            const optionsArray = optionsText.split('\n').map(o => o.trim()).filter(o => o);
+            fieldOptions = JSON.stringify(optionsArray);
         }
 
         const isCreate = !currentEditingFieldId;
@@ -560,8 +630,9 @@
             fieldType: parseInt(fieldType),
             customFieldTabId: tabId,
             entityType: 1,
-            entityId: '',
+            entityId: customFieldsGroupId,
             isRequired: isRequired,
+            isProfile: isProfile,
             displayOrder: 0,
             fieldOptions: fieldOptions
         };
@@ -570,23 +641,31 @@
             data.id = currentEditingFieldId;
         }
 
+        // Lấy AntiForgeryToken
+        const token = $('input[name="__RequestVerificationToken"]').val();
+
         $.ajax({
             url: url,
             type: method,
             contentType: 'application/json',
             data: JSON.stringify(data),
+            headers: {
+                'RequestVerificationToken': token
+            },
             success: function (response) {
                 if (response.success) {
-                    const fieldModalElement = document.getElementById('fieldModal');
-                    const fieldModalBS = bootstrap.Modal.getOrCreateInstance(fieldModalElement);
-                    fieldModalBS.hide();
+                    $('#fieldModal').modal('hide');
                     
                     setTimeout(function() {
                         loadTabs();
+                        // Đảm bảo modal group vẫn mở
+                        if ($('#groupModal').hasClass('show')) {
+                            $('body').addClass('modal-open');
+                        }
                         if (typeof toastr !== 'undefined') {
                             toastr.success(response.message);
                         }
-                    }, 300);
+                    }, 350);
                 } else {
                     Swal.fire('Lỗi', response.message, 'error');
                 }
@@ -606,21 +685,29 @@
     function confirmDeleteField() {
         if (!currentDeletingFieldId) return;
 
+        // Lấy AntiForgeryToken
+        const token = $('input[name="__RequestVerificationToken"]').val();
+
         $.ajax({
             url: `/CustomField/DeleteField?fieldId=${currentDeletingFieldId}`,
             type: 'DELETE',
+            headers: {
+                'RequestVerificationToken': token
+            },
             success: function (response) {
                 if (response.success) {
-                    const deleteFieldModalElement = document.getElementById('deleteFieldModal');
-                    const deleteFieldModalBS = bootstrap.Modal.getOrCreateInstance(deleteFieldModalElement);
-                    deleteFieldModalBS.hide();
+                    $('#deleteFieldModal').modal('hide');
                     
                     setTimeout(function() {
                         loadTabs();
+                        // Đảm bảo modal group vẫn mở
+                        if ($('#groupModal').hasClass('show')) {
+                            $('body').addClass('modal-open');
+                        }
                         if (typeof toastr !== 'undefined') {
                             toastr.success(response.message);
                         }
-                    }, 300);
+                    }, 350);
                 } else {
                     Swal.fire('Lỗi', response.message, 'error');
                 }

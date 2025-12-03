@@ -192,6 +192,27 @@ namespace MiniAppGIBA.Services.HomePins
                             }
                         }
                         break;
+
+                    case PinEntityType.Article:
+                        var article = await _context.Articles
+                            .Where(a => a.Id == pin.EntityId)
+                            .Select(a => new { a.Status, a.GroupIds })
+                            .FirstOrDefaultAsync();
+
+                        if (article != null)
+                        {
+                            // Status: 0 = Nội bộ, 1 = Công khai
+                            if (article.Status == 1)
+                            {
+                                canView = true; // Công khai - everyone can view
+                            }
+                            else if (article.Status == 0 && !string.IsNullOrEmpty(userZaloId) && !string.IsNullOrEmpty(article.GroupIds))
+                            {
+                                var articleGroupIds = article.GroupIds.Split(',').Select(g => g.Trim()).ToList();
+                                canView = articleGroupIds.Any(gid => userGroupIds.Contains(gid)); // Nội bộ - only group members
+                            }
+                        }
+                        break;
                 }
 
                 if (canView)
@@ -273,6 +294,7 @@ namespace MiniAppGIBA.Services.HomePins
                 PinEntityType.Event => await _context.Events.AnyAsync(e => e.Id == entityId && e.IsActive),
                 PinEntityType.Meeting => await _context.Meetings.AnyAsync(m => m.Id == entityId),
                 PinEntityType.Showcase => await _context.Showcases.AnyAsync(s => s.Id == entityId),
+                PinEntityType.Article => await _context.Articles.AnyAsync(a => a.Id == entityId),
                 _ => false
             };
 
@@ -299,6 +321,10 @@ namespace MiniAppGIBA.Services.HomePins
                 PinEntityType.Showcase => await _context.Showcases
                     .Where(s => s.Id == pin.EntityId)
                     .Select(s => new { s.Id, s.Title, s.StartDate, s.EndDate, s.Status })
+                    .FirstOrDefaultAsync(),
+                PinEntityType.Article => await _context.Articles
+                    .Where(a => a.Id == pin.EntityId)
+                    .Select(a => new { a.Id, a.Title, a.BannerImage, a.Status, a.CreatedDate })
                     .FirstOrDefaultAsync(),
                 _ => null
             };
@@ -352,6 +378,15 @@ namespace MiniAppGIBA.Services.HomePins
                             .Take(100)
                             .ToListAsync();
                         entities = showcases.Cast<object>().ToList();
+                        break;
+
+                    case PinEntityType.Article:
+                        var articles = await _context.Articles
+                            .OrderByDescending(a => a.CreatedDate)
+                            .Select(a => new { a.Id, a.Title, a.BannerImage, a.Status, a.GroupIds })
+                            .Take(100)
+                            .ToListAsync();
+                        entities = articles.Cast<object>().ToList();
                         break;
                 }
 

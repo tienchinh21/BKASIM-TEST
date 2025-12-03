@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MiniAppGIBA.Base.Database;
 
@@ -11,9 +12,11 @@ using MiniAppGIBA.Base.Database;
 namespace MiniAppGIBA.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251203120620_updatefieldsToMembership")]
+    partial class updatefieldsToMembership
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1804,9 +1807,6 @@ namespace MiniAppGIBA.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("AppPosition")
                         .HasColumnType("nvarchar(max)");
 
@@ -1853,12 +1853,6 @@ namespace MiniAppGIBA.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("DayOfBirth")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FieldIds")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Fullname")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1883,12 +1877,6 @@ namespace MiniAppGIBA.Migrations
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Position")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Profile")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RoleId")

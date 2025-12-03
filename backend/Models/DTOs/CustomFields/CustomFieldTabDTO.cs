@@ -31,6 +31,11 @@ namespace MiniAppGIBA.Models.DTOs.CustomFields
         public int FieldCount { get; set; }
 
         /// <summary>
+        /// List of fields in this tab
+        /// </summary>
+        public List<CustomFieldDTO>? Fields { get; set; }
+
+        /// <summary>
         /// Date when the tab was created
         /// </summary>
         public DateTime CreatedDate { get; set; }

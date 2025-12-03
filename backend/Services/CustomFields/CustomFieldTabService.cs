@@ -36,8 +36,8 @@ namespace MiniAppGIBA.Services.CustomFields
                 _logger.LogInformation("Getting tabs for entity type {EntityType}, entity ID {EntityId}", entityType, entityId);
 
                 var tabs = await _tabRepository.AsQueryable()
-                    .Where(t => t.EntityType == entityType && t.EntityId == entityId)
-                    .Include(t => t.CustomFields)
+                    .Where(t => t.EntityType == entityType && t.EntityId == entityId && !t.IsDelete)
+                    .Include(t => t.CustomFields.Where(f => !f.IsDelete))
                     .OrderBy(t => t.DisplayOrder)
                     .ToListAsync();
 
@@ -48,6 +48,23 @@ namespace MiniAppGIBA.Services.CustomFields
                     TabName = t.TabName,
                     DisplayOrder = t.DisplayOrder,
                     FieldCount = t.CustomFields?.Count ?? 0,
+                    Fields = t.CustomFields?.OrderBy(f => f.DisplayOrder).Select(f => new CustomFieldDTO
+                    {
+                        Id = f.Id,
+                        CustomFieldTabId = f.CustomFieldTabId,
+                        EntityId = f.EntityId,
+                        FieldName = f.FieldName,
+                        FieldType = f.FieldType,
+                        FieldTypeText = f.FieldType.ToString(),
+                        FieldOptions = !string.IsNullOrEmpty(f.FieldOptions) 
+                            ? System.Text.Json.JsonSerializer.Deserialize<List<string>>(f.FieldOptions) 
+                            : null,
+                        IsRequired = f.IsRequired,
+                        DisplayOrder = f.DisplayOrder,
+                        IsProfile = f.IsProfile,
+                        CreatedDate = f.CreatedDate,
+                        UpdatedDate = f.UpdatedDate
+                    }).ToList(),
                     CreatedDate = t.CreatedDate,
                     UpdatedDate = t.UpdatedDate
                 }).ToList();
@@ -195,7 +212,7 @@ namespace MiniAppGIBA.Services.CustomFields
         }
 
         /// <summary>
-        /// Deletes a tab and all associated custom fields (cascade deletion)
+        /// Soft deletes a tab and all associated custom fields (sets IsDelete = true)
         /// </summary>
         public async Task<bool> DeleteTabAsync(string tabId)
         {
@@ -206,7 +223,7 @@ namespace MiniAppGIBA.Services.CustomFields
                     throw new ArgumentException("TabId is required", nameof(tabId));
                 }
 
-                _logger.LogInformation("Deleting tab with ID {TabId}", tabId);
+                _logger.LogInformation("Soft deleting tab with ID {TabId}", tabId);
 
                 var tab = await _tabRepository.AsQueryable()
                     .Include(t => t.CustomFields)
@@ -218,30 +235,38 @@ namespace MiniAppGIBA.Services.CustomFields
                     return false;
                 }
 
-                // Delete all associated custom fields first
+                // Soft delete all associated custom fields
                 if (tab.CustomFields != null && tab.CustomFields.Any())
                 {
-                    _logger.LogInformation("Deleting {FieldCount} associated fields for tab {TabId}",
+                    _logger.LogInformation("Soft deleting {FieldCount} associated fields for tab {TabId}",
                         tab.CustomFields.Count, tabId);
 
-                    _fieldRepository.DeleteRange(tab.CustomFields);
+                    foreach (var field in tab.CustomFields)
+                    {
+                        field.IsDelete = true;
+                        field.UpdatedDate = DateTime.Now;
+                    }
+                    _fieldRepository.UpdateRange(tab.CustomFields);
                 }
 
-                // Delete the tab
-                _tabRepository.Delete(tab);
+                // Soft delete the tab
+                tab.IsDelete = true;
+                tab.UpdatedDate = DateTime.Now;
+                _tabRepository.Update(tab);
+                
                 var savedCount = await _unitOfWork.SaveChangesAsync();
 
                 if (savedCount == 0)
                 {
-                    throw new InvalidOperationException("Failed to delete tab from database");
+                    throw new InvalidOperationException("Failed to soft delete tab from database");
                 }
 
-                _logger.LogInformation("Successfully deleted tab with ID {TabId}", tabId);
+                _logger.LogInformation("Successfully soft deleted tab with ID {TabId}", tabId);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting tab with ID {TabId}", tabId);
+                _logger.LogError(ex, "Error soft deleting tab with ID {TabId}", tabId);
                 throw;
             }
         }

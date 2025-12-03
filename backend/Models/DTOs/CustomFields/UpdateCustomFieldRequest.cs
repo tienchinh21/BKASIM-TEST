@@ -33,6 +33,11 @@ namespace MiniAppGIBA.Models.DTOs.CustomFields
         public bool IsRequired { get; set; }
 
         /// <summary>
+        /// Whether this field should be displayed on public profile
+        /// </summary>
+        public bool IsProfile { get; set; }
+
+        /// <summary>
         /// The new display order of this field
         /// </summary>
         public int DisplayOrder { get; set; }

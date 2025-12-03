@@ -38,9 +38,14 @@ namespace MiniAppGIBA.Models.DTOs.CustomFields
         public string? FieldOptions { get; set; }
 
         /// <summary>
-        /// /// Whether this field is required
+        /// Whether this field is required
         /// </summary>
         public bool IsRequired { get; set; }
+
+        /// <summary>
+        /// Whether this field should be displayed on public profile
+        /// </summary>
+        public bool IsProfile { get; set; }
 
         /// <summary>
         /// The display order of this field

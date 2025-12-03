@@ -47,7 +47,7 @@ namespace MiniAppGIBA.Service.Groups
             {
 
                 IQueryable<Group> queryable = _groupRepository.AsQueryable()
-                    .Include(g => g.MembershipGroups.Where(mg => mg.Membership.IsDelete != true))
+                    .Include(g => g.MembershipGroups.Where(mg => mg.Membership != null && mg.Membership.IsDelete != true))
                     .ThenInclude(mg => mg.Membership);
 
                 if (allowedGroupIds != null && allowedGroupIds.Any())
@@ -121,7 +121,7 @@ namespace MiniAppGIBA.Service.Groups
                     Logo = GetFullUrl(g.Logo),
                     CreatedDate = g.CreatedDate,
                     UpdatedDate = g.UpdatedDate,
-                    MemberCount = g.MembershipGroups?.Count(mg => mg.IsApproved == true && mg.Membership.IsDelete != true) ?? 0,
+                    MemberCount = g.MembershipGroups?.Count(mg => mg.IsApproved == true && mg.Membership != null && mg.Membership.IsDelete != true) ?? 0,
                     IsJoined = joinedGroupIds.Contains(g.Id),
                     MainActivities = g.MainActivities
                 }).ToList();
@@ -355,7 +355,7 @@ namespace MiniAppGIBA.Service.Groups
                 _logger.LogInformation("GetGroupByIdAsync called with ID: {GroupId}", id);
 
                 var group = await _groupRepository.AsQueryable()
-                    .Include(g => g.MembershipGroups.Where(mg => mg.Membership.IsDelete != true))
+                    .Include(g => g.MembershipGroups.Where(mg => mg.Membership != null && mg.Membership.IsDelete != true))
                         .ThenInclude(mg => mg.Membership)
                     .FirstOrDefaultAsync(g => g.Id == id);
 
@@ -378,17 +378,18 @@ namespace MiniAppGIBA.Service.Groups
                     Logo = GetFullUrl(group.Logo),
                     CreatedDate = group.CreatedDate,
                     UpdatedDate = group.UpdatedDate,
-                    MemberCount = group.MembershipGroups?.Count(mg => mg.IsApproved == true && mg.Membership.IsDelete != true) ?? 0,
+                    MemberCount = group.MembershipGroups?.Count(mg => mg.IsApproved == true && mg.Membership != null && mg.Membership.IsDelete != true) ?? 0,
                     MainActivities = group.MainActivities,
                     Members = group.MembershipGroups?
-                        .Where(mg => mg.IsApproved == true && mg.Membership.IsDelete != true) // Chỉ lấy thành viên đã được duyệt và chưa bị xóa
+                        .Where(mg => mg.IsApproved == true && mg.Membership != null && mg.Membership.IsDelete != true) // Chỉ lấy thành viên đã được duyệt và chưa bị xóa
                         .Select(mg => new GroupMemberDTO
                         {
                             MembershipId = mg.Id,
                             MembershipName = mg.Membership?.Fullname ?? "N/A",
                             PhoneNumber = mg.Membership?.PhoneNumber ?? "N/A",
                             JoinedDate = mg.CreatedDate,
-                            IsApproved = mg.IsApproved ?? false
+                            IsApproved = mg.IsApproved ?? false,
+                            HasCustomFieldsSubmitted = mg.HasCustomFieldsSubmitted
                         }).ToList() ?? new List<GroupMemberDTO>()
                 };
             }
@@ -737,7 +738,7 @@ namespace MiniAppGIBA.Service.Groups
 
                 // Lấy số lượng thành viên (chỉ đếm membership chưa bị xóa)
                 var memberCount = await _membershipGroupRepository.AsQueryable()
-                    .Where(mg => mg.GroupId == id && mg.IsApproved == true && mg.Membership.IsDelete != true)
+                    .Where(mg => mg.GroupId == id && mg.IsApproved == true && mg.Membership != null && mg.Membership.IsDelete != true)
                     .CountAsync();
 
                 // 1 = chưa đăng ký, 2 = chờ phê duyệt, 3 = đã tham gia, 4 = bị từ chối
@@ -747,7 +748,7 @@ namespace MiniAppGIBA.Service.Groups
                 if (userZaloId != null)
                 {
                     var membership = await _membershipGroupRepository.AsQueryable()
-                        .Where(mg => mg.GroupId == id && mg.UserZaloId == userZaloId && mg.Membership.IsDelete != true)
+                        .Where(mg => mg.GroupId == id && mg.UserZaloId == userZaloId && mg.Membership != null && mg.Membership.IsDelete != true)
                         .FirstOrDefaultAsync();
                     if (membership != null)
                     {
@@ -813,7 +814,7 @@ namespace MiniAppGIBA.Service.Groups
                 // Kiểm tra user đã tham gia nhóm chưa
                 var membership = await _membershipGroupRepository.AsQueryable()
                     .Include(mg => mg.Membership)
-                    .FirstOrDefaultAsync(mg => mg.GroupId == id && mg.UserZaloId == userZaloId && mg.IsApproved == true && mg.Membership.IsDelete != true);
+                    .FirstOrDefaultAsync(mg => mg.GroupId == id && mg.UserZaloId == userZaloId && mg.IsApproved == true && mg.Membership != null && mg.Membership.IsDelete != true);
 
                 if (membership == null)
                 {
@@ -829,7 +830,7 @@ namespace MiniAppGIBA.Service.Groups
                             .ThenInclude(es => es.SponsorshipTier)
                     .Include(g => g.Events.Where(e => e.IsActive))
                         .ThenInclude(e => e.EventRegistrations)
-                    .Include(g => g.MembershipGroups.Where(mg => mg.IsApproved == true && mg.Membership.IsDelete != true)) // Chỉ lấy thành viên đã được duyệt và chưa bị xóa
+                    .Include(g => g.MembershipGroups.Where(mg => mg.IsApproved == true && mg.Membership != null && mg.Membership.IsDelete != true)) // Chỉ lấy thành viên đã được duyệt và chưa bị xóa
                         .ThenInclude(mg => mg.Membership)
                     .FirstOrDefaultAsync(g => g.Id == id);
 
@@ -930,7 +931,7 @@ namespace MiniAppGIBA.Service.Groups
                         .FirstOrDefaultAsync(mg => mg.GroupId == eventEntity.GroupId &&
                                                   mg.UserZaloId == userZaloId &&
                                                   mg.IsApproved == true &&
-                                                  mg.Membership.IsDelete != true);
+                                                  mg.Membership != null && mg.Membership.IsDelete != true);
                     canViewEvent = membership != null;
                 }
 

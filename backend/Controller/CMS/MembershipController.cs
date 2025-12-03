@@ -5,6 +5,7 @@ using MiniAppGIBA.Models.Request.Memberships;
 using MiniAppGIBA.Services.Memberships;
 using MiniAppGIBA.Models.Queries.Memberships;
 using MiniAppGIBA.Base.Interface;
+using MiniAppGIBA.Base.Helper;
 
 namespace MiniAppGIBA.Controller.CMS
 {
@@ -14,13 +15,16 @@ namespace MiniAppGIBA.Controller.CMS
     {
         private readonly IMembershipService _membershipService;
         private readonly ILogger<MembershipController> _logger;
+        private readonly IWebHostEnvironment _env;
 
         public MembershipController(
             IMembershipService membershipService,
-            ILogger<MembershipController> logger)
+            ILogger<MembershipController> logger,
+            IWebHostEnvironment env)
         {
             _membershipService = membershipService;
             _logger = logger;
+            _env = env;
         }
 
         [HttpGet("")]
@@ -83,7 +87,33 @@ namespace MiniAppGIBA.Controller.CMS
                     Fullname = membership.Fullname ?? string.Empty,
                     ZaloAvatar = membership.ZaloAvatar,
                     PhoneNumber = membership.PhoneNumber,
-                    RoleId = membership.RoleId
+                    RoleId = membership.RoleId,
+                    // Personal information fields
+                    Profile = membership.Profile,
+                    DayOfBirth = membership.DayOfBirth,
+                    Address = membership.Address,
+                    Position = membership.Position,
+                    FieldIds = membership.FieldIds,
+                    // Company information fields
+                    CompanyFullName = membership.CompanyFullName,
+                    CompanyBrandName = membership.CompanyBrandName,
+                    TaxCode = membership.TaxCode,
+                    BusinessField = membership.BusinessField,
+                    BusinessType = membership.BusinessType,
+                    HeadquartersAddress = membership.HeadquartersAddress,
+                    CompanyWebsite = membership.CompanyWebsite,
+                    CompanyPhoneNumber = membership.CompanyPhoneNumber,
+                    CompanyEmail = membership.CompanyEmail,
+                    LegalRepresentative = membership.LegalRepresentative,
+                    LegalRepresentativePosition = membership.LegalRepresentativePosition,
+                    CompanyLogo = membership.CompanyLogo,
+                    BusinessRegistrationNumber = membership.BusinessRegistrationNumber,
+                    BusinessRegistrationDate = membership.BusinessRegistrationDate,
+                    BusinessRegistrationPlace = membership.BusinessRegistrationPlace,
+                    // Other fields
+                    AppPosition = membership.AppPosition,
+                    Term = membership.Term,
+                    SortField = membership.SortField
                 };
 
                 _logger.LogInformation("UpdateMembershipRequest created - Fullname: {Fullname}, PhoneNumber: {PhoneNumber}",
@@ -243,6 +273,48 @@ namespace MiniAppGIBA.Controller.CMS
             }
         }
 
+        /// <summary>
+        /// Upload logo công ty
+        /// </summary>
+        [HttpPost("UploadLogo")]
+        public async Task<IActionResult> UploadLogo(IFormFile file)
+        {
+            if (!IsAdmin())
+            {
+                return Json(new { success = false, message = "Không có quyền truy cập" });
+            }
 
+            try
+            {
+                if (file == null || file.Length == 0)
+                {
+                    return Json(new { success = false, message = "Vui lòng chọn file" });
+                }
+
+                // Validate file type
+                var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+                if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                {
+                    return Json(new { success = false, message = "Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, WEBP)" });
+                }
+
+                // Validate file size (max 5MB)
+                if (file.Length > 5 * 1024 * 1024)
+                {
+                    return Json(new { success = false, message = "Kích thước file không được vượt quá 5MB" });
+                }
+
+                var savePath = Path.Combine(_env.WebRootPath, "uploads", "images", "company-logos");
+                var fileName = await FileHandler.SaveFile(file, savePath);
+                var fileUrl = $"/uploads/images/company-logos/{fileName}";
+
+                return Json(new { success = true, data = new { url = fileUrl } });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading company logo");
+                return Json(new { success = false, message = "Có lỗi xảy ra khi upload logo" });
+            }
+        }
     }
 }

@@ -978,6 +978,143 @@ namespace MiniAppGIBA.Controller.API
         }
 
         /// <summary>
+        /// [MINI APP] Lấy chi tiết nhóm đã tham gia kèm custom field values mà user đã nhập khi đăng ký
+        /// </summary>
+        [HttpGet("my-membership/{groupId}")]
+        public async Task<IActionResult> GetMyMembershipDetail(string groupId)
+        {
+            try
+            {
+                var userZaloId = User.FindFirst("UserZaloId")?.Value;
+                if (string.IsNullOrEmpty(userZaloId))
+                {
+                    return Unauthorized(new ApiResponse<object>
+                    {
+                        Code = 1,
+                        Message = "Không tìm thấy thông tin người dùng"
+                    });
+                }
+                Console.WriteLine("ádsad" + groupId + userZaloId);
+                // Lấy thông tin membership group kèm custom field values
+                var membershipGroup = await _membershipGroupRepository.AsQueryable()
+                    .Where(mg => mg.GroupId == groupId && mg.UserZaloId == userZaloId)
+                    .Include(mg => mg.Group)
+                    .Include(mg => mg.Membership)
+                    .Include(mg => mg.CustomFieldValues)
+                        .ThenInclude(cfv => cfv.CustomField)
+                    .FirstOrDefaultAsync();
+
+                if (membershipGroup == null)
+                {
+                    return NotFound(new ApiResponse<object>
+                    {
+                        Code = 1,
+                        Message = "Bạn chưa đăng ký tham gia nhóm này"
+                    });
+                }
+
+                // Lấy thông tin group chi tiết
+                var group = membershipGroup.Group;
+                if (group == null)
+                {
+                    return NotFound(new ApiResponse<object>
+                    {
+                        Code = 1,
+                        Message = "Không tìm thấy thông tin nhóm"
+                    });
+                }
+
+                // Lấy số lượng thành viên đã duyệt
+                var memberCount = await _membershipGroupRepository.AsQueryable()
+                    .CountAsync(mg => mg.GroupId == groupId && mg.IsApproved == true);
+
+                // Lấy tất cả custom fields của group để hiển thị đầy đủ (kể cả chưa có giá trị)
+                var allCustomFields = await _customFieldService.GetFieldsByEntityAsync(ECustomFieldEntityType.GroupMembership, groupId);
+
+                // Map custom field values đã nhập
+                var customFieldValuesDict = membershipGroup.CustomFieldValues
+                    .Where(cfv => cfv.CustomField != null)
+                    .ToDictionary(cfv => cfv.CustomFieldId, cfv => cfv);
+
+                // Tạo danh sách custom fields với giá trị
+                var customFieldsWithValues = allCustomFields.Select(cf =>
+                {
+                    customFieldValuesDict.TryGetValue(cf.Id, out var fieldValue);
+                    return new
+                    {
+                        fieldId = cf.Id,
+                        fieldName = cf.FieldName,
+                        fieldType = cf.FieldType.ToString(),
+                        fieldTypeText = cf.FieldTypeText,
+                        isRequired = cf.IsRequired,
+                        options = cf.FieldOptions,
+                        tabId = cf.CustomFieldTabId,
+                        displayOrder = cf.DisplayOrder,
+                        value = fieldValue?.FieldValue,
+                        hasValue = fieldValue != null
+                    };
+                }).OrderBy(cf => cf.displayOrder).ToList();
+
+                // Group custom fields by tab
+                var customFieldsByTab = customFieldsWithValues
+                    .GroupBy(cf => cf.tabId)
+                    .Select(g => new
+                    {
+                        tabId = g.Key,
+                        tabName = "Thông tin chung",
+                        fields = g.ToList()
+                    })
+                    .ToList();
+
+                var result = new
+                {
+                    // Thông tin membership
+                    membershipGroupId = membershipGroup.Id,
+                    reason = membershipGroup.Reason,
+                    company = membershipGroup.Company,
+                    position = membershipGroup.Position,
+                    groupPosition = membershipGroup.GroupPosition,
+                    isApproved = membershipGroup.IsApproved,
+                    statusText = membershipGroup.IsApproved switch
+                    {
+                        null => "Chờ xét duyệt",
+                        true => "Đã duyệt",
+                        false => "Từ chối"
+                    },
+                    rejectReason = membershipGroup.RejectReason,
+                    approvedDate = membershipGroup.ApprovedDate,
+                    joinRequestDate = membershipGroup.CreatedDate,
+                    hasCustomFieldsSubmitted = membershipGroup.HasCustomFieldsSubmitted,
+                    canEdit = membershipGroup.IsApproved == null,
+
+                    // Thông tin group
+                    group = new
+                    {
+                        id = group.Id,
+                        groupName = group.GroupName,
+                        description = group.Description,
+                        rule = group.Rule,
+                        logo = GetFullUrl(group.Logo),
+                        isActive = group.IsActive,
+                        memberCount = memberCount,
+                        createdDate = group.CreatedDate
+                    },
+
+                    // Custom fields với giá trị đã nhập
+                    // customFields = customFieldsWithValues,
+                    customFieldsByTab = customFieldsByTab
+                };
+
+                return Success(result, "Lấy thông tin chi tiết thành viên trong nhóm thành công");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting membership detail for group {GroupId}", groupId);
+                return Error("Có lỗi xảy ra khi lấy thông tin chi tiết", 500);
+            }
+        }
+
+        /// <summary>
         /// [MINI APP] Chỉnh sửa đơn xin tham gia (chỉ cho phép khi đang chờ duyệt)
         /// </summary>
         [HttpPut("my-join-requests/{id}")]

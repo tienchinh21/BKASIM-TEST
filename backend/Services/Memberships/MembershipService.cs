@@ -160,6 +160,36 @@ namespace MiniAppGIBA.Services.Memberships
             if (request.ZaloAvatar != null) membership.ZaloAvatar = request.ZaloAvatar;
             if (request.PhoneNumber != null) membership.PhoneNumber = request.PhoneNumber;
             if (request.RoleId != null) membership.RoleId = request.RoleId;
+            
+            // Personal information fields
+            if (request.FieldIds != null) membership.FieldIds = request.FieldIds;
+            if (request.Profile != null) membership.Profile = request.Profile;
+            if (request.DayOfBirth != null) membership.DayOfBirth = request.DayOfBirth;
+            if (request.Address != null) membership.Address = request.Address;
+            if (request.Position != null) membership.Position = request.Position;
+            
+            // Company information fields
+            if (request.CompanyFullName != null) membership.CompanyFullName = request.CompanyFullName;
+            if (request.CompanyBrandName != null) membership.CompanyBrandName = request.CompanyBrandName;
+            if (request.TaxCode != null) membership.TaxCode = request.TaxCode;
+            if (request.BusinessField != null) membership.BusinessField = request.BusinessField;
+            if (request.BusinessType != null) membership.BusinessType = request.BusinessType;
+            if (request.HeadquartersAddress != null) membership.HeadquartersAddress = request.HeadquartersAddress;
+            if (request.CompanyWebsite != null) membership.CompanyWebsite = request.CompanyWebsite;
+            if (request.CompanyPhoneNumber != null) membership.CompanyPhoneNumber = request.CompanyPhoneNumber;
+            if (request.CompanyEmail != null) membership.CompanyEmail = request.CompanyEmail;
+            if (request.LegalRepresentative != null) membership.LegalRepresentative = request.LegalRepresentative;
+            if (request.LegalRepresentativePosition != null) membership.LegalRepresentativePosition = request.LegalRepresentativePosition;
+            if (request.CompanyLogo != null) membership.CompanyLogo = request.CompanyLogo;
+            if (request.BusinessRegistrationNumber != null) membership.BusinessRegistrationNumber = request.BusinessRegistrationNumber;
+            if (request.BusinessRegistrationDate != null) membership.BusinessRegistrationDate = request.BusinessRegistrationDate;
+            if (request.BusinessRegistrationPlace != null) membership.BusinessRegistrationPlace = request.BusinessRegistrationPlace;
+            
+            // Other fields
+            if (request.AppPosition != null) membership.AppPosition = request.AppPosition;
+            if (request.Term != null) membership.Term = request.Term;
+            if (request.SortField != null) membership.SortField = request.SortField;
+            
             membership.UpdatedDate = DateTime.Now;
 
             _membershipRepository.Update(membership);
@@ -313,7 +343,37 @@ namespace MiniAppGIBA.Services.Memberships
             RoleId = m.RoleId,
             IsDelete = m.IsDelete,
             CreatedDate = m.CreatedDate,
-            UpdatedDate = m.UpdatedDate
+            UpdatedDate = m.UpdatedDate,
+            // Personal information fields
+            FieldIds = m.FieldIds,
+            Profile = m.Profile,
+            DayOfBirth = m.DayOfBirth,
+            Address = m.Address,
+            Position = m.Position,
+            // Company information fields
+            CompanyFullName = m.CompanyFullName,
+            CompanyBrandName = m.CompanyBrandName,
+            TaxCode = m.TaxCode,
+            BusinessField = m.BusinessField,
+            BusinessType = m.BusinessType,
+            HeadquartersAddress = m.HeadquartersAddress,
+            CompanyWebsite = m.CompanyWebsite,
+            CompanyPhoneNumber = m.CompanyPhoneNumber,
+            CompanyEmail = m.CompanyEmail,
+            LegalRepresentative = m.LegalRepresentative,
+            LegalRepresentativePosition = m.LegalRepresentativePosition,
+            CompanyLogo = m.CompanyLogo,
+            BusinessRegistrationNumber = m.BusinessRegistrationNumber,
+            BusinessRegistrationDate = m.BusinessRegistrationDate,
+            BusinessRegistrationPlace = m.BusinessRegistrationPlace,
+            // Rating fields
+            AverageRating = m.AverageRating,
+            TotalRatings = m.TotalRatings,
+            // Other fields
+            AppPosition = m.AppPosition,
+            Term = m.Term,
+            Code = m.Code,
+            SortField = m.SortField
         };
 
         private static System.Linq.Expressions.Expression<Func<Membership, object>> GetSortExpression(string? sortBy) =>

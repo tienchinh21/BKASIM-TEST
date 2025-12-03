@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MiniAppGIBA.Base.Database;
 
@@ -11,9 +12,11 @@ using MiniAppGIBA.Base.Database;
 namespace MiniAppGIBA.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251203094544_initdb")]
+    partial class initdb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1804,76 +1807,15 @@ namespace MiniAppGIBA.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
 
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("AppPosition")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("AverageRating")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("BusinessField")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("BusinessRegistrationDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("BusinessRegistrationNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessRegistrationPlace")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BusinessType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CompanyBrandName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CompanyEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CompanyFullName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CompanyLogo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CompanyPhoneNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CompanyWebsite")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DayOfBirth")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FieldIds")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Fullname")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("HeadquartersAddress")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsDelete")
                         .HasColumnType("bit");
-
-                    b.Property<string>("LegalRepresentative")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LegalRepresentativePosition")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OldSlugs")
                         .HasColumnType("nvarchar(max)");
@@ -1885,12 +1827,6 @@ namespace MiniAppGIBA.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Position")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Profile")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("RoleId")
                         .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)");
@@ -1898,18 +1834,6 @@ namespace MiniAppGIBA.Migrations
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("SortField")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TaxCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Term")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("TotalRatings")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("datetime2");

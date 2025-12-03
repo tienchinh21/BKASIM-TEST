@@ -18,6 +18,11 @@ namespace MiniAppGIBA.Models.DTOs.Groups
         public DateTime? ApprovedDate { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }
+        
+        /// <summary>
+        /// Whether custom fields have been submitted for this membership group
+        /// </summary>
+        public bool HasCustomFieldsSubmitted { get; set; }
 
         // Status helpers
         public string StatusText => IsApproved switch

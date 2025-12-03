@@ -69,7 +69,6 @@ namespace MiniAppGIBA.Controller.API
                         phoneNumber = phoneNumber,
                         fullname = membership?.Fullname,
                         zaloAvatar = membership?.ZaloAvatar,
-                        roleId = membership?.RoleId,
                         roleName = userRole?.Name
                     }
                 });

@@ -11,51 +11,238 @@
 </div>
 
 <!-- Modal Body -->
-<div class="modal-body p-4">
+<div class="modal-body p-4" style="max-height: 70vh; overflow-y: auto;">
     <div class="p-0">
         <form id="membershipForm" onsubmit="submitMembershipForm(event)">
             @Html.AntiForgeryToken()
             <input type="hidden" name="Id" value="@ViewBag.MembershipId" />
 
-            <div class="row g-3">
-                <!-- Họ tên -->
-                <div class="col-md-6">
-                    <label class="form-label fw-medium">
-                        Họ và tên <span class="text-danger">*</span>
-                    </label>
-                    <input name="Fullname" class="form-control" placeholder="Nhập họ và tên" value="@Model.Fullname" />
+            <!-- Thông tin cơ bản -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="ri-user-line me-2"></i>Thông tin cơ bản</h6>
                 </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Họ tên -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">
+                                Họ và tên <span class="text-danger">*</span>
+                            </label>
+                            <input name="Fullname" class="form-control" placeholder="Nhập họ và tên" value="@Model.Fullname" />
+                        </div>
 
-                <!-- Số điện thoại -->
-                <div class="col-md-6">
-                    <label class="form-label fw-medium">
-                        Số điện thoại
-                    </label>
-                    <input name="PhoneNumber" class="form-control" value="@Model.PhoneNumber" />
+                        <!-- Số điện thoại -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Số điện thoại</label>
+                            <input name="PhoneNumber" class="form-control" value="@Model.PhoneNumber" readonly />
+                        </div>
+
+                        <!-- User Zalo Name -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Tên Zalo</label>
+                            <input name="UserZaloName" class="form-control" value="@Model.UserZaloName" readonly />
+                        </div>
+
+                        <!-- Zalo Avatar -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Avatar Zalo</label>
+                            <input name="ZaloAvatar" class="form-control" value="@Model.ZaloAvatar" readonly />
+                        </div>
+
+                        <!-- Ngày sinh -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Ngày sinh</label>
+                            <input type="date" name="DayOfBirth" class="form-control" value="@(Model.DayOfBirth?.ToString("yyyy-MM-dd"))" />
+                        </div>
+
+                        <!-- Địa chỉ -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Địa chỉ</label>
+                            <input name="Address" class="form-control" placeholder="Nhập địa chỉ" value="@Model.Address" />
+                        </div>
+
+                        <!-- Chức vụ -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Chức vụ</label>
+                            <input name="Position" class="form-control" placeholder="Nhập chức vụ" value="@Model.Position" />
+                        </div>
+
+                        <!-- Giới thiệu -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Giới thiệu bản thân</label>
+                            <textarea name="Profile" class="form-control" rows="2" placeholder="Nhập giới thiệu">@Model.Profile</textarea>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <!-- User Zalo Name -->
-                <div class="col-md-6">
-                    <label class="form-label fw-medium">
-                        Tên Zalo
-                    </label>
-                    <input name="UserZaloName" class="form-control" value="@Model.UserZaloName" readonly />
+            <!-- Thông tin doanh nghiệp -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="ri-building-line me-2"></i>Thông tin doanh nghiệp</h6>
                 </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Tên công ty đầy đủ -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Tên công ty đầy đủ</label>
+                            <input name="CompanyFullName" class="form-control" placeholder="Nhập tên công ty" value="@Model.CompanyFullName" />
+                        </div>
 
-                <!-- Zalo Avatar -->
-                <div class="col-md-6">
-                    <label class="form-label fw-medium">
-                        Avatar Zalo
-                    </label>
-                    <input name="ZaloAvatar" class="form-control" value="@Model.ZaloAvatar" />
+                        <!-- Tên thương hiệu -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Tên thương hiệu</label>
+                            <input name="CompanyBrandName" class="form-control" placeholder="Nhập tên thương hiệu" value="@Model.CompanyBrandName" />
+                        </div>
+
+                        <!-- Mã số thuế -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Mã số thuế</label>
+                            <input name="TaxCode" class="form-control" placeholder="Nhập mã số thuế" value="@Model.TaxCode" />
+                        </div>
+
+                        <!-- Ngành nghề kinh doanh -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Ngành nghề kinh doanh</label>
+                            <input name="BusinessField" class="form-control" placeholder="Nhập ngành nghề" value="@Model.BusinessField" />
+                        </div>
+
+                        <!-- Loại hình doanh nghiệp -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Loại hình doanh nghiệp</label>
+                            <input name="BusinessType" class="form-control" placeholder="Nhập loại hình" value="@Model.BusinessType" />
+                        </div>
+
+                        <!-- Địa chỉ trụ sở chính -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Địa chỉ trụ sở chính</label>
+                            <input name="HeadquartersAddress" class="form-control" placeholder="Nhập địa chỉ trụ sở" value="@Model.HeadquartersAddress" />
+                        </div>
+
+                        <!-- Website -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Website doanh nghiệp</label>
+                            <input name="CompanyWebsite" class="form-control" placeholder="https://example.com" value="@Model.CompanyWebsite" />
+                        </div>
+
+                        <!-- SĐT doanh nghiệp -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">SĐT doanh nghiệp</label>
+                            <input name="CompanyPhoneNumber" class="form-control" placeholder="Nhập SĐT doanh nghiệp" value="@Model.CompanyPhoneNumber" />
+                        </div>
+
+                        <!-- Email doanh nghiệp -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Email doanh nghiệp</label>
+                            <input type="email" name="CompanyEmail" class="form-control" placeholder="email@company.com" value="@Model.CompanyEmail" />
+                        </div>
+
+                        <!-- Người đại diện pháp lý -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Người đại diện pháp lý</label>
+                            <input name="LegalRepresentative" class="form-control" placeholder="Nhập tên người đại diện" value="@Model.LegalRepresentative" />
+                        </div>
+
+                        <!-- Chức vụ người đại diện -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Chức vụ người đại diện</label>
+                            <input name="LegalRepresentativePosition" class="form-control" placeholder="Nhập chức vụ" value="@Model.LegalRepresentativePosition" />
+                        </div>
+
+                        <!-- Logo công ty -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Logo công ty</label>
+                            <div class="d-flex align-items-start gap-3">
+                                <!-- Preview ảnh -->
+                                <div class="position-relative" style="min-width: 100px;">
+                                    @if (!string.IsNullOrEmpty(Model.CompanyLogo))
+                                    {
+                                        <img id="companyLogoPreview" src="@Model.CompanyLogo" alt="Logo công ty" 
+                                             class="rounded border" style="width: 100px; height: 100px; object-fit: cover;"
+                                             onerror="this.src='/images/no-image.png'" />
+                                    }
+                                    else
+                                    {
+                                        <div id="companyLogoPreview" class="rounded border bg-light d-flex align-items-center justify-content-center" 
+                                             style="width: 100px; height: 100px;">
+                                            <i class="ri-image-line text-muted" style="font-size: 32px;"></i>
+                                        </div>
+                                    }
+                                </div>
+                                <!-- Upload và URL input -->
+                                <div class="flex-grow-1">
+                                    <input type="hidden" name="CompanyLogo" id="companyLogoUrl" value="@Model.CompanyLogo" />
+                                    <div class="input-group mb-2">
+                                        <input type="file" class="form-control" id="companyLogoFile" accept="image/*" onchange="previewAndUploadLogo(this)" />
+                                        <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('companyLogoFile').click()">
+                                            <i class="ri-upload-2-line"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Hoặc nhập URL trực tiếp:</small>
+                                    <input type="text" class="form-control form-control-sm mt-1" id="companyLogoUrlInput" 
+                                           placeholder="https://example.com/logo.png" value="@Model.CompanyLogo" 
+                                           onchange="updateLogoFromUrl(this.value)" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
 
-                <!-- Role ID -->
-                <div class="col-md-6">
-                    <label class="form-label fw-medium">
-                        Role ID
-                    </label>
-                    <input name="RoleId" class="form-control" value="@Model.RoleId" />
+            <!-- Thông tin đăng ký kinh doanh -->
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="ri-file-text-line me-2"></i>Thông tin đăng ký kinh doanh</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Số giấy chứng nhận -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Số giấy chứng nhận ĐKKD</label>
+                            <input name="BusinessRegistrationNumber" class="form-control" placeholder="Nhập số giấy CN" value="@Model.BusinessRegistrationNumber" />
+                        </div>
+
+                        <!-- Ngày cấp -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Ngày cấp</label>
+                            <input type="date" name="BusinessRegistrationDate" class="form-control" value="@(Model.BusinessRegistrationDate?.ToString("yyyy-MM-dd"))" />
+                        </div>
+
+                        <!-- Nơi cấp -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Nơi cấp</label>
+                            <input name="BusinessRegistrationPlace" class="form-control" placeholder="Nhập nơi cấp" value="@Model.BusinessRegistrationPlace" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thông tin khác -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="ri-settings-line me-2"></i>Thông tin khác</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Chức vụ trong App -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Chức vụ trong App</label>
+                            <input name="AppPosition" class="form-control" placeholder="Nhập chức vụ" value="@Model.AppPosition" />
+                        </div>
+
+                        <!-- Nhiệm kỳ -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Nhiệm kỳ</label>
+                            <input name="Term" class="form-control" placeholder="Nhập nhiệm kỳ" value="@Model.Term" />
+                        </div>
+
+                        <!-- Thứ tự sắp xếp -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Thứ tự sắp xếp</label>
+                            <input name="SortField" class="form-control" placeholder="Nhập thứ tự" value="@Model.SortField" />
+                        </div>
+                    </div>
                 </div>
             </div>
         </form>
@@ -100,5 +287,91 @@
                 showError('Lỗi', 'Có lỗi xảy ra khi cập nhật');
             }
         });
+    }
+
+    // Preview và upload logo công ty
+    function previewAndUploadLogo(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showError('Lỗi', 'Vui lòng chọn file ảnh');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showError('Lỗi', 'Kích thước file không được vượt quá 5MB');
+                return;
+            }
+
+            // Preview ảnh ngay lập tức
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('companyLogoPreview');
+                if (preview.tagName === 'IMG') {
+                    preview.src = e.target.result;
+                } else {
+                    // Replace div with img
+                    const img = document.createElement('img');
+                    img.id = 'companyLogoPreview';
+                    img.src = e.target.result;
+                    img.alt = 'Logo công ty';
+                    img.className = 'rounded border';
+                    img.style.cssText = 'width: 100px; height: 100px; object-fit: cover;';
+                    preview.parentNode.replaceChild(img, preview);
+                }
+            };
+            reader.readAsDataURL(file);
+
+            // Upload file
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', 'company-logos');
+
+            $.ajax({
+                url: '/Membership/UploadLogo',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success && response.data) {
+                        const logoUrl = response.data.url || response.data;
+                        document.getElementById('companyLogoUrl').value = logoUrl;
+                        document.getElementById('companyLogoUrlInput').value = logoUrl;
+                        showSuccess('Thành công', 'Upload logo thành công');
+                    } else {
+                        showError('Lỗi', response.message || 'Upload thất bại');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Upload error:', error);
+                    showError('Lỗi', 'Có lỗi xảy ra khi upload logo');
+                }
+            });
+        }
+    }
+
+    // Cập nhật logo từ URL
+    function updateLogoFromUrl(url) {
+        document.getElementById('companyLogoUrl').value = url;
+        
+        if (url) {
+            const preview = document.getElementById('companyLogoPreview');
+            if (preview.tagName === 'IMG') {
+                preview.src = url;
+            } else {
+                const img = document.createElement('img');
+                img.id = 'companyLogoPreview';
+                img.src = url;
+                img.alt = 'Logo công ty';
+                img.className = 'rounded border';
+                img.style.cssText = 'width: 100px; height: 100px; object-fit: cover;';
+                img.onerror = function() { this.src = '/images/no-image.png'; };
+                preview.parentNode.replaceChild(img, preview);
+            }
+        }
     }
 </script>

@@ -904,6 +904,13 @@
         // Reset modal khi đóng để tránh conflict
         $(document).ready(function() {
             $('#groupModal').on('hidden.bs.modal', function () {
+                // Reset Quill editors
+                if (window.descriptionQuillEditor) {
+                    window.descriptionQuillEditor = null;
+                }
+                if (window.mainActivitiesQuillEditor) {
+                    window.mainActivitiesQuillEditor = null;
+                }
                 $(this).find('.modal-body').empty();
             });
         });

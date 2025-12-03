@@ -192,7 +192,8 @@ namespace MiniAppGIBA.Services.Events
 
             if (query.EndDate.HasValue)
             {
-                queryable = queryable.Where(e => e.EndTime <= query.EndDate.Value);
+                // Filter theo StartTime thay vì EndTime để lấy sự kiện bắt đầu trong khoảng thời gian
+                queryable = queryable.Where(e => e.StartTime <= query.EndDate.Value);
             }
 
             return queryable;
@@ -209,13 +210,17 @@ namespace MiniAppGIBA.Services.Events
                 return queryable;
             }
 
-            // User chưa đăng nhập -> chỉ thấy sự kiện public
+            // User chưa đăng nhập -> chỉ thấy sự kiện công khai (Type = 2)
             if (string.IsNullOrEmpty(userZaloId))
             {
                 return queryable.Where(e => e.Type == 2);
             }
 
-            // 1. Lấy danh sách group nội bộ mà user là member (logic cũ)
+            // User đã đăng nhập:
+            // 1. Luôn lấy sự kiện công khai (Type = 2)
+            // 2. Lấy thêm sự kiện nội bộ (Type = 1) mà user tham gia
+
+            // Lấy danh sách group mà user là member
             var userJoinedGroupIds = await _membershipGroupRepository.AsQueryable()
                 .Where(mg => mg.UserZaloId == userZaloId && mg.IsApproved == true)
                 .Select(mg => mg.GroupId)
@@ -223,7 +228,7 @@ namespace MiniAppGIBA.Services.Events
 
             var userJoinedGroupIdsList = userJoinedGroupIds.ToList();
 
-            // 2. Mở rộng: lấy thêm các Event mà user đã tham gia bằng đăng ký đơn lẻ (EventRegistration)
+            // Lấy các Event mà user đã đăng ký (EventRegistration)
             var joinedEventIds = new List<string>();
             var registeredEventIds = await _eventRegistrationRepository.AsQueryable()
                 .Where(r => r.UserZaloId == userZaloId && r.Status != (byte)ERegistrationStatus.Cancelled)
@@ -232,7 +237,7 @@ namespace MiniAppGIBA.Services.Events
                 .ToListAsync();
             joinedEventIds.AddRange(registeredEventIds);
 
-            // 3. Mở rộng: lấy thêm các Event mà user đang nằm trong GuestList (được mời theo phone/email)
+            // Lấy các Event mà user được mời trong GuestList
             var membershipRepository = _unitOfWork.GetRepository<Membership>();
             var userMembership = await membershipRepository.AsQueryable()
                 .FirstOrDefaultAsync(m => m.UserZaloId == userZaloId && m.IsDelete != true);
@@ -240,24 +245,16 @@ namespace MiniAppGIBA.Services.Events
             if (userMembership != null)
             {
                 var phone = userMembership.PhoneNumber;
-                // var email = userMembership.Email;
-                if (!string.IsNullOrEmpty(phone) 
-                // || !string.IsNullOrEmpty(email)
-                )
+                if (!string.IsNullOrEmpty(phone))
                 {
                     var guestListRepository = _unitOfWork.GetRepository<GuestList>();
-                    // Chỉ lấy các GuestList đã xác nhận (status != 0 / Pending)
-                    // Status: 0 = Pending, 1 = Approved, 2 = Rejected, 3 = Cancelled, 4 = PendingRegistration, 5 = Registered
                     var guestEventIds = await guestListRepository.AsQueryable()
                         .Where(gl =>
                             gl.EventGuest != null &&
                             gl.Status != (byte)EGuestStatus.Pending &&
                             gl.Status != (byte)EGuestStatus.Rejected &&
                             gl.Status != (byte)EGuestStatus.Cancelled &&
-                            (
-                                (!string.IsNullOrEmpty(phone) && gl.GuestPhone == phone) 
-                                // || (!string.IsNullOrEmpty(email) && gl.GuestEmail == email)
-                            ))
+                            !string.IsNullOrEmpty(phone) && gl.GuestPhone == phone)
                         .Select(gl => gl.EventGuest.EventId)
                         .Distinct()
                         .ToListAsync();
@@ -268,8 +265,8 @@ namespace MiniAppGIBA.Services.Events
 
             var joinedEventIdsList = joinedEventIds.Distinct().ToList();
 
-            // Quyền xem sự kiện cho user:
-            // - Sự kiện public (Type = 2)
+            // Quyền xem sự kiện cho user đã đăng nhập:
+            // - Sự kiện công khai (Type = 2) - LUÔN LUÔN
             // - Sự kiện nội bộ (Type = 1) của các group mà user là member
             // - Sự kiện nội bộ (Type = 1) mà user đã tham gia (EventRegistration/GuestList)
             queryable = queryable.Where(e =>

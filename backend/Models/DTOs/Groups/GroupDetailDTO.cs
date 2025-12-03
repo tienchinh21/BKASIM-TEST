@@ -14,5 +14,10 @@ namespace MiniAppGIBA.Models.DTOs.Groups
         public string? PhoneNumber { get; set; }
         public DateTime JoinedDate { get; set; }
         public bool IsApproved { get; set; }
+        
+        /// <summary>
+        /// Whether custom fields have been submitted for this membership group
+        /// </summary>
+        public bool HasCustomFieldsSubmitted { get; set; }
     }
 }

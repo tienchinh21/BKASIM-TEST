@@ -53,6 +53,11 @@ namespace MiniAppGIBA.Models.DTOs.CustomFields
         public int DisplayOrder { get; set; }
 
         /// <summary>
+        /// Whether this field should be displayed on public profile
+        /// </summary>
+        public bool IsProfile { get; set; }
+
+        /// <summary>
         /// Date when the field was created
         /// </summary>
         public DateTime CreatedDate { get; set; }

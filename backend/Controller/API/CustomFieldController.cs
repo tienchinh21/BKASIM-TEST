@@ -29,15 +29,7 @@ namespace MiniAppGIBA.Controller.API
             _formHandler = formHandler;
         }
 
-        /// <summary>
-        /// Retrieves the form structure (tabs and fields) for a specific entity
-        /// </summary>
-        /// <param name="entityType">The type of entity (e.g., "GroupMembership", "EventRegistration")</param>
-        /// <param name="entityId">The ID of the entity (e.g., GroupId for membership registration)</param>
-        /// <returns>Form structure with tabs and fields organized by display order</returns>
-        /// <remarks>
-        /// Requirements: 3.1, 3.2
-        /// </remarks>
+
         [HttpGet("form-structure")]
         public async Task<IActionResult> GetFormStructure(
             [FromQuery] string entityType,
@@ -92,16 +84,6 @@ namespace MiniAppGIBA.Controller.API
             }
         }
 
-        /// <summary>
-        /// Validates a form submission against custom field definitions
-        /// </summary>
-        /// <param name="entityType">The type of entity being submitted</param>
-        /// <param name="entityId">The ID of the entity (e.g., GroupId for membership registration)</param>
-        /// <param name="request">Dictionary of field IDs to submitted values</param>
-        /// <returns>Validation result with errors if validation fails</returns>
-        /// <remarks>
-        /// /// Requirements: 3.3, 3.4
-        /// </remarks>
         [HttpPost("validate")]
         public async Task<IActionResult> ValidateForm(
             [FromQuery] string entityType,
@@ -155,16 +137,7 @@ namespace MiniAppGIBA.Controller.API
             }
         }
 
-        /// <summary>
-        /// Submits a form with custom field values
-        /// </summary>
-        /// <param name="entityType">The type of entity being submitted</param>
-        /// <param name="entityId">The ID of the entity instance (e.g., MembershipGroupId for membership submission)</param>
-        /// <param name="request">Dictionary of field IDs to submitted values</param>
-        /// <returns>List of created CustomFieldValue DTOs if successful</returns>
-        /// <remarks>
-        /// Requirements: 3.5
-        /// </remarks>
+
         [HttpPost("submit")]
         public async Task<IActionResult> SubmitForm(
             [FromQuery] string entityType,
@@ -208,15 +181,6 @@ namespace MiniAppGIBA.Controller.API
             }
         }
 
-        /// <summary>
-        /// /// Retrieves submitted custom field values for a specific entity
-        /// </summary>
-        /// <param name="entityType">The type of entity</param>
-        /// <param name="entityId">The ID of the entity instance</param>
-        /// <returns>List of submitted custom field values organized by tabs</returns>
-        /// <remarks>
-        /// Requirements: 4.1, 4.2
-        /// </remarks>
         [HttpGet("submitted-values")]
         public async Task<IActionResult> GetSubmittedValues(
             [FromQuery] string entityType,

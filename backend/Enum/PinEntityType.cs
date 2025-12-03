@@ -18,6 +18,11 @@ namespace MiniAppGIBA.Enum
         /// <summary>
         /// Showcase entity type
         /// </summary>
-        Showcase = 3
+        Showcase = 3,
+
+        /// <summary>
+        /// Article entity type
+        /// </summary>
+        Article = 4
     }
 }

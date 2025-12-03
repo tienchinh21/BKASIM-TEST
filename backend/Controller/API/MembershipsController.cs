@@ -19,6 +19,7 @@ using MiniAppGIBA.Constants;
 using MiniAppGIBA.Services.Groups;
 using MiniAppGIBA.Enum;
 using MiniAppGIBA.Base.Helpers;
+using Internal;
 namespace MiniAppGIBA.Controller.API
 {
 
@@ -234,8 +235,7 @@ namespace MiniAppGIBA.Controller.API
                         id = existingMembership.Id,
                         phoneNumber = existingMembership.PhoneNumber,
                         fullname = existingMembership.Fullname,
-                        avatar = existingMembership.ZaloAvatar,
-                        roleId = existingMembership.RoleId
+                        avatar = existingMembership.ZaloAvatar
                     };
                     return Success(new
                     {
@@ -264,9 +264,11 @@ namespace MiniAppGIBA.Controller.API
         {
             try
             {
+                var phone = PhoneNumberHandler.FixFormatPhoneNumber(request.PhoneNumber);
+
                 // Kiểm tra xem user đã đăng ký chưa (cả PhoneNumber và UserZaloId phải khớp)
                 var existingMembership = await _membershipRepository.GetFirstOrDefaultAsync(
-                    m => m.PhoneNumber == request.PhoneNumber && m.UserZaloId == request.UserZaloId && m.IsDelete != true);
+                    m => m.PhoneNumber == phone && m.UserZaloId == request.UserZaloId && m.IsDelete != true);
 
                 if (existingMembership != null)
                 {
@@ -276,13 +278,14 @@ namespace MiniAppGIBA.Controller.API
                 // Generate unique slug from Fullname
                 var slug = await GenerateUniqueSlugAsync(request.Fullname);
                 // Tạo membership mới với thông tin từ request (có thể null)
+                Console.WriteLine("phone: " + phone);
                 var membership = new Membership
                 {
                     UserZaloId = request.UserZaloId,
                     UserZaloName = request.UserZaloName,
                     Fullname = request.Fullname,
                     Slug = slug,
-                    PhoneNumber = request.PhoneNumber,
+                    PhoneNumber = phone,
                     ZaloAvatar = request.ZaloAvatar,
                     CreatedDate = DateTime.Now,
                     UpdatedDate = DateTime.Now
@@ -408,10 +411,39 @@ namespace MiniAppGIBA.Controller.API
                     oldSlugs = membership.OldSlugs,
                     phoneNumber = membership.PhoneNumber,
                     zaloAvatar = membership.ZaloAvatar,
-                    roleId = membership.RoleId,
                     isDelete = membership.IsDelete,
                     createdDate = membership.CreatedDate,
-                    updatedDate = membership.UpdatedDate
+                    updatedDate = membership.UpdatedDate,
+                    // Personal information fields
+                    fieldIds = membership.FieldIds,
+                    profile = membership.Profile,
+                    dayOfBirth = membership.DayOfBirth,
+                    address = membership.Address,
+                    position = membership.Position,
+                    // Company information fields
+                    companyFullName = membership.CompanyFullName,
+                    companyBrandName = membership.CompanyBrandName,
+                    taxCode = membership.TaxCode,
+                    businessField = membership.BusinessField,
+                    businessType = membership.BusinessType,
+                    headquartersAddress = membership.HeadquartersAddress,
+                    companyWebsite = membership.CompanyWebsite,
+                    companyPhoneNumber = membership.CompanyPhoneNumber,
+                    companyEmail = membership.CompanyEmail,
+                    legalRepresentative = membership.LegalRepresentative,
+                    legalRepresentativePosition = membership.LegalRepresentativePosition,
+                    companyLogo = membership.CompanyLogo,
+                    businessRegistrationNumber = membership.BusinessRegistrationNumber,
+                    businessRegistrationDate = membership.BusinessRegistrationDate,
+                    businessRegistrationPlace = membership.BusinessRegistrationPlace,
+                    // Rating fields
+                    averageRating = membership.AverageRating,
+                    totalRatings = membership.TotalRatings,
+                    // Other fields
+                    appPosition = membership.AppPosition,
+                    term = membership.Term,
+                    code = membership.Code,
+                    sortField = membership.SortField
                 });
             }
             catch (CustomException ex)
@@ -525,6 +557,58 @@ namespace MiniAppGIBA.Controller.API
                     membership.PhoneNumber = request.PhoneNumber;
                 if (request.RoleId != null)
                     membership.RoleId = request.RoleId;
+                
+                // Personal information fields
+                if (request.FieldIds != null)
+                    membership.FieldIds = request.FieldIds;
+                if (request.Profile != null)
+                    membership.Profile = request.Profile;
+                if (request.DayOfBirth != null)
+                    membership.DayOfBirth = request.DayOfBirth;
+                if (request.Address != null)
+                    membership.Address = request.Address;
+                if (request.Position != null)
+                    membership.Position = request.Position;
+                
+                // Company information fields
+                if (request.CompanyFullName != null)
+                    membership.CompanyFullName = request.CompanyFullName;
+                if (request.CompanyBrandName != null)
+                    membership.CompanyBrandName = request.CompanyBrandName;
+                if (request.TaxCode != null)
+                    membership.TaxCode = request.TaxCode;
+                if (request.BusinessField != null)
+                    membership.BusinessField = request.BusinessField;
+                if (request.BusinessType != null)
+                    membership.BusinessType = request.BusinessType;
+                if (request.HeadquartersAddress != null)
+                    membership.HeadquartersAddress = request.HeadquartersAddress;
+                if (request.CompanyWebsite != null)
+                    membership.CompanyWebsite = request.CompanyWebsite;
+                if (request.CompanyPhoneNumber != null)
+                    membership.CompanyPhoneNumber = request.CompanyPhoneNumber;
+                if (request.CompanyEmail != null)
+                    membership.CompanyEmail = request.CompanyEmail;
+                if (request.LegalRepresentative != null)
+                    membership.LegalRepresentative = request.LegalRepresentative;
+                if (request.LegalRepresentativePosition != null)
+                    membership.LegalRepresentativePosition = request.LegalRepresentativePosition;
+                if (request.CompanyLogo != null)
+                    membership.CompanyLogo = request.CompanyLogo;
+                if (request.BusinessRegistrationNumber != null)
+                    membership.BusinessRegistrationNumber = request.BusinessRegistrationNumber;
+                if (request.BusinessRegistrationDate != null)
+                    membership.BusinessRegistrationDate = request.BusinessRegistrationDate;
+                if (request.BusinessRegistrationPlace != null)
+                    membership.BusinessRegistrationPlace = request.BusinessRegistrationPlace;
+                
+                // Other fields
+                if (request.AppPosition != null)
+                    membership.AppPosition = request.AppPosition;
+                if (request.Term != null)
+                    membership.Term = request.Term;
+                if (request.SortField != null)
+                    membership.SortField = request.SortField;
 
                 membership.UpdatedDate = DateTime.Now;
 
@@ -538,8 +622,7 @@ namespace MiniAppGIBA.Controller.API
                         id = membership.Id,
                         fullname = membership.Fullname,
                         phoneNumber = membership.PhoneNumber,
-                        zaloAvatar = membership.ZaloAvatar,
-                        roleId = membership.RoleId
+                        zaloAvatar = membership.ZaloAvatar
                     }
                 });
             }
@@ -578,10 +661,39 @@ namespace MiniAppGIBA.Controller.API
                     oldSlugs = membership.OldSlugs,
                     phoneNumber = membership.PhoneNumber,
                     zaloAvatar = membership.ZaloAvatar,
-                    roleId = membership.RoleId,
                     isDelete = membership.IsDelete,
                     createdDate = membership.CreatedDate.ToString("dd/MM/yyyy HH:mm"),
-                    updatedDate = membership.UpdatedDate.ToString("dd/MM/yyyy HH:mm")
+                    updatedDate = membership.UpdatedDate.ToString("dd/MM/yyyy HH:mm"),
+                    // Personal information fields
+                    fieldIds = membership.FieldIds,
+                    profile = membership.Profile,
+                    dayOfBirth = membership.DayOfBirth,
+                    address = membership.Address,
+                    position = membership.Position,
+                    // Company information fields
+                    companyFullName = membership.CompanyFullName,
+                    companyBrandName = membership.CompanyBrandName,
+                    taxCode = membership.TaxCode,
+                    businessField = membership.BusinessField,
+                    businessType = membership.BusinessType,
+                    headquartersAddress = membership.HeadquartersAddress,
+                    companyWebsite = membership.CompanyWebsite,
+                    companyPhoneNumber = membership.CompanyPhoneNumber,
+                    companyEmail = membership.CompanyEmail,
+                    legalRepresentative = membership.LegalRepresentative,
+                    legalRepresentativePosition = membership.LegalRepresentativePosition,
+                    companyLogo = membership.CompanyLogo,
+                    businessRegistrationNumber = membership.BusinessRegistrationNumber,
+                    businessRegistrationDate = membership.BusinessRegistrationDate,
+                    businessRegistrationPlace = membership.BusinessRegistrationPlace,
+                    // Rating fields
+                    averageRating = membership.AverageRating,
+                    totalRatings = membership.TotalRatings,
+                    // Other fields
+                    appPosition = membership.AppPosition,
+                    term = membership.Term,
+                    code = membership.Code,
+                    sortField = membership.SortField
                 });
             }
             catch (Exception ex)
@@ -675,11 +787,40 @@ namespace MiniAppGIBA.Controller.API
                     fullname = membership.Fullname,
                     phoneNumber = membership.PhoneNumber,
                     avatar = membership.ZaloAvatar,
-                    roleId = membership.RoleId,
                     groupName = groupName,
                     isDelete = membership.IsDelete,
                     createdDate = membership.CreatedDate.ToString("dd/MM/yyyy HH:mm"),
-                    updatedDate = membership.UpdatedDate.ToString("dd/MM/yyyy HH:mm")
+                    updatedDate = membership.UpdatedDate.ToString("dd/MM/yyyy HH:mm"),
+                    // Personal information fields
+                    fieldIds = membership.FieldIds,
+                    profile = membership.Profile,
+                    dayOfBirth = membership.DayOfBirth,
+                    address = membership.Address,
+                    position = membership.Position,
+                    // Company information fields
+                    companyFullName = membership.CompanyFullName,
+                    companyBrandName = membership.CompanyBrandName,
+                    taxCode = membership.TaxCode,
+                    businessField = membership.BusinessField,
+                    businessType = membership.BusinessType,
+                    headquartersAddress = membership.HeadquartersAddress,
+                    companyWebsite = membership.CompanyWebsite,
+                    companyPhoneNumber = membership.CompanyPhoneNumber,
+                    companyEmail = membership.CompanyEmail,
+                    legalRepresentative = membership.LegalRepresentative,
+                    legalRepresentativePosition = membership.LegalRepresentativePosition,
+                    companyLogo = membership.CompanyLogo,
+                    businessRegistrationNumber = membership.BusinessRegistrationNumber,
+                    businessRegistrationDate = membership.BusinessRegistrationDate,
+                    businessRegistrationPlace = membership.BusinessRegistrationPlace,
+                    // Rating fields
+                    averageRating = membership.AverageRating,
+                    totalRatings = membership.TotalRatings,
+                    // Other fields
+                    appPosition = membership.AppPosition,
+                    term = membership.Term,
+                    code = membership.Code,
+                    sortField = membership.SortField
                 });
             }
             catch (Exception ex)

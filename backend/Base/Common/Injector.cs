@@ -51,6 +51,8 @@ namespace MiniAppGIBA.Base.Common
             services.AddScoped<Services.CustomFields.ICustomFieldService, Services.CustomFields.CustomFieldService>();
             services.AddScoped<Services.CustomFields.ICustomFieldValueService, Services.CustomFields.CustomFieldValueService>();
             services.AddScoped<Services.CustomFields.ICustomFieldFormHandler, Services.CustomFields.CustomFieldFormHandler>();
+            services.AddScoped<Services.CustomFields.ICustomFieldValidator, Services.CustomFields.CustomFieldValidator>();
+            services.AddScoped<Services.CustomFields.IGroupCustomFieldService, Services.CustomFields.GroupCustomFieldService>();
         }
 
     }
