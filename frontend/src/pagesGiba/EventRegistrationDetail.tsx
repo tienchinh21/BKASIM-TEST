@@ -118,11 +118,11 @@ const EventRegistrationDetail: React.FC = () => {
           ></div>
 
           <div className="p-4">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex-1">
-                <div className="flex gap-2 items-center mb-2">
-                  <span>Tên sự kiện:</span>
-                  <h1 className="text-lg font-bold text-gray-900">
+            <div className="flex items-start justify-between mb-4 gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="mb-2">
+                  <span className="text-sm text-gray-600">Tên sự kiện:</span>
+                  <h1 className="text-lg font-bold text-gray-900 break-words">
                     {registration.eventTitle}
                   </h1>
                 </div>
@@ -141,9 +141,9 @@ const EventRegistrationDetail: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <div className="ml-4">
+              <div className="flex-shrink-0">
                 <span
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold text-white"
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold text-white whitespace-nowrap"
                   style={{
                     background: getBackgroundColorByStatus(registration.status),
                   }}

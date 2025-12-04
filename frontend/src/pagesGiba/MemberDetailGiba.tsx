@@ -325,7 +325,7 @@ const MemberDetailGiba: React.FC = () => {
       }
     }
 
-    const shareTitle = `DN BKASIM - ${memberDetail.basicInfo.fullName}`;
+    const shareTitle = `Thành viên CLB DN BKASIM - ${memberDetail.basicInfo.fullName}`;
     const shareDescription = memberDetail.basicInfo.profile
       ? `${memberDetail.basicInfo.profile}\n${
           memberDetail.basicInfo.position ? memberDetail.basicInfo.position : ""
@@ -385,7 +385,7 @@ const MemberDetailGiba: React.FC = () => {
 
   React.useEffect(() => {
     setHeader({
-      title: "PROFILE THÀNH VIÊN",
+      title: "THÀNH VIÊN CLB DN BKASIM",
       showUserInfo: false,
       showMenuButton: false,
       showCloseButton: false,
@@ -617,131 +617,131 @@ const MemberDetailGiba: React.FC = () => {
     );
   };
 
-  const renderGroupInfoCard = () => {
-    const groupInfo = memberDetail?.groupInfo;
-    const groupsArray = Array.isArray(groupInfo)
-      ? groupInfo
-      : groupInfo
-      ? [groupInfo]
-      : [];
+  // const renderGroupInfoCard = () => {
+  //   const groupInfo = memberDetail?.groupInfo;
+  //   const groupsArray = Array.isArray(groupInfo)
+  //     ? groupInfo
+  //     : groupInfo
+  //     ? [groupInfo]
+  //     : [];
 
-    if (groupsArray.length === 0) {
-      return (
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "8px",
-            padding: "16px",
-            marginBottom: "16px",
-            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
-            borderLeft: `4px solid ${themeColor}`,
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: "700",
-              color: themeColor,
-              marginBottom: "12px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <div
-              style={{
-                width: "4px",
-                height: "20px",
-                background: themeColor,
-                borderRadius: "2px",
-              }}
-            />
-            Thành viên CLB DN BKASIM
-          </h2>
-          <div
-            style={{
-              fontSize: "15px",
-              color: "#050505",
-            }}
-          >
-            GIBA
-          </div>
-        </div>
-      );
-    }
+  //   if (groupsArray.length === 0) {
+  //     return (
+  //       <div
+  //         style={{
+  //           background: "#fff",
+  //           borderRadius: "8px",
+  //           padding: "16px",
+  //           marginBottom: "16px",
+  //           boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+  //           borderLeft: `4px solid ${themeColor}`,
+  //         }}
+  //       >
+  //         <h2
+  //           style={{
+  //             fontSize: "20px",
+  //             fontWeight: "700",
+  //             color: themeColor,
+  //             marginBottom: "12px",
+  //             display: "flex",
+  //             alignItems: "center",
+  //             gap: "8px",
+  //           }}
+  //         >
+  //           <div
+  //             style={{
+  //               width: "4px",
+  //               height: "20px",
+  //               background: themeColor,
+  //               borderRadius: "2px",
+  //             }}
+  //           />
+  //           Thành viên CLB DN BKASIM
+  //         </h2>
+  //         <div
+  //           style={{
+  //             fontSize: "15px",
+  //             color: "#050505",
+  //           }}
+  //         >
+  //           GIBA
+  //         </div>
+  //       </div>
+  //     );
+  //   }
 
-    return (
-      <div
-        style={{
-          background: "#fff",
-          borderRadius: "8px",
-          padding: "16px",
-          marginBottom: "16px",
-          boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
-          borderLeft: `4px solid ${themeColor}`,
-        }}
-      >
-        <h2
-          style={{
-            fontSize: "20px",
-            fontWeight: "700",
-            color: themeColor,
-            marginBottom: "12px",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <div
-            style={{
-              width: "4px",
-              height: "20px",
-              background: themeColor,
-              borderRadius: "2px",
-            }}
-          />
-          Thành viên CLB DN BKASIM
-        </h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          {groupsArray.map((group, index) => (
-            <div
-              key={group?.groupId || index}
-              style={{
-                padding: "12px",
-                background: addOpacity(themeColor, 0.05),
-                borderRadius: "8px",
-                borderLeft: `3px solid ${themeColor}`,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "15px",
-                  color: "#050505",
-                  fontWeight: "500",
-                  marginBottom: "4px",
-                }}
-              >
-                {group?.groupName
-                  ? `DN BKASIM - ${group.groupName}`
-                  : "DN BKASIM"}
-              </div>
-              {group?.groupPosition && (
-                <div
-                  style={{
-                    fontSize: "14px",
-                    color: "#65676b",
-                    marginTop: "4px",
-                  }}
-                >
-                  Vị trí: {group.groupPosition}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  //   return (
+  //     <div
+  //       style={{
+  //         background: "#fff",
+  //         borderRadius: "8px",
+  //         padding: "16px",
+  //         marginBottom: "16px",
+  //         boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
+  //         borderLeft: `4px solid ${themeColor}`,
+  //       }}
+  //     >
+  //       <h2
+  //         style={{
+  //           fontSize: "20px",
+  //           fontWeight: "700",
+  //           color: themeColor,
+  //           marginBottom: "12px",
+  //           display: "flex",
+  //           alignItems: "center",
+  //           gap: "8px",
+  //         }}
+  //       >
+  //         <div
+  //           style={{
+  //             width: "4px",
+  //             height: "20px",
+  //             background: themeColor,
+  //             borderRadius: "2px",
+  //           }}
+  //         />
+  //         Thành viên CLB DN BKASIM
+  //       </h2>
+  //       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+  //         {groupsArray.map((group, index) => (
+  //           <div
+  //             key={group?.groupId || index}
+  //             style={{
+  //               padding: "12px",
+  //               background: addOpacity(themeColor, 0.05),
+  //               borderRadius: "8px",
+  //               borderLeft: `3px solid ${themeColor}`,
+  //             }}
+  //           >
+  //             <div
+  //               style={{
+  //                 fontSize: "15px",
+  //                 color: "#050505",
+  //                 fontWeight: "500",
+  //                 marginBottom: "4px",
+  //               }}
+  //             >
+  //               {group?.groupName
+  //                 ? `DN BKASIM - ${group.groupName}`
+  //                 : "DN BKASIM"}
+  //             </div>
+  //             {group?.groupPosition && (
+  //               <div
+  //                 style={{
+  //                   fontSize: "14px",
+  //                   color: "#65676b",
+  //                   marginTop: "4px",
+  //                 }}
+  //               >
+  //                 Vị trí: {group.groupPosition}
+  //               </div>
+  //             )}
+  //           </div>
+  //         ))}
+  //       </div>
+  //     </div>
+  //   );
+  // };
 
   return (
     <Page
@@ -1241,7 +1241,7 @@ const MemberDetailGiba: React.FC = () => {
         )}
 
         {/* Group Info Card */}
-        {renderGroupInfoCard()}
+        {/* {renderGroupInfoCard()} */}
 
         {/* Content Cards */}
         <DragDropContext

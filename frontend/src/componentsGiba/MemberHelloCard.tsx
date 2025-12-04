@@ -81,6 +81,7 @@ const MemberHelloCard: React.FC<MemberHelloCardProps> = ({
               fontSize: "16px",
               fontWeight: "700",
               color: "#1f2937",
+              marginTop: "10px",
             }}
           >
             BKASIM

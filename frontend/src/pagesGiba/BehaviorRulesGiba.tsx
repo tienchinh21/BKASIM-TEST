@@ -1067,7 +1067,7 @@ const BehaviorRulesGiba: React.FC = () => {
                         <span className="text-white font-semibold">
                           Thông tin & Quy tắc ứng xử
                         </span>{" "}
-                        của GIBA{" "}
+                        của CLB DN BKASIM{" "}
                         <span className="text-red-500 font-bold">*</span>
                       </p>
                     </div>
@@ -1108,7 +1108,7 @@ const BehaviorRulesGiba: React.FC = () => {
                       <p className="text-sm text-gray-300 leading-relaxed">
                         Tôi đồng ý{" "}
                         <span className="text-white font-semibold">
-                          Theo dõi Zalo OA {dfData.oaName || "GIBA"}
+                          Theo dõi Zalo OA {dfData.oaName}
                         </span>{" "}
                         để nhận thông báo và cập nhật mới nhất{" "}
                         <span className="text-red-500 font-bold">*</span>
